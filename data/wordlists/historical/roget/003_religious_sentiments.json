@@ -1,0 +1,24 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "RELIGIOUS SENTIMENTS",
+    "description": "Roget's Thesaurus -  / SYMPATHETIC AFFECTIONS / RELIGIOUS SENTIMENTS",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 12,
+    "words": [
+        "desecrating",
+        "holiness",
+        "impiety",
+        "impious",
+        "incredulousness",
+        "irreligion",
+        "irreligious",
+        "piety",
+        "pious",
+        "profaneness",
+        "sanctimoniousness",
+        "ungodliness"
+    ]
+}

@@ -1,0 +1,29 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Judgment.  [Conclusion.]",
+    "description": "Roget's Thesaurus - IV / III. ORGANIC MATTER / Judgment.  [Conclusion.] ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 17,
+    "words": [
+        "all things considered",
+        "arrive at",
+        "come to a conclusion",
+        "conclude",
+        "determinate",
+        "determine",
+        "discover",
+        "draw a conclusion",
+        "evolve",
+        "find",
+        "fix upon",
+        "judge",
+        "judging",
+        "judicious",
+        "learn",
+        "on the whole",
+        "pick"
+    ]
+}

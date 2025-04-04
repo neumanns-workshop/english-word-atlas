@@ -1,0 +1,26 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Opposition.",
+    "description": "Roget's Thesaurus - V / II. MODES OF COMMUNICATION / Opposition. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 14,
+    "words": [
+        "adverse",
+        "against",
+        "antagonistic",
+        "at cross purposes",
+        "contrary",
+        "counter to",
+        "counteract",
+        "in conflict with",
+        "oppose",
+        "opposed",
+        "opposing",
+        "run counter to",
+        "versus",
+        "withstand"
+    ]
+}

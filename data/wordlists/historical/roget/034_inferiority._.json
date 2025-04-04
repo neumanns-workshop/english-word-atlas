@@ -1,0 +1,28 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Inferiority.",
+    "description": "Roget's Thesaurus - I / III. QUANTITY / Inferiority. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 16,
+    "words": [
+        "at the bottom",
+        "be inferior",
+        "below par",
+        "below the mark",
+        "come short of",
+        "deficient",
+        "fall short of",
+        "inferior",
+        "less",
+        "lesser",
+        "minor",
+        "not",
+        "not pass",
+        "small",
+        "smaller",
+        "under the mark"
+    ]
+}

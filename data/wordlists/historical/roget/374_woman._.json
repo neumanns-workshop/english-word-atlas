@@ -1,0 +1,30 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Woman.",
+    "description": "Roget's Thesaurus - III / III. ORGANIC MATTER / Woman. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 18,
+    "words": [
+        "carnal",
+        "copulate",
+        "erotic",
+        "female",
+        "feminine",
+        "feminize",
+        "fornicate",
+        "have intercourse",
+        "have sex",
+        "ladylike",
+        "maidenly",
+        "make love",
+        "mate",
+        "matronly",
+        "sensual",
+        "sexual",
+        "sexy",
+        "womanly"
+    ]
+}

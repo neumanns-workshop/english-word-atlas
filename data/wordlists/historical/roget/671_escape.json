@@ -1,0 +1,20 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Escape.",
+    "description": "Roget's Thesaurus - V / II. MODES OF COMMUNICATION / Escape. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 8,
+    "words": [
+        "effect one's escape",
+        "escape",
+        "escaped",
+        "escaping",
+        "fled",
+        "make good",
+        "make one's escape",
+        "scape"
+    ]
+}

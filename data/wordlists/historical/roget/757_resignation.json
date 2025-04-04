@@ -1,0 +1,19 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Resignation",
+    "description": "Roget's Thesaurus - V / I. GENERAL INTERSOCIAL VOLITION / Resignation",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 7,
+    "words": [
+        "abdicant",
+        "give up",
+        "lay down",
+        "resign",
+        "throw up",
+        "throw up the cards",
+        "wash one's"
+    ]
+}

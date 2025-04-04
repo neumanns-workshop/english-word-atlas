@@ -1,0 +1,25 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Failure.",
+    "description": "Roget's Thesaurus - V / II. MODES OF COMMUNICATION / Failure. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 13,
+    "words": [
+        "at",
+        "be unsuccessful",
+        "fail",
+        "failing",
+        "in vain",
+        "make vain",
+        "not succeed",
+        "re",
+        "successless",
+        "to little or no purpose",
+        "tripping",
+        "unsuccessful",
+        "unsuccessfully"
+    ]
+}

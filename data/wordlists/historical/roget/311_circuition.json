@@ -1,0 +1,23 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "[Curvilinear motion.] Circuition.",
+    "description": "Roget's Thesaurus - II / II. DIMENSIONS / [Curvilinear motion.] Circuition. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 11,
+    "words": [
+        "bend",
+        "circuitous",
+        "circumforaneous",
+        "go about",
+        "go round to the right",
+        "heel",
+        "put about",
+        "round about",
+        "turn",
+        "turning",
+        "wheel"
+    ]
+}

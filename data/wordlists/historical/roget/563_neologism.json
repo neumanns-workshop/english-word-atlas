@@ -1,0 +1,21 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Neologism.",
+    "description": "Roget's Thesaurus - IV / II. MODES OF COMMUNICATION / Neologism. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 9,
+    "words": [
+        "Americanize",
+        "Anglicize",
+        "archaic",
+        "backform",
+        "coin a term",
+        "coin words",
+        "neologic",
+        "neological",
+        "obsolete"
+    ]
+}

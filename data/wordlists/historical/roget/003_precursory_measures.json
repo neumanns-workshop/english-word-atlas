@@ -1,0 +1,33 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "PRECURSORY MEASURES",
+    "description": "Roget's Thesaurus -  / PROSPECTIVE VOLITION / PRECURSORY MEASURES",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 21,
+    "words": [
+        "disused",
+        "essay",
+        "essaying",
+        "experimentally",
+        "extempore",
+        "forbearance",
+        "misuse",
+        "misused",
+        "preparation",
+        "prepare",
+        "prepared",
+        "preparing",
+        "providing",
+        "rawness",
+        "ripening",
+        "try",
+        "undertake",
+        "undertaking",
+        "unprepared",
+        "use",
+        "used"
+    ]
+}

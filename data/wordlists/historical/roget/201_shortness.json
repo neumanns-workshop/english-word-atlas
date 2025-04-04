@@ -1,0 +1,26 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Shortness",
+    "description": "Roget's Thesaurus - II / II. DIMENSIONS / Shortness",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 14,
+    "words": [
+        "be short",
+        "brief",
+        "compact",
+        "compendious",
+        "curt",
+        "curtail",
+        "in short",
+        "render short",
+        "scrimp",
+        "shorn",
+        "short",
+        "shorten",
+        "shortly",
+        "stubby"
+    ]
+}

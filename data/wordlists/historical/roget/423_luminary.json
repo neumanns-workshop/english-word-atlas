@@ -1,0 +1,15 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "[Source of light, self-luminous body.] Luminary.",
+    "description": "Roget's Thesaurus - III / III. ORGANIC MATTER / [Source of light, self-luminous body.] Luminary. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 3,
+    "words": [
+        "glowing",
+        "illuminate",
+        "phosphorescent"
+    ]
+}

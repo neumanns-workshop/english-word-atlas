@@ -1,0 +1,23 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Apportionment",
+    "description": "Roget's Thesaurus - V / I. GENERAL INTERSOCIAL VOLITION / Apportionment",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 11,
+    "words": [
+        "administer",
+        "allot",
+        "apportion",
+        "apportioning",
+        "billet",
+        "dispense",
+        "distribute",
+        "divide",
+        "each to each",
+        "respective",
+        "respectively"
+    ]
+}

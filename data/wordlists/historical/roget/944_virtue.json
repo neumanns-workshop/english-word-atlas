@@ -1,0 +1,25 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Virtue.",
+    "description": "Roget's Thesaurus - VI / IV. MORAL  AFFECTIONS / Virtue. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 13,
+    "words": [
+        "adj",
+        "be virtuous",
+        "deserving",
+        "do one's duty",
+        "e merito",
+        "fulfill",
+        "good",
+        "innocent",
+        "meritorious",
+        "practice virtue",
+        "virtuous",
+        "virtuously &c",
+        "worthy"
+    ]
+}

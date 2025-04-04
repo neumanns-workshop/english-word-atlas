@@ -1,0 +1,25 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Disjunction.",
+    "description": "Roget's Thesaurus - I / III. QUANTITY / Disjunction. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 13,
+    "words": [
+        "adrift",
+        "apart",
+        "be disjoined",
+        "come off",
+        "come to pieces",
+        "discontinuous",
+        "disjoined",
+        "fall off",
+        "fall to",
+        "multipartite",
+        "one by one",
+        "separately",
+        "severally"
+    ]
+}

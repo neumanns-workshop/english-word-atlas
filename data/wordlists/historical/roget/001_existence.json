@@ -1,0 +1,28 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Existence",
+    "description": "Roget's Thesaurus - I / I. EXISTENCE / Existence",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 16,
+    "words": [
+        "actually",
+        "be",
+        "breathe",
+        "exist",
+        "existent",
+        "existing",
+        "have being",
+        "in existence",
+        "in fact",
+        "in point of fact",
+        "in reality",
+        "indeed",
+        "live",
+        "stand",
+        "subsist",
+        "under the sun"
+    ]
+}

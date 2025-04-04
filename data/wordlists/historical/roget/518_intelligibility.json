@@ -1,0 +1,24 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Intelligibility.",
+    "description": "Roget's Thesaurus - IV / I. NATURE OF IDEAS COMMUNICATED. / Intelligibility. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 12,
+    "words": [
+        "be intelligible",
+        "clear",
+        "clear as day",
+        "clear as noonday",
+        "in plain English",
+        "in plain terms",
+        "in plain words",
+        "intelligible",
+        "lucid",
+        "speak for itself",
+        "speak volumes",
+        "tell its"
+    ]
+}

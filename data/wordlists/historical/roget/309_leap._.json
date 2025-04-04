@@ -1,0 +1,24 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Leap.",
+    "description": "Roget's Thesaurus - II / II. DIMENSIONS / Leap. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 12,
+    "words": [
+        "bound",
+        "frisky",
+        "hop",
+        "jump over the moon",
+        "jump up",
+        "leap",
+        "leaping",
+        "on the light fantastic toe",
+        "ramp",
+        "saltatory",
+        "spring",
+        "vault"
+    ]
+}

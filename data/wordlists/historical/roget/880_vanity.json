@@ -1,0 +1,21 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Vanity.",
+    "description": "Roget's Thesaurus - VI / I. GENERAL INTERSOCIAL VOLITION / Vanity. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 9,
+    "words": [
+        "be vain",
+        "be vain of",
+        "conceited",
+        "lay",
+        "pique oneself",
+        "proud as a peacock",
+        "vain",
+        "vain as a peacock",
+        "vainly"
+    ]
+}

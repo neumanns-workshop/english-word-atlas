@@ -1,0 +1,19 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Misrepresentation.",
+    "description": "Roget's Thesaurus - IV / II. MODES OF COMMUNICATION / Misrepresentation. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 7,
+    "words": [
+        "caricature",
+        "daub",
+        "distort",
+        "exaggerate",
+        "misrepresent",
+        "misrepresented",
+        "overdraw"
+    ]
+}

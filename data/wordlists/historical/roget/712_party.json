@@ -1,0 +1,24 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Party.",
+    "description": "Roget's Thesaurus - V / II. MODES OF COMMUNICATION / Party. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 12,
+    "words": [
+        "cement a party",
+        "club together",
+        "en masse",
+        "hand in hand",
+        "in",
+        "in alliance",
+        "in league",
+        "in the",
+        "join",
+        "shoulder to shoulder",
+        "side by side",
+        "unite"
+    ]
+}

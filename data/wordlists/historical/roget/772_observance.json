@@ -1,0 +1,25 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Observance",
+    "description": "Roget's Thesaurus - V / I. GENERAL INTERSOCIAL VOLITION / Observance",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 13,
+    "words": [
+        "abide by",
+        "acknowledge",
+        "cling to",
+        "comply with",
+        "faithful",
+        "faithfully",
+        "honorable",
+        "loyal",
+        "observant",
+        "observe",
+        "respect",
+        "true",
+        "true as the"
+    ]
+}

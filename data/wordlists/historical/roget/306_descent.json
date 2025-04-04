@@ -1,0 +1,25 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "[Motion downwards] Descent.",
+    "description": "Roget's Thesaurus - II / II. DIMENSIONS / [Motion downwards] Descent. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 13,
+    "words": [
+        "come down",
+        "decurrent",
+        "decursive",
+        "descend",
+        "descendent",
+        "descending",
+        "downhill",
+        "downwards",
+        "drop",
+        "drop down",
+        "fall",
+        "go down",
+        "gravitate"
+    ]
+}

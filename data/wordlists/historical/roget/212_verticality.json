@@ -1,0 +1,29 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Verticality.",
+    "description": "Roget's Thesaurus - II / II. DIMENSIONS / Verticality. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 17,
+    "words": [
+        "be vertical",
+        "erect",
+        "normal",
+        "on end",
+        "perpendicular",
+        "plumb",
+        "right on end",
+        "stand",
+        "stand erect",
+        "stand on end",
+        "stand up",
+        "straight",
+        "up",
+        "up on end",
+        "upright",
+        "vertical",
+        "vertically"
+    ]
+}

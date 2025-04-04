@@ -1,0 +1,27 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Permission",
+    "description": "Roget's Thesaurus - V / I. GENERAL INTERSOCIAL VOLITION / Permission",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 15,
+    "words": [
+        "admit",
+        "allow",
+        "by leave",
+        "give permission",
+        "give power",
+        "indulgent",
+        "let",
+        "on leave",
+        "permissive",
+        "permit",
+        "permitted",
+        "permitting",
+        "speciali gratia",
+        "under",
+        "with leave"
+    ]
+}

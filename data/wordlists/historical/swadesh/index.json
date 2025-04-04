@@ -1,0 +1,16 @@
+{
+    "categories": {
+        "swadesh_207": {
+            "name": "",
+            "description": "Swadesh 207-word list - The original extended vocabulary list for historical-comparative linguistics, later refined into the more focused 100-word list",
+            "word_count": 206
+        },
+        "swadesh_100": {
+            "name": "",
+            "description": "Swadesh 100-word list - A refined core vocabulary list for historical-comparative linguistics, reduced from the earlier 207-word list to focus on the most stable concepts across languages",
+            "word_count": 99
+        }
+    },
+    "total_categories": 2,
+    "total_words": 211
+}

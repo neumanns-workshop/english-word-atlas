@@ -1,0 +1,19 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Danger.",
+    "description": "Roget's Thesaurus - V / II. MODES OF COMMUNICATION / Danger. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 7,
+    "words": [
+        "be exposed to danger",
+        "be in danger",
+        "endangered",
+        "fraught with danger",
+        "in danger",
+        "incur",
+        "run into danger"
+    ]
+}

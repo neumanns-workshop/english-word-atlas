@@ -1,0 +1,23 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Confutation.",
+    "description": "Roget's Thesaurus - IV / III. ORGANIC MATTER / Confutation. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 11,
+    "words": [
+        "capable of refutation",
+        "confute",
+        "confuted",
+        "confuting",
+        "controvert",
+        "disprove",
+        "negative",
+        "parry",
+        "rebut",
+        "refutable",
+        "refute"
+    ]
+}

@@ -1,0 +1,23 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Improbity.",
+    "description": "Roget's Thesaurus - VI / IV. MORAL  AFFECTIONS / Improbity. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 11,
+    "words": [
+        "be dishonest",
+        "break one's",
+        "break one's word",
+        "dishonest",
+        "dishonestly",
+        "dishonorable",
+        "like a thief in the night",
+        "mala fide",
+        "play false",
+        "unconscientious",
+        "unscrupulous"
+    ]
+}

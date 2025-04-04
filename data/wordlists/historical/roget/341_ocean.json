@@ -1,0 +1,21 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Ocean",
+    "description": "Roget's Thesaurus - III / II. DIMENSIONS / Ocean ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 9,
+    "words": [
+        "afloat",
+        "at sea",
+        "marine",
+        "maritime",
+        "oceanic",
+        "on sea",
+        "pelagian",
+        "pelagic",
+        "seagoing"
+    ]
+}

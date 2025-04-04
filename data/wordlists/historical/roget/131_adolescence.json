@@ -1,0 +1,21 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Adolescence.",
+    "description": "Roget's Thesaurus - I / VI. TIME / Adolescence. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 9,
+    "words": [
+        "adolescent",
+        "come of age",
+        "come to man's estate",
+        "come to years of discretion",
+        "of age",
+        "of full age",
+        "of ripe age",
+        "out of",
+        "pubescent"
+    ]
+}

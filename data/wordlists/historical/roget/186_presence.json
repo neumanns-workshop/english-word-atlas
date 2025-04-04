@@ -1,0 +1,27 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Presence",
+    "description": "Roget's Thesaurus - II / I. SPACE IN GENERAL / Presence",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 15,
+    "words": [
+        "aboard",
+        "assister",
+        "at home",
+        "be present",
+        "everywhere",
+        "exist in space",
+        "here",
+        "inhabiting",
+        "make one of",
+        "moored",
+        "occupying",
+        "on board",
+        "present",
+        "there",
+        "where"
+    ]
+}

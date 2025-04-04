@@ -1,0 +1,24 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Weakness",
+    "description": "Roget's Thesaurus - I / VIII. CAUSATION / Weakness",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 12,
+    "words": [
+        "be weak",
+        "crumble",
+        "drop",
+        "feeble",
+        "give way",
+        "impotent",
+        "relaxed",
+        "shake",
+        "totter",
+        "tremble",
+        "unnerved",
+        "weak"
+    ]
+}

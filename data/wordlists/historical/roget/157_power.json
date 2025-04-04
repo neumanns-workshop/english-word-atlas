@@ -1,0 +1,24 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Power",
+    "description": "Roget's Thesaurus - I / VIII. CAUSATION / Power",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 12,
+    "words": [
+        "able",
+        "be powerful",
+        "by dint of",
+        "by virtue of",
+        "capable",
+        "equal to",
+        "gain power",
+        "potential",
+        "powerful",
+        "powerfully",
+        "puissant",
+        "up to"
+    ]
+}

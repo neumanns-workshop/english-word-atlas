@@ -1,0 +1,24 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Order.",
+    "description": "Roget's Thesaurus - I / IV. ORDER / Order. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 12,
+    "words": [
+        "be in order",
+        "become in order",
+        "draw up",
+        "fall in",
+        "form",
+        "in",
+        "in order",
+        "in trim",
+        "methodically",
+        "orderly",
+        "regular",
+        "step by"
+    ]
+}

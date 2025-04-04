@@ -1,0 +1,29 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "End.",
+    "description": "Roget's Thesaurus - I / IV. ORDER / End. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 17,
+    "words": [
+        "at the last",
+        "be all over",
+        "close",
+        "conclude",
+        "crowning",
+        "definitive",
+        "die",
+        "end",
+        "ending",
+        "expire",
+        "final",
+        "finally",
+        "finish",
+        "in fine",
+        "once for all",
+        "terminal",
+        "terminate"
+    ]
+}

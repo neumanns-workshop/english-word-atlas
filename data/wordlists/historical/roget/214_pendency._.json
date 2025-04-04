@@ -1,0 +1,24 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Pendency.",
+    "description": "Roget's Thesaurus - II / II. DIMENSIONS / Pendency. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 12,
+    "words": [
+        "be pendent",
+        "beetling",
+        "dangle",
+        "depend",
+        "hang",
+        "hanging",
+        "jutting",
+        "pendent",
+        "pendulous",
+        "pensile",
+        "swag",
+        "swing"
+    ]
+}

@@ -1,0 +1,25 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Probity.",
+    "description": "Roget's Thesaurus - VI / IV. MORAL  AFFECTIONS / Probity. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 13,
+    "words": [
+        "be honorable",
+        "bona fide",
+        "deal",
+        "deal honorably",
+        "deal squarely",
+        "honest",
+        "honest as daylight",
+        "honorable",
+        "in good faith",
+        "on the square",
+        "upright",
+        "veracious",
+        "virtuous"
+    ]
+}

@@ -1,0 +1,25 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Excitation.",
+    "description": "Roget's Thesaurus - VI / I. GENERAL INTERSOCIAL VOLITION / Excitation. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 13,
+    "words": [
+        "affect",
+        "animate",
+        "astir",
+        "excite",
+        "excited",
+        "impress",
+        "interest",
+        "move",
+        "strike",
+        "till one is black in the face",
+        "touch",
+        "up the qui vive",
+        "wrought up"
+    ]
+}

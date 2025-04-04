@@ -1,0 +1,22 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "[Absence, want or loss of hope.] Hopelessness.",
+    "description": "Roget's Thesaurus - VI / I. GENERAL INTERSOCIAL VOLITION / [Absence, want or loss of hope.] Hopelessness. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 10,
+    "words": [
+        "abandon all hope",
+        "au",
+        "despair",
+        "despairing",
+        "desperate",
+        "give up all hope",
+        "gone",
+        "hopeless",
+        "in despair",
+        "lose all hope"
+    ]
+}

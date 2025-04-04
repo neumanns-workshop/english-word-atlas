@@ -1,0 +1,25 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "[Uninterrupted sequence.] Continuity.",
+    "description": "Roget's Thesaurus - I / IV. ORDER / [Uninterrupted sequence.] Continuity. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 13,
+    "words": [
+        "consecutive",
+        "continued",
+        "continuous",
+        "continuously",
+        "fall in",
+        "follow in a series",
+        "form a series",
+        "gradual",
+        "in a line",
+        "in succession",
+        "progressive",
+        "serial",
+        "seriatim"
+    ]
+}

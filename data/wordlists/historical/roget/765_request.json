@@ -1,0 +1,32 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Request",
+    "description": "Roget's Thesaurus - V / I. GENERAL INTERSOCIAL VOLITION / Request",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 20,
+    "words": [
+        "ask",
+        "be good enough",
+        "be so good as",
+        "beg",
+        "crave",
+        "do",
+        "have",
+        "invite",
+        "petition",
+        "please",
+        "pop",
+        "pray",
+        "precatory",
+        "prithee",
+        "request",
+        "requesting",
+        "solicit",
+        "sue",
+        "suppliant",
+        "supplicant"
+    ]
+}

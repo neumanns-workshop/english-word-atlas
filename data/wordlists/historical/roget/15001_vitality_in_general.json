@@ -1,0 +1,29 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Vitality in general",
+    "description": "Roget's Thesaurus -  / ORGANIC MATTER / Vitality in general",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 17,
+    "words": [
+        "burried",
+        "cadaverous",
+        "corpse",
+        "dead",
+        "death",
+        "die",
+        "dying",
+        "hanging",
+        "inorganic",
+        "inter",
+        "interment",
+        "kill",
+        "killing",
+        "life",
+        "living",
+        "organic",
+        "vivified"
+    ]
+}

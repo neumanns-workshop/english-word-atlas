@@ -1,0 +1,30 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Resonance.",
+    "description": "Roget's Thesaurus - III / III. ORGANIC MATTER / Resonance. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 18,
+    "words": [
+        "damp the sound",
+        "dampened",
+        "dead",
+        "deaden the sound",
+        "gingle",
+        "jingle",
+        "muffled",
+        "nonresonant",
+        "reecho",
+        "resonant",
+        "resonate",
+        "resound",
+        "resounding",
+        "reverberant",
+        "reverberate",
+        "ring",
+        "sound dead",
+        "stop the sound"
+    ]
+}

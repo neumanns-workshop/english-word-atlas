@@ -1,0 +1,23 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "BEING, IN THE ABSTRACT",
+    "description": "Roget's Thesaurus - WORDS EXPRESSING ABSTRACT RELATIONS / EXISTENCE / BEING, IN THE ABSTRACT",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 11,
+    "words": [
+        "actually",
+        "annihilated",
+        "exist",
+        "existence",
+        "existing",
+        "inexistence",
+        "inexistent",
+        "negatively",
+        "negativeness",
+        "positiveness",
+        "virtually"
+    ]
+}

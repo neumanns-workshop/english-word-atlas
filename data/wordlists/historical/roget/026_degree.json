@@ -1,0 +1,21 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "[Relative quantity.] Degree.",
+    "description": "Roget's Thesaurus - I / III. QUANTITY / [Relative quantity.] Degree. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 9,
+    "words": [
+        "by degrees",
+        "comparative",
+        "gradual",
+        "gradually",
+        "however",
+        "inasmuch",
+        "pro tanto",
+        "shading off",
+        "within the bounds"
+    ]
+}

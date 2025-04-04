@@ -1,0 +1,24 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Melody. Concord.",
+    "description": "Roget's Thesaurus - III / III. ORGANIC MATTER / Melody. Concord. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 12,
+    "words": [
+        "as one",
+        "be harmonious",
+        "chime",
+        "harmonical",
+        "harmonious",
+        "harmoniously",
+        "harmonize",
+        "in",
+        "in concord",
+        "in harmony",
+        "in tune",
+        "symphonize"
+    ]
+}

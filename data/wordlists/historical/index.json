@@ -1,0 +1,101 @@
+{
+    "categories": {},
+    "total_categories": 0,
+    "total_words": 11945,
+    "sources": {
+        "ogden": {
+            "description": "Ogden's Basic English - Complete word list from all categories including basic, supplement, and unofficial lists",
+            "citation": "Ogden, C. K. (1930). Basic English: A General Introduction with Rules and Grammar. Paul Treber & Co., Ltd.",
+            "word_count": 2234,
+            "unique_words": 788,
+            "shared_words": 1446,
+            "unique_percent": 35.3,
+            "shared_percent": 64.7
+        },
+        "gsl": {
+            "description": "General Service List - Complete word list with frequency information",
+            "citation": "West, Michael. (1953). A General Service List of English Words. Longman, Green & Co.",
+            "word_count": 3453,
+            "unique_words": 1222,
+            "shared_words": 2231,
+            "unique_percent": 35.4,
+            "shared_percent": 64.6
+        },
+        "swadesh": {
+            "description": "Swadesh List - Complete word list including all variants",
+            "citation": "Swadesh, M. (1952). Lexico-statistic dating of prehistoric ethnic contacts. Proceedings of the American Philosophical Society, 96(4), 452-463.",
+            "word_count": 211,
+            "unique_words": 8,
+            "shared_words": 203,
+            "unique_percent": 3.8,
+            "shared_percent": 96.2
+        },
+        "roget": {
+            "description": "Roget's Thesaurus - Complete word list from all categories",
+            "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+            "word_count": 9173,
+            "unique_words": 7597,
+            "shared_words": 1576,
+            "unique_percent": 82.8,
+            "shared_percent": 17.2
+        }
+    },
+    "total_sources": 4,
+    "overlaps": {
+        "ogden": {
+            "swadesh": {
+                "words": 174,
+                "percent_of_ogden": 7.8,
+                "percent_of_swadesh": 82.5
+            },
+            "roget": {
+                "words": 701,
+                "percent_of_ogden": 31.4,
+                "percent_of_roget": 7.6
+            }
+        },
+        "gsl": {
+            "ogden": {
+                "words": 1347,
+                "percent_of_gsl": 39.0,
+                "percent_of_ogden": 60.3
+            },
+            "swadesh": {
+                "words": 195,
+                "percent_of_gsl": 5.6,
+                "percent_of_swadesh": 92.4
+            },
+            "roget": {
+                "words": 1480,
+                "percent_of_gsl": 42.9,
+                "percent_of_roget": 16.1
+            }
+        },
+        "swadesh": {},
+        "roget": {
+            "swadesh": {
+                "words": 108,
+                "percent_of_roget": 1.2,
+                "percent_of_swadesh": 51.2
+            }
+        }
+    },
+    "source_counts": {
+        "1": {
+            "words": 9615,
+            "percent": 80.5
+        },
+        "2": {
+            "words": 1617,
+            "percent": 13.5
+        },
+        "3": {
+            "words": 630,
+            "percent": 5.3
+        },
+        "4": {
+            "words": 83,
+            "percent": 0.7
+        }
+    }
+}

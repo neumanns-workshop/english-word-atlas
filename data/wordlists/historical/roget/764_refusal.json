@@ -1,0 +1,27 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Refusal",
+    "description": "Roget's Thesaurus - V / I. GENERAL INTERSOCIAL VOLITION / Refusal",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 15,
+    "words": [
+        "decline",
+        "deny",
+        "negative",
+        "nill",
+        "no",
+        "no thank you",
+        "not for the world",
+        "on no account",
+        "recusant",
+        "refuse",
+        "refusing",
+        "reject",
+        "restive",
+        "turn down",
+        "uncomplying"
+    ]
+}

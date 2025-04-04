@@ -1,0 +1,24 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Production",
+    "description": "Roget's Thesaurus - I / VIII. CAUSATION / Production",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 12,
+    "words": [
+        "construct",
+        "do",
+        "form",
+        "gar",
+        "make",
+        "operate",
+        "perform",
+        "produce",
+        "produced",
+        "producing",
+        "productive of",
+        "prolific"
+    ]
+}

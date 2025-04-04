@@ -1,0 +1,27 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Essay.",
+    "description": "Roget's Thesaurus - V / II. MODES OF COMMUNICATION / Essay. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 15,
+    "words": [
+        "at a venture",
+        "attempt",
+        "by rule of",
+        "empirical",
+        "endeavor",
+        "essay",
+        "essaying",
+        "experiment",
+        "experimental",
+        "experimentally",
+        "on trial",
+        "strive",
+        "tempt",
+        "tentative",
+        "try"
+    ]
+}

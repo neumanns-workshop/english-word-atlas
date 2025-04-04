@@ -1,0 +1,21 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Impurity",
+    "description": "Roget's Thesaurus - VI / IV. MORAL  AFFECTIONS / Impurity",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 9,
+    "words": [
+        "be impure",
+        "debauch",
+        "defile",
+        "impure",
+        "intrigue",
+        "not to be mentioned to ears",
+        "prostitute",
+        "seduce",
+        "unclean"
+    ]
+}

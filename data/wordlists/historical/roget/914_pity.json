@@ -1,0 +1,31 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Pity.",
+    "description": "Roget's Thesaurus - VI / III. SYMPATHETIC AFFECTIONS / Pity. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 19,
+    "words": [
+        "bowelless",
+        "commiserate",
+        "compassionate",
+        "give no quarter",
+        "have no mercy",
+        "have pity",
+        "merciless",
+        "pitiful",
+        "pitiless",
+        "pity",
+        "pitying",
+        "ruthless",
+        "show pity",
+        "shut the gates of mercy",
+        "sympathetic",
+        "take pity",
+        "touched",
+        "unmerciful",
+        "unpitying"
+    ]
+}

@@ -1,0 +1,91 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Virtual Environment
+venv/
+ENV/
+env/
+.env
+.venv
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Data files
+*.npz
+*.npy
+*.pkl
+*.h5
+
+# Specific large files that should be generated locally
+data/frequencies/precomputed_frequencies.json
+data/dictionaries/precomputed_pronunciations.json
+data/embeddings/precomputed_embeddings.npz
+
+# Raw data files
+NGSL_1.2_stats.csv
+SUBTLEXus74286wordstextversion.zip
+data/frequencies/subtlex_us.txt
+SUP_lemmatized.csv
+data/dictionaries/cmudict-0.7b
+roget-structure.txt
+roget15a.txt
+
+# Logs
+logs/
+*.log
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+nosetests.xml
+coverage.xml
+*.cover
+
+# Documentation
+docs/_build/
+site/
+
+# Distribution / packaging
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/ 

@@ -1,0 +1,24 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Multitude.",
+    "description": "Roget's Thesaurus - I / V. NUMBER / Multitude. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 12,
+    "words": [
+        "Briarean",
+        "be numerous",
+        "creep with",
+        "crowd",
+        "divers",
+        "many",
+        "not a few",
+        "several",
+        "sundry",
+        "swarm with",
+        "teem with",
+        "various"
+    ]
+}

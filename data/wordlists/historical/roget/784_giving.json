@@ -1,0 +1,22 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Giving",
+    "description": "Roget's Thesaurus - V / I. GENERAL INTERSOCIAL VOLITION / Giving",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 10,
+    "words": [
+        "allowable",
+        "allowed",
+        "deliver",
+        "given",
+        "giving",
+        "hand",
+        "hand over",
+        "make over",
+        "pass",
+        "put into the hands of"
+    ]
+}

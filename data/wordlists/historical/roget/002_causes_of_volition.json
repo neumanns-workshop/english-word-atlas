@@ -1,0 +1,25 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Causes of Volition",
+    "description": "Roget's Thesaurus -  / VOLITION IN GENERAL / Causes of Volition",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 13,
+    "words": [
+        "because",
+        "dissuade",
+        "dissuaded",
+        "dissuading",
+        "dissuasion",
+        "impulsive",
+        "induce",
+        "induced",
+        "inspired",
+        "motive",
+        "ostensibly",
+        "pretend",
+        "tempting"
+    ]
+}

@@ -1,0 +1,17 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Intelligence. Wisdom.",
+    "description": "Roget's Thesaurus - IV / III. ORGANIC MATTER / Intelligence. Wisdom. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 5,
+    "words": [
+        "have all one's wits about one",
+        "intelligent",
+        "keen",
+        "quick of apprehension",
+        "understand"
+    ]
+}

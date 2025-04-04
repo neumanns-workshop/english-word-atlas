@@ -1,0 +1,27 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "[Long duration.] Diuturnity.",
+    "description": "Roget's Thesaurus - I / VI. TIME / [Long duration.] Diuturnity. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 15,
+    "words": [
+        "abide",
+        "brave a thousand",
+        "continue",
+        "durable",
+        "endure",
+        "for a long time",
+        "for ages",
+        "for an age",
+        "for ever so long",
+        "last",
+        "lasting",
+        "long",
+        "of long duration",
+        "remain",
+        "stand"
+    ]
+}

@@ -1,0 +1,22 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Benevolence.",
+    "description": "Roget's Thesaurus - VI / III. SYMPATHETIC AFFECTIONS / Benevolence. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 10,
+    "words": [
+        "amiable",
+        "be benevolent",
+        "bear",
+        "benevolent",
+        "have one's heart in the right place",
+        "kind",
+        "kindly",
+        "obliging",
+        "with a good intention",
+        "with the best intentions"
+    ]
+}

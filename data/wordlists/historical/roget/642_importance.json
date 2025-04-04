@@ -1,0 +1,25 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Importance.",
+    "description": "Roget's Thesaurus - V / II. MODES OF COMMUNICATION / Importance. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 13,
+    "words": [
+        "above all",
+        "be important",
+        "be somebody",
+        "be something",
+        "import",
+        "important",
+        "in the main",
+        "material",
+        "materially",
+        "momentous",
+        "of importance",
+        "signify",
+        "to the"
+    ]
+}

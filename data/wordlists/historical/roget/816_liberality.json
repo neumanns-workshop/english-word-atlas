@@ -1,0 +1,20 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Liberality",
+    "description": "Roget's Thesaurus - V / I. GENERAL INTERSOCIAL VOLITION / Liberality",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 8,
+    "words": [
+        "be liberal",
+        "bleed freely",
+        "charitable",
+        "free",
+        "generous",
+        "liberal",
+        "shower down upon",
+        "spend freely"
+    ]
+}

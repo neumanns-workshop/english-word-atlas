@@ -1,0 +1,28 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Defense",
+    "description": "Roget's Thesaurus - V / II. MODES OF COMMUNICATION / Defense ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 16,
+    "words": [
+        "armed",
+        "armed at all points",
+        "at",
+        "defend",
+        "defending",
+        "defensive",
+        "defensively",
+        "engarrison",
+        "fend",
+        "forfend",
+        "in defense",
+        "on the defense",
+        "on the defensive",
+        "screen",
+        "shield",
+        "shroud"
+    ]
+}

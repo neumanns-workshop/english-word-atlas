@@ -1,0 +1,23 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "[Indefinite space.] Space",
+    "description": "Roget's Thesaurus - II / I. SPACE IN GENERAL / [Indefinite space.] Space",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 11,
+    "words": [
+        "ample",
+        "capacious",
+        "everywhere",
+        "expansive",
+        "extensive",
+        "extensively",
+        "far and",
+        "far and near",
+        "roomy",
+        "spacious",
+        "wherever"
+    ]
+}

@@ -1,0 +1,20 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Liberation",
+    "description": "Roget's Thesaurus - V / I. GENERAL INTERSOCIAL VOLITION / Liberation",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 8,
+    "words": [
+        "free",
+        "liberate",
+        "liberated",
+        "out of harness",
+        "render free",
+        "set at liberty",
+        "set clear",
+        "set free"
+    ]
+}

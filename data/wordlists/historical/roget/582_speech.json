@@ -1,0 +1,28 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Speech.",
+    "description": "Roget's Thesaurus - IV / II. MODES OF COMMUNICATION / Speech. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 16,
+    "words": [
+        "by word of mouth",
+        "deliver",
+        "from the lips of",
+        "give utterance to",
+        "lingual",
+        "not",
+        "oral",
+        "orally",
+        "phonetic",
+        "pronounce",
+        "say",
+        "speak of",
+        "speaking",
+        "spoken",
+        "utter",
+        "viva voce"
+    ]
+}

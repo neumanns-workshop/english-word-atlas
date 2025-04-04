@@ -1,0 +1,25 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Obedience",
+    "description": "Roget's Thesaurus - V / I. GENERAL INTERSOCIAL VOLITION / Obedience",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 13,
+    "words": [
+        "at",
+        "bear obedience to",
+        "compliant",
+        "complying",
+        "devoted",
+        "faithful",
+        "in compliance with",
+        "in obedience to",
+        "loyal",
+        "obedient",
+        "obediently",
+        "obey",
+        "submit"
+    ]
+}

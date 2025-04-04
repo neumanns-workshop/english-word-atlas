@@ -1,0 +1,26 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "[Complex curvature.] Convolution.",
+    "description": "Roget's Thesaurus - II / II. DIMENSIONS / [Complex curvature.] Convolution. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 14,
+    "words": [
+        "Gordian knot",
+        "a can of worms",
+        "be convoluted",
+        "convoluted",
+        "in and out",
+        "round and round",
+        "tortile",
+        "turn and twist",
+        "twine",
+        "twirl",
+        "twisted",
+        "wave",
+        "wind",
+        "winding"
+    ]
+}

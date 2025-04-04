@@ -1,0 +1,24 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "[Ostensible motive, ground, or reason assigned.] Pretext.",
+    "description": "Roget's Thesaurus - V / II. MODES OF COMMUNICATION / [Ostensible motive, ground, or reason assigned.] Pretext. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 12,
+    "words": [
+        "allege",
+        "alleged",
+        "apologetic",
+        "excuse",
+        "ostensibly",
+        "plead",
+        "pretend",
+        "pretended",
+        "shelter oneself under the plea of",
+        "under color",
+        "under the plea",
+        "under the pretense of"
+    ]
+}

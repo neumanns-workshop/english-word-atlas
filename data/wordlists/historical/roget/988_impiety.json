@@ -1,0 +1,24 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Impiety",
+    "description": "Roget's Thesaurus - VI / V. RELIGIOUS AFFECTIONS / Impiety",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 12,
+    "words": [
+        "be impious",
+        "blaspheme",
+        "desecrate",
+        "desecrating",
+        "impious",
+        "irreligious",
+        "profane",
+        "revile",
+        "scoff",
+        "under",
+        "under the cloak of religion",
+        "under the mask of religion"
+    ]
+}

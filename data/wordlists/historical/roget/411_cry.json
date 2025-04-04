@@ -1,0 +1,27 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Cry.",
+    "description": "Roget's Thesaurus - III / III. ORGANIC MATTER / Cry. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 15,
+    "words": [
+        "bawl",
+        "brawl",
+        "clamant",
+        "clamorous",
+        "cry",
+        "crying",
+        "halloa",
+        "halloo",
+        "hoop",
+        "roar",
+        "shout",
+        "stentorian",
+        "vociferous",
+        "whoop",
+        "yell"
+    ]
+}

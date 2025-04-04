@@ -1,0 +1,27 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "[Locomotion by land.] Journey.",
+    "description": "Roget's Thesaurus - II / II. DIMENSIONS / [Locomotion by land.] Journey. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 15,
+    "words": [
+        "ambulatory",
+        "by the Marrowbone stage",
+        "course",
+        "go a journey",
+        "itinerant",
+        "journey",
+        "on Shanks's mare",
+        "on foot",
+        "on horseback",
+        "peripatetic",
+        "roving",
+        "take a journey",
+        "take a walk",
+        "travel",
+        "traveling"
+    ]
+}

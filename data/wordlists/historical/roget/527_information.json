@@ -1,0 +1,29 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Information",
+    "description": "Roget's Thesaurus - IV / II. MODES OF COMMUNICATION / Information",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 17,
+    "words": [
+        "acquaint",
+        "acquaint with",
+        "communique",
+        "correct",
+        "corrective",
+        "from information received",
+        "impart",
+        "inform",
+        "inform of",
+        "informed",
+        "published",
+        "put straight",
+        "reported",
+        "set right",
+        "set straight",
+        "tell",
+        "undeceive"
+    ]
+}

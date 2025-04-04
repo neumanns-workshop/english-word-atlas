@@ -1,0 +1,14 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Posterity",
+    "description": "Roget's Thesaurus - I / VIII. CAUSATION / Posterity",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 2,
+    "words": [
+        "diphyletic",
+        "filial"
+    ]
+}

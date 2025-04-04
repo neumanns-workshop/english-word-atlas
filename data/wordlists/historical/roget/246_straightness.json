@@ -1,0 +1,21 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Straightness.",
+    "description": "Roget's Thesaurus - II / II. DIMENSIONS / Straightness. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 9,
+    "words": [
+        "be straight",
+        "direct",
+        "even",
+        "have no turning",
+        "not incline to either side",
+        "rectilineal",
+        "rectilinear",
+        "right",
+        "straight"
+    ]
+}

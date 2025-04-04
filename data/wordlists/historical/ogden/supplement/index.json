@@ -1,0 +1,111 @@
+{
+    "categories": {
+        "time_and_numbers": {
+            "name": "Time and Numbers",
+            "description": "Ogden's Basic English - Time and Numbers",
+            "word_count": 57
+        },
+        "general_science": {
+            "name": "General Science",
+            "description": "Ogden's Basic English - General Science words",
+            "word_count": 101
+        },
+        "addendum": {
+            "name": "Official Addendum",
+            "description": "Ogden's Basic English - Official addendum containing additional words that complement the core vocabulary",
+            "word_count": 350
+        },
+        "international": {
+            "name": "International Nouns",
+            "description": "Ogden's Basic English - International nouns that are commonly understood across languages",
+            "word_count": 50
+        },
+        "ogden_full": {
+            "name": "Ogden Full",
+            "description": "Ogden's Basic English - Full Supplemental word list including numbers, months, days, and scientific terms",
+            "word_count": 196
+        },
+        "commerce": {
+            "name": "Commerce",
+            "description": "Ogden's Basic English - Commerce words",
+            "word_count": 107
+        },
+        "new_century": {
+            "name": "New Century",
+            "description": "Ogden's Basic English - New Century words",
+            "word_count": 5
+        },
+        "international_science": {
+            "name": "International Science",
+            "description": "Ogden's Basic English - International Science words",
+            "word_count": 19
+        },
+        "unofficial_certain": {
+            "name": "Unofficial Supplement",
+            "description": "Unofficial supplement to Ogden's Basic English containing additional animals, plants, and food-related terms",
+            "word_count": 90
+        },
+        "titles_and_orgs": {
+            "name": "International Titles",
+            "description": "Ogden's Basic English - International titles and institutional names that are commonly understood across languages",
+            "word_count": 12
+        },
+        "biology": {
+            "name": "Biology",
+            "description": "Ogden's Basic English - Biology words",
+            "word_count": 49
+        },
+        "physics_and_chemistry": {
+            "name": "Physics and Chemistry",
+            "description": "Ogden's Basic English - Physics and Chemistry words",
+            "word_count": 50
+        },
+        "social_sciences": {
+            "name": "Social Sciences",
+            "description": "Ogden's Basic English - Social Sciences words",
+            "word_count": 22
+        },
+        "complement": {
+            "name": "Complement",
+            "description": "Ogden's Basic English - Complementary words including conjugations, pronouns, and grammatical variations",
+            "word_count": 95
+        },
+        "mathematics": {
+            "name": "Mathematics",
+            "description": "Ogden's Basic English - Mathematics words",
+            "word_count": 50
+        },
+        "onomatopoetic": {
+            "name": "Onomatopoeic",
+            "description": "Ogden's Basic English - Onomatopoeic words that are commonly understood across languages",
+            "word_count": 5
+        },
+        "geology": {
+            "name": "Geology",
+            "description": "Ogden's Basic English - Geology words",
+            "word_count": 50
+        },
+        "radio_academy": {
+            "name": "Radio Academy Supplement",
+            "description": "Ogden's Basic English - Supplementary international words commonly used in radio and academic contexts",
+            "word_count": 248
+        },
+        "general_utility": {
+            "name": "General Utility",
+            "description": "Ogden's Basic English - General utility words that are commonly understood across languages",
+            "word_count": 50
+        },
+        "sciences": {
+            "name": "International Sciences",
+            "description": "Ogden's Basic English - International scientific field names that are commonly understood across languages",
+            "word_count": 12
+        },
+        "unofficial_uncertain": {
+            "name": "Unofficial Uncertain Supplement",
+            "description": "Unofficial uncertain supplement to Ogden's Basic English containing additional animals, plants, and food-related terms that may be less commonly used",
+            "word_count": 90
+        }
+    },
+    "total_categories": 21,
+    "total_words": 1415
+}

@@ -1,0 +1,25 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Ridicule.",
+    "description": "Roget's Thesaurus - VI / I. GENERAL INTERSOCIAL VOLITION / Ridicule. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 13,
+    "words": [
+        "deride",
+        "derisive",
+        "derisory",
+        "in ridicule",
+        "ironic",
+        "ironical",
+        "laugh in",
+        "mock",
+        "mocking",
+        "ridicule",
+        "sarcastic",
+        "snigger",
+        "taunt"
+    ]
+}

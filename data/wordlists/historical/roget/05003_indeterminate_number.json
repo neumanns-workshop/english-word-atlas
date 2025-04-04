@@ -1,0 +1,31 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "INDETERMINATE NUMBER",
+    "description": "Roget's Thesaurus - WORDS EXPRESSING ABSTRACT RELATIONS / NUMBER / INDETERMINATE NUMBER",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 19,
+    "words": [
+        "few",
+        "fewness",
+        "fraction",
+        "fractional",
+        "infinite",
+        "infinitely",
+        "infiniteness",
+        "infinity",
+        "many",
+        "multitude",
+        "numerous",
+        "rarely",
+        "reduced",
+        "repeat",
+        "repeated",
+        "repeatedly",
+        "repetition",
+        "weeding",
+        "zero"
+    ]
+}

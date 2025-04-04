@@ -1,0 +1,28 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Similarity.",
+    "description": "Roget's Thesaurus - I / II. RELATION / Similarity. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 16,
+    "words": [
+        "alike",
+        "as if",
+        "as if it were",
+        "as it were",
+        "be similar",
+        "bear resemblance",
+        "just as",
+        "like",
+        "look like",
+        "quasi",
+        "resemble",
+        "resembling",
+        "similar",
+        "smack",
+        "so to speak",
+        "twin"
+    ]
+}

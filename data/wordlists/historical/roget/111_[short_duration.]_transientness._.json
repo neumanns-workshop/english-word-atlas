@@ -1,0 +1,29 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "[Short duration.] Transientness.",
+    "description": "Roget's Thesaurus - I / VI. TIME / [Short duration.] Transientness. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 17,
+    "words": [
+        "be transient",
+        "evanescent",
+        "fade",
+        "fleeting",
+        "flit",
+        "fly",
+        "for a",
+        "for the moment",
+        "gallop",
+        "pass away",
+        "passing",
+        "pro tempore",
+        "temporarily",
+        "transient",
+        "transitive",
+        "transitory",
+        "vanish"
+    ]
+}

@@ -1,0 +1,26 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Interment.",
+    "description": "Roget's Thesaurus - III / III. ORGANIC MATTER / Interment. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 14,
+    "words": [
+        "beneath the sod",
+        "burial",
+        "burried",
+        "bury",
+        "consign to the grave",
+        "funebrial",
+        "funereal",
+        "in memoriam",
+        "inter",
+        "lay in the",
+        "lay in the grave",
+        "mortuary",
+        "post mortem",
+        "post obit"
+    ]
+}

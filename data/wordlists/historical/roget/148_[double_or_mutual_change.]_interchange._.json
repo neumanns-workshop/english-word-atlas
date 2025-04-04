@@ -1,0 +1,33 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "[Double or mutual change.] Interchange.",
+    "description": "Roget's Thesaurus - I / VII. CHANGE / [Double or mutual change.] Interchange. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 21,
+    "words": [
+        "backwards and",
+        "bandy",
+        "commutative",
+        "counterchange",
+        "exchange",
+        "in exchange",
+        "in lieu of",
+        "in place of",
+        "in the room",
+        "in the stead of",
+        "instead",
+        "interchange",
+        "interchanged",
+        "mutatis mutandis",
+        "mutual",
+        "reciprocal",
+        "subdititious",
+        "substituted",
+        "transpose",
+        "vicarious",
+        "vice versa"
+    ]
+}

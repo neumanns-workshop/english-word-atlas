@@ -1,0 +1,25 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Promise",
+    "description": "Roget's Thesaurus - V / I. GENERAL INTERSOCIAL VOLITION / Promise",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 13,
+    "words": [
+        "absolute",
+        "as one's head shall answer for",
+        "engage",
+        "give a promise",
+        "make an",
+        "promise",
+        "promising",
+        "promissory",
+        "unconditional",
+        "under hand and seal",
+        "undertake",
+        "upon",
+        "votive"
+    ]
+}

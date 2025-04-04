@@ -1,0 +1,22 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Fewness.",
+    "description": "Roget's Thesaurus - I / V. NUMBER / Fewness. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 10,
+    "words": [
+        "be few",
+        "few",
+        "here and there",
+        "rare",
+        "rarely",
+        "scant",
+        "scanty",
+        "scattered",
+        "thin",
+        "thinly scattered"
+    ]
+}

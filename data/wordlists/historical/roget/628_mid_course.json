@@ -1,0 +1,16 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Mid-course.",
+    "description": "Roget's Thesaurus - V / II. MODES OF COMMUNICATION / Mid-course. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 4,
+    "words": [
+        "keep in a middle course",
+        "preserve a middle course",
+        "preserve an even",
+        "straight"
+    ]
+}

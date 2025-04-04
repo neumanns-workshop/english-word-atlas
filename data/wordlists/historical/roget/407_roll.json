@@ -1,0 +1,22 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "[Repeated and protracted sounds.] Roll.",
+    "description": "Roget's Thesaurus - III / III. ORGANIC MATTER / [Repeated and protracted sounds.] Roll. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 10,
+    "words": [
+        "clack",
+        "clatter",
+        "drum",
+        "like a bee in a",
+        "monotonous",
+        "patter",
+        "rattle",
+        "roll",
+        "rolling",
+        "rumble"
+    ]
+}

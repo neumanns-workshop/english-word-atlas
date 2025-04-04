@@ -1,0 +1,23 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Success.",
+    "description": "Roget's Thesaurus - V / II. MODES OF COMMUNICATION / Success. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 11,
+    "words": [
+        "be successful",
+        "gain one's end",
+        "gain one's ends",
+        "in triumph",
+        "prosperous",
+        "succeed",
+        "succeeding",
+        "successful",
+        "successfully",
+        "triumphant",
+        "well flying colors"
+    ]
+}

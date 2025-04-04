@@ -1,0 +1,25 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Phrase.",
+    "description": "Roget's Thesaurus - IV / II. MODES OF COMMUNICATION / Phrase. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 13,
+    "words": [
+        "express",
+        "expressed",
+        "give expression to",
+        "give words to",
+        "idiomatic",
+        "in",
+        "in good set terms",
+        "in round terms",
+        "in set terms",
+        "phrase",
+        "set terms",
+        "word",
+        "word it"
+    ]
+}

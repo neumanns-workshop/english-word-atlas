@@ -1,0 +1,105 @@
+{
+  "type": "historical",
+  "source": "ogden",
+  "description": "Ogden's Basic English - Semantic Categories Index",
+  "license": "Public Domain",
+  "version": "1.0",
+  "citation": "Ogden, C. K. (1930). Basic English: A General Introduction with Rules and Grammar. Paul Treber & Co., Ltd.",
+  "categories": [
+    {
+      "name": "Color",
+      "id": "color",
+      "word_count": 22
+    },
+    {
+      "name": "Direction",
+      "id": "direction",
+      "word_count": 34
+    },
+    {
+      "name": "Time",
+      "id": "time",
+      "word_count": 36
+    },
+    {
+      "name": "Animals",
+      "id": "animals",
+      "word_count": 23
+    },
+    {
+      "name": "Food and Drink",
+      "id": "food_and_drink",
+      "word_count": 48
+    },
+    {
+      "name": "Household",
+      "id": "household",
+      "word_count": 119
+    },
+    {
+      "name": "Clothes",
+      "id": "clothes",
+      "word_count": 16
+    },
+    {
+      "name": "Tools",
+      "id": "tools",
+      "word_count": 22
+    },
+    {
+      "name": "Buildings",
+      "id": "buildings",
+      "word_count": 15
+    },
+    {
+      "name": "People",
+      "id": "people",
+      "word_count": 24
+    },
+    {
+      "name": "Body Parts",
+      "id": "body_parts",
+      "word_count": 45
+    },
+    {
+      "name": "Materials",
+      "id": "materials",
+      "word_count": 19
+    },
+    {
+      "name": "Transport",
+      "id": "transport",
+      "word_count": 15
+    },
+    {
+      "name": "Business",
+      "id": "business",
+      "word_count": 32
+    },
+    {
+      "name": "Education",
+      "id": "education",
+      "word_count": 38
+    },
+    {
+      "name": "Political",
+      "id": "political",
+      "word_count": 34
+    },
+    {
+      "name": "War",
+      "id": "war",
+      "word_count": 42
+    },
+    {
+      "name": "Agriculture",
+      "id": "agriculture",
+      "word_count": 48
+    },
+    {
+      "name": "Mathematics",
+      "id": "mathematics",
+      "word_count": 22
+    }
+  ]
+}

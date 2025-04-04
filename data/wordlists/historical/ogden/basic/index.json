@@ -1,0 +1,31 @@
+{
+    "categories": {
+        "things_general": {
+            "name": "",
+            "description": "Ogden's Basic English - things_general word list",
+            "word_count": 400
+        },
+        "qualities_general": {
+            "name": "",
+            "description": "Ogden's Basic English - qualities_general word list",
+            "word_count": 100
+        },
+        "things_picturable": {
+            "name": "",
+            "description": "Ogden's Basic English - things_picturable word list",
+            "word_count": 199
+        },
+        "qualities_opposites": {
+            "name": "",
+            "description": "Ogden's Basic English - qualities_opposites word list",
+            "word_count": 50
+        },
+        "operations": {
+            "name": "",
+            "description": "Ogden's Basic English - operations word list",
+            "word_count": 100
+        }
+    },
+    "total_categories": 5,
+    "total_words": 849
+}

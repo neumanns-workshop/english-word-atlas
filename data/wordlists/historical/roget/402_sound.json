@@ -1,0 +1,22 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Sound.",
+    "description": "Roget's Thesaurus - III / III. ORGANIC MATTER / Sound. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 10,
+    "words": [
+        "emit sound",
+        "give out sound",
+        "make a noise",
+        "produce sound",
+        "resonant",
+        "soniferous",
+        "sonorific",
+        "sonorous",
+        "sound",
+        "sounding"
+    ]
+}

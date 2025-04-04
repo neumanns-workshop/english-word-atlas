@@ -1,0 +1,28 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "IMPERFECT FLUIDS",
+    "description": "Roget's Thesaurus -  / INORGANIC MATTER / IMPERFECT FLUIDS",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 16,
+    "words": [
+        "bubble",
+        "bubbling",
+        "cloudy",
+        "inspissate",
+        "muddy",
+        "oil",
+        "pulpiness",
+        "pulpy",
+        "resin",
+        "resiny",
+        "semifluid",
+        "semiliquidity",
+        "stickiness",
+        "unctuous",
+        "unctuousness",
+        "varnish"
+    ]
+}

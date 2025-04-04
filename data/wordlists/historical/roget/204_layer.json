@@ -1,0 +1,25 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Layer",
+    "description": "Roget's Thesaurus - II / II. DIMENSIONS / Layer",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 13,
+    "words": [
+        "coat",
+        "cover",
+        "delaminate",
+        "lamellar",
+        "lamellated",
+        "lamelliform",
+        "layered",
+        "pare",
+        "peel",
+        "plate",
+        "shave",
+        "slice",
+        "veneer"
+    ]
+}

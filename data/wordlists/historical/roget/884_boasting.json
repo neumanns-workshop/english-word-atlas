@@ -1,0 +1,25 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Boasting.",
+    "description": "Roget's Thesaurus - VI / I. GENERAL INTERSOCIAL VOLITION / Boasting. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 13,
+    "words": [
+        "Puff",
+        "Thrasonic",
+        "boast",
+        "boasting",
+        "brag",
+        "flaming",
+        "flourish",
+        "magniloquent",
+        "make a boast of",
+        "show off",
+        "stilted",
+        "vaunt",
+        "vauntingly"
+    ]
+}

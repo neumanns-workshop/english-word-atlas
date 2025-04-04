@@ -1,0 +1,29 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "COMPLEX CHANGE",
+    "description": "Roget's Thesaurus - WORDS EXPRESSING ABSTRACT RELATIONS / CHANGE / COMPLEX CHANGE",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 17,
+    "words": [
+        "changeable",
+        "changeableness",
+        "destiny",
+        "established",
+        "eventuality",
+        "eventually",
+        "fluctuate",
+        "fluctuating",
+        "happen",
+        "happening",
+        "immutability",
+        "impend",
+        "impending",
+        "seesaw",
+        "stability",
+        "unchangeability",
+        "unchangeable"
+    ]
+}

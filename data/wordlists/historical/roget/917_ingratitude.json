@@ -1,0 +1,21 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Ingratitude.",
+    "description": "Roget's Thesaurus - VI / III. SYMPATHETIC AFFECTIONS / Ingratitude. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 9,
+    "words": [
+        "be ungrateful",
+        "forget benefits",
+        "ingrate",
+        "look a gift horse in the",
+        "thankless",
+        "ungrateful",
+        "unmindful",
+        "unthankful",
+        "wanting in"
+    ]
+}

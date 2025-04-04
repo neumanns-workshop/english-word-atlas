@@ -1,0 +1,24 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Approbation.",
+    "description": "Roget's Thesaurus - VI / IV. MORAL  AFFECTIONS / Approbation. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 12,
+    "words": [
+        "approbate",
+        "approve",
+        "approving",
+        "in favor of",
+        "lost in admiration",
+        "think good",
+        "think much of",
+        "think well",
+        "to admiration",
+        "well",
+        "with credit",
+        "with three times three"
+    ]
+}

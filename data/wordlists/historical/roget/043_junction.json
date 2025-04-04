@@ -1,0 +1,27 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Junction.",
+    "description": "Roget's Thesaurus - I / III. QUANTITY / Junction. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 15,
+    "words": [
+        "associate",
+        "compact",
+        "conjoin",
+        "conjoint",
+        "conjunct",
+        "connect",
+        "corporate",
+        "in conjunction with",
+        "join",
+        "joined",
+        "joint",
+        "jointly",
+        "lay",
+        "put together",
+        "unite"
+    ]
+}

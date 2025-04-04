@@ -1,0 +1,22 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "[Absence of wonder.]  Expectance.",
+    "description": "Roget's Thesaurus - VI / I. GENERAL INTERSOCIAL VOLITION / [Absence of wonder.]  Expectance. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 10,
+    "words": [
+        "as a matter of course",
+        "astonished at nothing",
+        "blase",
+        "expect",
+        "expecting",
+        "naturally",
+        "nil",
+        "not be surprised",
+        "not wonder",
+        "unamazed"
+    ]
+}

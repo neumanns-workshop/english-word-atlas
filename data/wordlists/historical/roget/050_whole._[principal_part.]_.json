@@ -1,0 +1,29 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Whole. [Principal part.]",
+    "description": "Roget's Thesaurus - I / III. QUANTITY / Whole. [Principal part.] ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 17,
+    "words": [
+        "all",
+        "altogether",
+        "amass",
+        "complete",
+        "constitute a whole",
+        "embody",
+        "entire",
+        "entirely",
+        "form a whole",
+        "individual",
+        "integral",
+        "integrate",
+        "one",
+        "total",
+        "totally",
+        "whole",
+        "wholly"
+    ]
+}

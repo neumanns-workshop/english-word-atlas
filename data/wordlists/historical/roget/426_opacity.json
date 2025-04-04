@@ -1,0 +1,26 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Opacity",
+    "description": "Roget's Thesaurus - III / III. ORGANIC MATTER / Opacity",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 14,
+    "words": [
+        "adiaphanous",
+        "be opaque",
+        "dim",
+        "fuliginous",
+        "hazy",
+        "impervious to light",
+        "misty",
+        "muddy",
+        "obfuscate",
+        "obfuscated",
+        "obstruct the passage of light",
+        "opaque",
+        "thick",
+        "turbid"
+    ]
+}

@@ -1,0 +1,27 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "[Idea to be conveyed.] Meaning.  [Thing signified.]",
+    "description": "Roget's Thesaurus - IV / I. NATURE OF IDEAS COMMUNICATED. / [Idea to be conveyed.] Meaning.  [Thing signified.] ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 15,
+    "words": [
+        "allusive",
+        "breathe",
+        "convey",
+        "express",
+        "expressive",
+        "imply",
+        "import",
+        "mean",
+        "meaning",
+        "purport",
+        "significant",
+        "signify",
+        "suggestive",
+        "that is to say",
+        "to that effect"
+    ]
+}

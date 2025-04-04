@@ -1,0 +1,31 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "[Absolute quantity.] Quantity.",
+    "description": "Roget's Thesaurus - I / III. QUANTITY / [Absolute quantity.] Quantity. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 19,
+    "words": [
+        "a few",
+        "a full",
+        "all of",
+        "any",
+        "aught",
+        "determine",
+        "enumerate",
+        "estimate",
+        "exactly",
+        "fix",
+        "fully",
+        "measure",
+        "more or less",
+        "quantify",
+        "quantitate",
+        "quantitative",
+        "some",
+        "the sum of",
+        "to the tune of"
+    ]
+}

@@ -1,0 +1,31 @@
+{
+  "type": "historical",
+  "source": "ogden",
+  "category": "Materials",
+  "description": "Ogden's Basic English - Materials semantic category",
+  "license": "Public Domain",
+  "version": "1.0",
+  "citation": "Ogden, C. K. (1930). Basic English: A General Introduction with Rules and Grammar. Paul Treber & Co., Ltd.",
+  "total_words": 19,
+  "words": [
+    "brass",
+    "brick",
+    "canvas",
+    "cloth",
+    "coal",
+    "copper",
+    "glass",
+    "gold",
+    "iron",
+    "leather",
+    "linen",
+    "material",
+    "metal",
+    "silk",
+    "silver",
+    "steel",
+    "tin",
+    "tree",
+    "wool"
+  ]
+}

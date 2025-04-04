@@ -1,0 +1,23 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Inclusion. [Comprehension under, or reference to a class.]",
+    "description": "Roget's Thesaurus - I / IV. ORDER / Inclusion. [Comprehension under, or reference to a class.] ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 11,
+    "words": [
+        "be included in",
+        "belong to",
+        "come under",
+        "congener",
+        "congenerous",
+        "fall under",
+        "included",
+        "including",
+        "inclusive",
+        "of",
+        "range under"
+    ]
+}

@@ -1,0 +1,24 @@
+{
+    "type": "historical",
+    "source": "ogden",
+    "category": "International Sciences",
+    "description": "Ogden's Basic English - International scientific field names that are commonly understood across languages",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Ogden, C. K. (1930). Basic English: A General Introduction with Rules and Grammar. Paul Treber & Co., Ltd.",
+    "total_words": 12,
+    "words": [
+        "Algebra",
+        "Arithmetic",
+        "Biology",
+        "Chemistry",
+        "Geography",
+        "Geology",
+        "Geometry",
+        "Mathematics",
+        "Physics",
+        "Physiology",
+        "Psychology",
+        "Zoology"
+    ]
+}

@@ -1,0 +1,33 @@
+{
+  "type": "historical",
+  "source": "ogden",
+  "category": "Mathematics",
+  "description": "Ogden's Basic English - Mathematics semantic category",
+  "license": "Public Domain",
+  "version": "1.0",
+  "citation": "Ogden, C. K. (1930). Basic English: A General Introduction with Rules and Grammar. Paul Treber & Co., Ltd.",
+  "total_words": 22,
+  "words": [
+    "addition",
+    "amount",
+    "angle",
+    "arch",
+    "ball",
+    "circle",
+    "cord",
+    "curve",
+    "division",
+    "greater",
+    "less",
+    "line",
+    "number",
+    "plane",
+    "point",
+    "power",
+    "product",
+    "root",
+    "solid",
+    "square",
+    "times"
+  ]
+}

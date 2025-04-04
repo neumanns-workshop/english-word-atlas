@@ -1,0 +1,28 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "[Forming a whole without coherence.] Mixture.",
+    "description": "Roget's Thesaurus - I / III. QUANTITY / [Forming a whole without coherence.] Mixture. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 16,
+    "words": [
+        "amid",
+        "amidst",
+        "among",
+        "amongst",
+        "combine",
+        "commix",
+        "composite",
+        "immix",
+        "implex",
+        "in the crowd",
+        "in the midst of",
+        "intermix",
+        "join",
+        "mix",
+        "mixed",
+        "with"
+    ]
+}

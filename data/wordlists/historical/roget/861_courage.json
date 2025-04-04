@@ -1,0 +1,23 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "[Absence of fear.] Courage.",
+    "description": "Roget's Thesaurus - VI / I. GENERAL INTERSOCIAL VOLITION / [Absence of fear.] Courage. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 11,
+    "words": [
+        "be courageous",
+        "brave",
+        "courageous",
+        "dare",
+        "face danger",
+        "gallant",
+        "intrepid",
+        "make bold",
+        "valiant",
+        "valorous",
+        "venture"
+    ]
+}

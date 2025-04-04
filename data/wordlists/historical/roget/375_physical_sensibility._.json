@@ -1,0 +1,22 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Physical Sensibility.",
+    "description": "Roget's Thesaurus - III / III. ORGANIC MATTER / Physical Sensibility. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 10,
+    "words": [
+        "aesthetic",
+        "be sensible of",
+        "feel",
+        "perceive",
+        "perceptive",
+        "sensible",
+        "sensitive",
+        "sensuous",
+        "sentient",
+        "to the quick"
+    ]
+}

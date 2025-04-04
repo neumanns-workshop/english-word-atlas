@@ -1,0 +1,24 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "[Destruction of live; violent death.] Killing.",
+    "description": "Roget's Thesaurus - III / III. ORGANIC MATTER / [Destruction of live; violent death.] Killing. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 12,
+    "words": [
+        "assassinate",
+        "butcher",
+        "in at the death",
+        "kill",
+        "killing",
+        "murder",
+        "murderous",
+        "put to death",
+        "sanguinary",
+        "shed blood",
+        "slaughterous",
+        "slay"
+    ]
+}

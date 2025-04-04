@@ -1,0 +1,28 @@
+{
+  "type": "historical",
+  "source": "ogden",
+  "category": "Clothes",
+  "description": "Ogden's Basic English - Clothes semantic category",
+  "license": "Public Domain",
+  "version": "1.0",
+  "citation": "Ogden, C. K. (1930). Basic English: A General Introduction with Rules and Grammar. Paul Treber & Co., Ltd.",
+  "total_words": 16,
+  "words": [
+    "boot",
+    "button",
+    "coat",
+    "collar",
+    "dress",
+    "glove",
+    "hat",
+    "shirt",
+    "shoe",
+    "silk",
+    "skirt",
+    "sock",
+    "stocking",
+    "trousers",
+    "umbrella",
+    "watch"
+  ]
+}

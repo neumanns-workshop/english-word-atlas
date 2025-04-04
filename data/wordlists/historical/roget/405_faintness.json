@@ -1,0 +1,31 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Faintness.",
+    "description": "Roget's Thesaurus - III / III. ORGANIC MATTER / Faintness. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 19,
+    "words": [
+        "babble",
+        "between the",
+        "breathe",
+        "dull",
+        "flow",
+        "gurgle",
+        "hum",
+        "in a whisper",
+        "inaudible",
+        "just audible",
+        "low",
+        "murmur",
+        "purl",
+        "ripple",
+        "scarcely audible",
+        "sotto voce",
+        "stifled",
+        "whisper",
+        "with bated breath"
+    ]
+}

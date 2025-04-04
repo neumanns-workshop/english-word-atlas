@@ -1,0 +1,15 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Blueness.",
+    "description": "Roget's Thesaurus - III / III. ORGANIC MATTER / Blueness. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 3,
+    "words": [
+        "azure",
+        "blue",
+        "cerulean"
+    ]
+}

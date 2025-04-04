@@ -1,0 +1,20 @@
+{
+    "type": "historical",
+    "source": "roget",
+    "category": "Pacification.",
+    "description": "Roget's Thesaurus - V / II. MODES OF COMMUNICATION / Pacification. ",
+    "license": "Public Domain",
+    "version": "1.0",
+    "citation": "Roget, P. M. (1852). Thesaurus of English Words and Phrases. Longman, Brown, Green, and Longmans.",
+    "total_words": 8,
+    "words": [
+        "allay",
+        "compose",
+        "composing",
+        "conciliatory",
+        "pacified",
+        "pacify",
+        "reconcile",
+        "tranquilize"
+    ]
+}
