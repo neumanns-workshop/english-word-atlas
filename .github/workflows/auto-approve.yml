@@ -1,0 +1,30 @@
+name: Auto Approve
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+
+jobs:
+  auto-approve:
+    runs-on: ubuntu-latest
+    if: github.actor != 'myproject-bot' # Don't auto-approve the bot's own PRs
+    steps:
+      - name: Wait for CI to complete
+        uses: fountainhead/action-wait-for-check@v1.0.0
+        id: wait-for-ci
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          checkName: test
+          ref: ${{ github.event.pull_request.head.sha }}
+          timeoutSeconds: 300
+          intervalSeconds: 30
+
+      - name: Auto Approve
+        if: steps.wait-for-ci.outputs.conclusion == 'success'
+        uses: hmarr/auto-approve-action@v2
+        with:
+          github-token: ${{ secrets.BOT_GITHUB_TOKEN }} 
