@@ -5,7 +5,21 @@ All notable changes to the English Word Atlas will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.1] - 2024-04-09
+## [0.1.2] - 2025-04-04
+
+### Added
+- Added support for [uv](https://github.com/astral-sh/uv) package manager with helper scripts
+- Added additional test coverage to increase from 75% to 84%
+- Added direct regex pattern support in the search method
+- Added CI workflow integration with Codecov for coverage reporting
+- Added branch protection for main branch to enforce code quality
+
+### Changed
+- Updated minimum Python version to 3.9 to support pytest-cov 6.0+
+- Improved documentation with clearer examples
+- Enhanced error handling in data loading functions
+
+## [0.1.1] - 2025-04-4
 
 ### Added
 - Added comprehensive test suite to achieve 75%+ branch coverage
@@ -21,7 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated test_get_syllable_counts to use issuperset() for more flexible testing
 - Fixed formatting of frequency distribution in CLI output
 
-## [0.1.0] - 2024-04-04
+## [0.1.0] - 2025-04-04
 
 ### Added
 - Initial dataset release with 8,536 words and phrases
