@@ -1,7 +1,7 @@
 # English Word Atlas
 
 [![CI](https://github.com/neumanns-workshop/english-word-atlas/actions/workflows/ci.yml/badge.svg)](https://github.com/neumanns-workshop/english-word-atlas/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/neumanns-workshop/english-word-atlas/branch/main/graph/badge.svg)](https://codecov.io/gh/neumanns-workshop/english-word-atlas)
+[![codecov](https://codecov.io/gh/neumanns-workshop/english-word-atlas/branch/main/graph/badge.svg?token=CODECOV_TOKEN2)](https://codecov.io/gh/neumanns-workshop/english-word-atlas)
 [![PyPI version](https://badge.fury.io/py/english-word-atlas.svg)](https://badge.fury.io/py/english-word-atlas)
 [![Python Versions](https://img.shields.io/pypi/pyversions/english-word-atlas.svg)](https://pypi.org/project/english-word-atlas/)
 
