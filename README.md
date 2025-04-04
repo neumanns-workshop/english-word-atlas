@@ -304,4 +304,11 @@ With 8,536 words and phrases categorized across multiple dimensions, English Wor
 
 The dataset is provided as a set of files designed for efficient storage and access:
 
-```
+## Development Workflow
+
+This project uses a protected `main` branch and requires all changes to go through pull requests:
+
+1. Development work should be done on the `develop` branch
+2. Create a pull request from `develop` to `main` when ready to release
+3. CI checks must pass before merging
+4. Once approved, changes will be merged to `main`
