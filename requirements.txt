@@ -1,3 +1,8 @@
+# This file is managed by uv
+# To install with uv: uv pip install -r requirements.txt
+# To sync the environment: uv pip sync requirements.txt
+# To generate a new lock file: uv pip freeze > requirements.txt
+
 numpy>=1.24.0
 scikit-learn>=1.0.0
 matplotlib>=3.5.0

@@ -10,13 +10,11 @@ A curated dataset of 8,536 English words and phrases with comprehensive linguist
 ## Quick Start
 
 ```bash
-# Install the package
+# With pip
 pip install english-word-atlas
 
-# Or install from source for development
-git clone https://github.com/neumanns-workshop/english-word-atlas.git
-cd english-word-atlas
-pip install -e ".[dev]"
+# With uv (faster)
+uv pip install english-word-atlas
 ```
 
 ```python
@@ -37,6 +35,8 @@ for word, score in similar_words:
     print(f"{word}: {score:.4f}")
 ```
 
+For uv usage, see [README-uv.md](README-uv.md).
+
 ## Repository Structure
 
 ```
@@ -48,18 +48,13 @@ english_word_atlas/
 ├── requirements.txt    # Development dependencies
 ├── pyproject.toml      # Package configuration
 ├── run_tests.py        # Test runner script
+├── run-with-uv.sh      # Helper for uv (Unix/macOS)
+├── run-with-uv.ps1     # Helper for uv (Windows)
+├── README-uv.md        # uv usage instructions
 ├── examples/           # Example usage scripts
 ├── tests/              # Test suite
 ├── word_atlas/         # Python package
-│   ├── __init__.py     # Package initialization
-│   ├── atlas.py        # Main WordAtlas class
-│   ├── data.py         # Data loading utilities
-│   ├── cli.py          # Command-line interface
-│   └── __main__.py     # Entry point for CLI
 └── data/               # Dataset files
-    ├── embeddings.npy     # Word embeddings (8536 x 384)
-    ├── word_index.json    # Word to embedding index mapping
-    └── word_data.json     # Word attributes and annotations
 ```
 
 ## Using the Package
@@ -67,15 +62,17 @@ english_word_atlas/
 ### Installation
 
 ```bash
-# Install from PyPI (when published)
+# With pip
 pip install english-word-atlas
 
-# Install from source with all dependencies
-# For development with visualization and web features
+# With uv (faster)
+uv pip install english-word-atlas
+
+# For development (with pip)
 pip install -e ".[dev,visualization,web]"
 
-# For basic usage
-pip install -e .
+# For development (with uv)
+uv pip install -e ".[dev,visualization,web]"
 ```
 
 ### Basic Usage
@@ -195,37 +192,18 @@ python examples/text_analysis.py /path/to/your/text.txt
 
 ## Testing
 
-The package includes a comprehensive test suite using pytest. The tests use a mock dataset to ensure they can run without the full dataset.
-
-### Running Tests
+The package includes a comprehensive test suite using pytest.
 
 ```bash
-# Install development dependencies
-pip install -e ".[dev]"
-
-# Run all tests
+# With the run_tests.py script
 python run_tests.py
 
-# Run tests with verbose output
-python run_tests.py -v
+# With uv
+./run-with-uv.sh test
 
-# Run specific test modules
-python run_tests.py tests/test_atlas.py
-
-# Run tests that match a pattern
-python run_tests.py -k "similarity"
-
-# Run tests against the real dataset (requires dataset to be installed)
-python run_tests.py --no-mock
+# Directly with pytest
+pytest
 ```
-
-### Test Coverage
-
-The test suite covers:
-- Core data loading functionality
-- WordAtlas class methods
-- Command-line interface
-- Example scripts
 
 ## Dataset Contents
 
@@ -327,198 +305,3 @@ With 8,536 words and phrases categorized across multiple dimensions, English Wor
 The dataset is provided as a set of files designed for efficient storage and access:
 
 ```
-data/
-├── embeddings.npy          # Word embeddings as numpy array (8536 x 384)
-├── word_index.json         # Mapping of words to embedding indices
-└── word_data.json          # Categorical and pronunciation data
-```
-
-* `embeddings.npy`: Dense numpy array of word embeddings
-* `word_index.json`: Maps words to their position in the embeddings array
-* `word_data.json`: Contains all other word attributes (pronunciations, category flags)
-
-Each word in the dataset has a corresponding entry in `word_data.json` with this structure:
-
-```json
-{
-    "word": {
-        "EMBEDDINGS_ALL_MINILM_L6_V2": [...],  // 384-dimensional array
-        "ARPABET": [["P", "R", "AH0", "N", "AH1", "N", "S"], ...],  // Pronunciation variants
-        "ROGET_ABSTRACT": true,  // Category flags
-        "GSL_ORIGINAL": false,
-        "FREQ_COUNT": 123.45,    // Raw frequency count (single words)
-        "FREQ_GRADE": 456.78,    // Computed frequency grade (all entries)
-        ...
-    }
-}
-```
-
-The embedding data is loaded automatically when initializing the `WordAtlas` class:
-
-```python
-from word_atlas import WordAtlas
-
-# The class automatically finds and loads the dataset files
-atlas = WordAtlas()
-
-# Access word information
-word = "freedom"
-info = atlas.get_word(word)
-
-# The embedding is available directly
-embedding = atlas.get_embedding(word)
-```
-
-## Use Cases
-
-The English Word Atlas can be used for a variety of applications:
-
-### Research
-- Psycholinguistic studies (word similarity, frequency effects)
-- Semantic relationship analysis
-- Cross-category lexical analysis
-- Phonological pattern research
-
-### NLP Applications
-- Text analysis and readability assessment
-- Vocabulary complexity measurement
-- Text simplification algorithms
-- Word embedding analysis and benchmarking
-
-### Education
-- Vocabulary teaching and assessment
-- Text material selection and adaptation
-- Language learning applications
-- Readability analysis of educational materials
-
-### Example: Text Analysis
-
-```python
-from word_atlas import WordAtlas
-import re
-from collections import Counter
-
-# Initialize the Word Atlas
-atlas = WordAtlas()
-
-# Analyze a text
-def analyze_text(text):
-    # Tokenize text
-    words = re.findall(r'\b[a-z]+\b', text.lower())
-    
-    # Get unique words
-    unique_words = set(words)
-    
-    # Check coverage in atlas
-    known_words = {word for word in unique_words if atlas.has_word(word)}
-    coverage = len(known_words) / len(unique_words) * 100 if unique_words else 0
-    
-    # Analyze frequency
-    frequencies = [atlas.get_word(word).get('FREQ_GRADE', 0) for word in known_words]
-    avg_frequency = sum(frequencies) / len(frequencies) if frequencies else 0
-    
-    # Count categories
-    categories = Counter()
-    for word in known_words:
-        for attr in atlas.get_word(word):
-            if attr.startswith('ROGET_') and atlas.get_word(word)[attr]:
-                categories[attr] += 1
-    
-    # Return results
-    return {
-        'total_words': len(words),
-        'unique_words': len(unique_words),
-        'coverage': coverage,
-        'avg_frequency': avg_frequency,
-        'top_categories': categories.most_common(5)
-    }
-
-# Example usage
-text = "The pursuit of happiness is a fundamental right. Freedom and liberty are essential concepts."
-results = analyze_text(text)
-print(f"Coverage: {results['coverage']:.1f}%")
-print(f"Average frequency: {results['avg_frequency']:.1f}")
-print("Top categories:")
-for category, count in results['top_categories']:
-    print(f"  {category}: {count}")
-```
-
-## License
-
-This dataset is distributed under the Apache License 2.0, as determined by the most restrictive license of its components (NLTK's stop words).
-
-## Contributing
-
-Contributions to the English Word Atlas are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-## Citation
-
-If you use this dataset in your research, please cite:
-```bibtex
-@dataset{english_word_atlas_2024,
-    title = {English Word Atlas},
-    year = {2024},
-    author = {[Your name]},
-    note = {Combines multiple linguistic resources for comprehensive word analysis},
-    url = {[repository URL]}
-}
-```
-
-## Acknowledgments
-
-### Core Word Lists
-- **Swadesh Lists** (1952, 1955)
-  - Created by Morris Swadesh
-  - 100-word and 207-word lists for comparative linguistics
-  - Public Domain
-
-- **General Service List (GSL)**
-  - Original GSL by Michael West (1953)
-  - New GSL by Browne, Culligan & Phillips (2013)
-  - Tokyo University of Foreign Studies
-
-- **Ogden's Basic English** (1930)
-  - Created by Charles Kay Ogden
-  - Basic English Institute
-  - Public Domain
-
-- **Roget's Thesaurus** (1911, 15a edition)
-  - Originally created by Peter Mark Roget (1779-1869)
-  - 1911 edition edited by Robert A. Dutch
-  - 15a edition extracted for this dataset
-  - Public Domain
-
-### Modern NLP Resources
-- **ALL-MiniLM-L6-v2 Embeddings**
-  - Created by Microsoft Research
-  - MIT License
-  - https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2
-
-### Stop Word Lists
-- **NLTK Stop Words**
-  - Natural Language Toolkit
-  - Bird, Steven, Edward Loper and Ewan Klein (2009)
-  - Apache License 2.0
-
-- **scikit-learn Stop Words**
-  - scikit-learn developers
-  - BSD 3-Clause License
-
-- **spaCy Stop Words**
-  - Explosion AI
-  - MIT License
-
-- **Fox Stop Words**
-  - Christopher Fox (1989)
-  - "A Stop List for General Text"
-  - Technical Report, University of Rochester
-
-### Pronunciation Data
-- **CMU Pronouncing Dictionary**
-  - Carnegie Mellon University
-  - Version 0.7b
-  - Public Domain
-
-## Contact
-
-For questions or issues, please open an issue in the repository. 

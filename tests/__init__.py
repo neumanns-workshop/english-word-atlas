@@ -1,1 +1,1 @@
-"""Tests for the English Word Atlas package.""" 
+"""Tests for the English Word Atlas package."""

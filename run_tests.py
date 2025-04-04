@@ -5,7 +5,12 @@ Run tests for the English Word Atlas package.
 This script runs pytest with common options. It's a convenient shortcut for
 running tests during development.
 
-Usage:
+Note: With uv, you can also use the commands in uv.toml:
+    uv run test                    # Run all tests
+    uv run coverage                # Run tests with coverage report
+    uv run html-coverage           # Generate HTML coverage report
+
+Traditional usage:
     python run_tests.py               # Run all tests
     python run_tests.py -v            # Run tests with verbose output
     python run_tests.py -k atlas      # Run tests containing 'atlas' in their name

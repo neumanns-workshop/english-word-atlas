@@ -13,4 +13,4 @@ from word_atlas.wordlist import WordlistBuilder
 __all__ = [
     "WordAtlas",
     "WordlistBuilder",
-] 
+]

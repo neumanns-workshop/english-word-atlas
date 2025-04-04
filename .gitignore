@@ -17,6 +17,18 @@ env/
 venv/
 ENV/
 
+# uv specific
+.uv/.lock
+.uv/.manifests/*
+.uv/.runner
+.uv/links/
+.uv/storage/
+.uv/
+uv.toml.bak
+UV-COMMANDS.md
+init-uv.sh
+init-uv.ps1
+
 # Jupyter Notebook
 *.ipynb
 .ipynb_checkpoints/
