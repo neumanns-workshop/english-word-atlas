@@ -1,48 +1,76 @@
+# Development and source materials
+/data/*
+!/data/word_data.json
+!/data/word_index.json
+!/data/embeddings.npy
+/working_notebooks/
+/extra_scripts/
+
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
-*.so
 .Python
-env/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# Virtual Environment
-venv/
-ENV/
-env/
 .env
 .venv
+env/
+venv/
+ENV/
+
+# Jupyter Notebook
+*.ipynb
+.ipynb_checkpoints/
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
 # IDE files
 .idea/
 .vscode/
 *.swp
 *.swo
-.DS_Store
 
-# Data files
-*.npz
-*.npy
-*.pkl
-*.h5
+# Testing and Coverage
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+.tox/
+.hypothesis/
+htmlcov/
+nosetests.xml
+coverage.xml
+*.cover
+
+# Documentation
+docs/_build/
+site/
+
+# Processing scripts and source data
+create_lookup_indices.py
+normalize_and_link.py
+check_indices.py
+analyze_data.py
+cats.txt
+*.zip
+*.csv
+roget*.txt
+SUP_*.csv
+NGSL_*.csv
+
+# Logs
+logs/
+*.log
+
+# Distribution / packaging
+*.manifest
+*.spec
 
 # Specific large files that should be generated locally
 data/frequencies/precomputed_frequencies.json
@@ -58,34 +86,6 @@ data/dictionaries/cmudict-0.7b
 roget-structure.txt
 roget15a.txt
 
-# Logs
-logs/
-*.log
-
-# Testing
-.coverage
-htmlcov/
-.pytest_cache/
-.tox/
-nosetests.xml
-coverage.xml
-*.cover
-
-# Documentation
-docs/_build/
-site/
-
-# Distribution / packaging
-*.manifest
-*.spec
-
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-.hypothesis/ 
+# Keep processed data
+!/data/processed/
+!/data/processed/* 

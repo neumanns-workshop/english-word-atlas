@@ -1,0 +1,49 @@
+name: Publish to PyPI
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+     
+    - name: Install uv
+      run: curl -LsSf https://astral.sh/uv/install.sh | sh
+        
+    - name: Install dependencies
+      run: |
+        uv pip install build twine
+        
+    - name: Verify version matches tag
+      run: |
+        # Extract version from pyproject.toml
+        VERSION=$(grep "version" pyproject.toml | cut -d'"' -f2)
+        # Extract tag version (remove 'v' prefix if present)
+        TAG_VERSION=${GITHUB_REF#refs/tags/}
+        TAG_VERSION=${TAG_VERSION#v}
+        # Check if versions match
+        if [ "$VERSION" != "$TAG_VERSION" ]; then
+          echo "Version in pyproject.toml ($VERSION) does not match tag version ($TAG_VERSION)"
+          exit 1
+        fi
+        
+    - name: Build package
+      run: python -m build
+      
+    - name: Check package
+      run: twine check dist/*
+      
+    - name: Publish package
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        user: __token__
+        password: ${{ secrets.PYPI_API_TOKEN }}
+        skip_existing: true 

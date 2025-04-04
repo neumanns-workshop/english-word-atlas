@@ -1,387 +1,524 @@
-# English Wordlists API
+# English Word Atlas
 
-A programmatic API for accessing classic, widely-used English wordlists.
+[![CI](https://github.com/neumanns-workshop/english-word-atlas/actions/workflows/ci.yml/badge.svg)](https://github.com/neumanns-workshop/english-word-atlas/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/neumanns-workshop/english-word-atlas/branch/main/graph/badge.svg)](https://codecov.io/gh/neumanns-workshop/english-word-atlas)
+[![PyPI version](https://badge.fury.io/py/english-word-atlas.svg)](https://badge.fury.io/py/english-word-atlas)
+[![Python Versions](https://img.shields.io/pypi/pyversions/english-word-atlas.svg)](https://pypi.org/project/english-word-atlas/)
 
-## Overview
+A curated dataset of 8,536 English words and phrases with comprehensive linguistic and semantic annotations, designed to capture the conceptual diversity of English. This dataset combines historical lexicographic resources with modern NLP tools to provide rich annotations for cognitive and computational linguistics research. Notably, due to Roget's Thesaurus entries, it includes multi-word phrases (e.g., "be so good as", "put a good face on") alongside single words, with full embedding and pronunciation coverage for both.
 
-This repository provides developers with programmatic access to high-quality, curated English wordlists for common use cases. Instead of hunting down scattered text files or web scraping, this API offers a clean, consistent way to access and filter standard wordlists.
+## Quick Start
 
-## Core Philosophy
+```bash
+# Install the package
+pip install english-word-atlas
 
-This project intentionally focuses on **simple, classic wordlists** rather than complex linguistic data structures. We prioritize:
-
-- **Raw word collections** over semantic networks or synsets
-- **Minimal metadata** that's sufficient for practical use
-- **Established, well-known lists** with historical significance
-- **Practical filtering and combination options** for real-world applications
-
-This approach ensures the API remains lightweight, easy to understand, and broadly applicable across various domains.
-
-## Core Wordlists (MVP)
-
-### Historical and Fundamental Lists
-- **Swadesh List**: Core vocabulary lists used in comparative linguistics (100 word version)
-- **Basic English**: Ogden's simplified subset of 850 English words
-- **Roget's Thesaurus Categories**: Semantically categorized word lists derived from Roget's Thesaurus
-  - 76 distinct categories organized by class and section
-  - 2,163 unique words with clear semantic relationships
-  - Hierarchical organization (Class → Section → Category)
-  - Includes multi-word phrases that are semantically coherent
-
-### Common English Lists
-- **Dolch Sight Words**: 220 most common words that readers should recognize on sight
-- **Fry's 1000 Instant Words**: Most frequently used English words
-
-### Grammatical Parts of Speech
-- **Prepositions**: Common English prepositions
-- **Articles**: Definite and indefinite articles
-- **Conjunctions**: Coordinating and subordinating conjunctions
-- **Pronouns**: Personal, possessive, relative, and demonstrative pronouns
-- **Auxiliary Verbs**: Helping verbs that support main verbs
-
-### Technical Lists
-- **Common English Stop Words**: Words typically filtered out in NLP applications
-  - Customizable stop word sets from different sources (NLTK, spaCy, etc.)
-  - Ability to combine or subtract from standard stop word lists
-
-## Additional Valuable Lists
-
-- **Dale-Chall Readability List**: ~3000 words familiar to US 4th graders
-- **Academic Word List (Coxhead)**: Words common in academic texts
-
-## Features (MVP)
-
-- **Complete List Access**: Retrieve entire wordlists in JSON format
-- **Pattern Matching**: Support for regex pattern matching across wordlists
-- **Set Operations**: Check if words exist in specific lists with `isin` functionality
-- **Consistent Format**: All lists available in standardized JSON format
-- **Customizable Stop Words**: Create personalized stop word lists by combining or subtracting from standard lists
-- **Word Frequencies**: Access frequency data for words and phrases from the SUBTLEX corpus
-
-## Word Frequencies
-
-The package includes frequency data from the SUBTLEX-US corpus, which is based on 51 million words from US film and TV subtitles. This provides more accurate frequency estimates for everyday language compared to traditional text-based corpora.
-
-### Frequency Features
-
-- **Precomputed Frequencies**: Fast access to frequency data for all words in our wordlists
-- **Multiple Metrics**: Access various frequency metrics (raw count, per million, log frequency, etc.)
-- **Multi-word Phrase Support**: Handles phrases (especially in Roget's thesaurus) by calculating component-based frequencies
-- **Frequency Bands**: Group words into frequency bands (1-5, with 1 being most frequent)
-- **Percentile Rankings**: See how words rank relative to others in the corpus
-
-### Using Frequencies
+# Or install from source for development
+git clone https://github.com/neumanns-workshop/english-word-atlas.git
+cd english-word-atlas
+pip install -e ".[dev]"
+```
 
 ```python
-from wordlists.frequencies import FrequencyDictionary
+# Basic usage example
+from word_atlas import WordAtlas
 
-# Initialize and load the frequency dictionary
-freq_dict = FrequencyDictionary()
-freq_dict.load()
+# Initialize the dataset
+atlas = WordAtlas()
 
-# Get frequency for a single word (per million)
-freq = freq_dict.get_frequency("computer")  # Returns 59.04
+# Explore a word
+word_info = atlas.get_word("freedom")
+print(f"Freedom has {word_info['SYLLABLE_COUNT']} syllables")
+print(f"Freedom pronunciation: {word_info['ARPABET'][0]}")
 
-# Get all frequency metrics for a word
-metrics = freq_dict.get_all_metrics("computer")
-# Returns dictionary with freq_count, cd_count, subtl_wf, lg10wf, subtl_cd, lg10cd
-
-# Get frequency for a multi-word phrase (e.g., from Roget's thesaurus)
-phrase_freq = freq_dict.get_frequency("computer science")  # Returns 48.14
-
-# Get frequency band (1-5, with 1 being most frequent)
-band = freq_dict.get_frequency_band("the")  # Returns 1
-
-# Get frequency percentile (0-100)
-percentile = freq_dict.get_percentile("the")  # Returns 100.0
-
-# Get most frequent words
-top_words = freq_dict.get_most_frequent(10)
-# Returns list of (word, frequency) tuples, sorted by frequency
+# Find similar words
+similar_words = atlas.get_similar_words("freedom", n=5)
+for word, score in similar_words:
+    print(f"{word}: {score:.4f}")
 ```
 
-## Usage
-
-```javascript
-import { getWordlist, createStopWordList, matchPattern, isInList } from 'wordlists';
-
-// Get complete Basic English list
-const basicEnglish = await getWordlist('basic-english');
-
-// Get all words from a specific Roget category
-const existenceWords = await getWordlist('roget-01001'); // "BEING, IN THE ABSTRACT"
-
-// Get the complete Roget hierarchical structure
-const rogetComplete = await getWordlist('roget-complete');
-
-// Get all words from a specific Roget section
-const existenceSection = rogetComplete.classes['WORDS EXPRESSING ABSTRACT RELATIONS']
-                                    .sections['EXISTENCE'];
-
-// Find all words in a specific semantic category
-const motionWords = await matchPattern(/.*/, ['roget-12001']); // "MOTION IN GENERAL"
-
-// Find all words matching a regex pattern
-const contractions = await matchPattern(/\'s$/);  // Words ending with 's
-
-// Check if specific words exist in a list
-const results = await isInList(['hello', 'computer', 'spoon'], 'basic-english');
-// Returns: { hello: true, computer: true, spoon: false }
-
-// Create a custom stop word list
-const customStopWords = createStopWordList({
-  base: 'nltk',           // Start with NLTK's stop words
-  add: ['custom', 'words'], // Add these words
-  remove: ['not', 'no', 'nor'] // Remove negation words
-});
-
-// Get all prepositions
-const prepositions = await getWordlist('prepositions');
-
-// Combine grammatical elements
-const functionalWords = await getWordlist(['articles', 'prepositions', 'conjunctions']);
-```
-
-## API Documentation
-
-### Core Functions
-
-| Function | Description | Parameters |
-|----------|-------------|------------|
-| `getWordlist(name)` | Retrieves complete wordlist | `name`: List identifier string or array of identifiers |
-| `matchPattern(pattern, lists)` | Finds words matching regex pattern | `pattern`: RegExp object, `lists`: Optional array of list names to search (defaults to all) |
-| `isInList(words, list)` | Checks if words exist in a list | `words`: Array of words to check, `list`: Name of list to check against |
-| `createStopWordList(options)` | Creates custom stop word list | `options`: Configuration object with base list and modifications |
-
-### List Identifiers
-
-| Identifier | Description | Word Count |
-|------------|-------------|------------|
-| `swadesh-100` | Swadesh 100 word list | 100 |
-| `basic-english` | Ogden's Basic English | 850 |
-| `dolch` | Complete Dolch sight words | 220 |
-| `fry-1000` | Complete Fry 1000 words | 1000 |
-| `prepositions` | English prepositions | ~70 |
-| `articles` | English articles | 3 |
-| `conjunctions` | English conjunctions | ~25 |
-| `pronouns` | English pronouns | ~35 |
-| `auxiliary-verbs` | English auxiliary verbs | ~25 |
-| `stop-words-nltk` | NLTK's English stop words | ~179 |
-| `stop-words-spacy` | spaCy's English stop words | ~326 |
-| `stop-words-smart` | SMART Information Retrieval stop words | ~571 |
-| `stop-words-minimal` | Minimal English stop words | ~35 |
-| `roget-complete` | Complete Roget's hierarchical structure | 2,163 |
-| `roget-{id}` | Individual Roget category (e.g., `roget-01001`) | varies |
-
-### Roget's Thesaurus Data Format
-
-The Roget's Thesaurus data is organized hierarchically:
-
-```javascript
-{
-  "classes": {
-    "WORDS EXPRESSING ABSTRACT RELATIONS": {
-      "name": "WORDS EXPRESSING ABSTRACT RELATIONS",
-      "sections": {
-        "EXISTENCE": {
-          "name": "EXISTENCE",
-          "categories": {
-            "01001": {
-              "name": "BEING, IN THE ABSTRACT",
-              "id": "01001",
-              "words": ["actually", "exist", "existence", ...]
-            }
-          }
-        }
-      }
-    }
-  },
-  "total_categories": 76,
-  "total_words": 2163
-}
-```
-
-Individual category files are also available in a simpler format:
-
-```javascript
-{
-  "class": "WORDS EXPRESSING ABSTRACT RELATIONS",
-  "section": "EXISTENCE",
-  "category": "BEING, IN THE ABSTRACT",
-  "words": ["actually", "exist", "existence", ...]
-}
-```
-
-## Project Structure
+## Repository Structure
 
 ```
-wordlists/
-├── data/                  # Raw wordlist data files
-│   ├── basic-english.json
-│   ├── dolch.json
-│   ├── fry-1000.json
-│   ├── grammar/           # Grammatical parts of speech
-│   │   ├── prepositions.json
-│   │   ├── articles.json
-│   │   ├── conjunctions.json
-│   │   ├── pronouns.json
-│   │   └── auxiliary-verbs.json
-│   ├── stop-words/        # Multiple stop word list variants
-│   │   ├── nltk.json
-│   │   ├── spacy.json
-│   │   ├── smart.json
-│   │   └── minimal.json
-│   ├── wordlists/         # Categorized word lists
-│   │   └── categories/
-│   │       └── roget/     # Roget's Thesaurus derived lists
-│   │           ├── roget_unified.json    # Complete hierarchical data
-│   │           ├── index.json            # Category index with metadata
-│   │           └── [category files...]   # Individual category files
-│   └── swadesh-100.json
-│   ├── frequencies/       # Word frequency data
-│   │   ├── subtlex_us.txt                 # Raw SUBTLEX frequency data
-│   │   └── precomputed_frequencies.json   # Precomputed frequencies for all wordlists
-│   ├── dictionaries/      # Pronunciation dictionaries
-│   │   ├── cmudict-0.7b                   # CMU Pronunciation Dictionary
-│   │   └── precomputed_pronunciations.json # Precomputed pronunciations for all wordlists
-├── src/                   # Source code
-│   ├── index.js           # Main entry point
-│   ├── wordlists.js       # Core wordlist functions
-│   ├── stop-words.js      # Stop word customization functions
-│   ├── grammar.js         # Grammatical categories functions
-│   └── utils.js           # Helper utilities
-├── python/                # Python implementation
-│   ├── wordlists/         # Python package
-│   │   ├── __init__.py    # Package initialization
-│   │   ├── wordlists.py   # Core functionality
-│   │   ├── frequencies.py # Frequency functionality
-│   │   ├── arpabet.py     # Pronunciation functionality
-│   │   └── types.py       # Type definitions
-│   ├── examples/          # Example scripts
-│   └── scripts/           # Utility scripts for precomputation
-├── package.json           # Project metadata and dependencies
-└── README.md              # This documentation file
+english_word_atlas/
+├── README.md           # Project documentation
+├── CHANGELOG.md        # Version history
+├── ROADMAP.md          # Development roadmap
+├── CONTRIBUTING.md     # Contribution guidelines
+├── requirements.txt    # Development dependencies
+├── pyproject.toml      # Package configuration
+├── run_tests.py        # Test runner script
+├── examples/           # Example usage scripts
+├── tests/              # Test suite
+├── word_atlas/         # Python package
+│   ├── __init__.py     # Package initialization
+│   ├── atlas.py        # Main WordAtlas class
+│   ├── data.py         # Data loading utilities
+│   ├── cli.py          # Command-line interface
+│   └── __main__.py     # Entry point for CLI
+└── data/               # Dataset files
+    ├── embeddings.npy     # Word embeddings (8536 x 384)
+    ├── word_index.json    # Word to embedding index mapping
+    └── word_data.json     # Word attributes and annotations
 ```
 
-## Future Enhancements (Post-MVP)
+## Using the Package
 
-- Additional wordlists (Oxford 3000, IELTS vocabulary, etc.)
-- Advanced filtering (by part of speech, frequency)
-- Simple word metadata (length, syllable count)
-- CLI tools and REST API endpoints
-- Domain-specific stop word lists (medical, legal, technical)
-- Dictionary-free word statistics (frequency, commonality)
+### Installation
 
-## License
+```bash
+# Install from PyPI (when published)
+pip install english-word-atlas
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+# Install from source with all dependencies
+# For development with visualization and web features
+pip install -e ".[dev,visualization,web]"
 
-## Contributing
+# For basic usage
+pip install -e .
+```
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+### Basic Usage
 
-# Wordlists
+```python
+from word_atlas import WordAtlas
 
-A collection of curated word lists for various purposes, including stop words and semantic categories.
+# Initialize the WordAtlas
+# It will automatically locate the dataset in standard locations
+atlas = WordAtlas()
 
-## Data Structure
+# Or specify a custom data directory
+# atlas = WordAtlas(data_dir="/path/to/data")
+
+# Get information about a word
+info = atlas.get_word("happiness")
+print(f"Syllables: {info.get('SYLLABLE_COUNT')}")
+print(f"Pronunciation: {info.get('ARPABET', [['?']])[0]}")
+print(f"Frequency: {info.get('FREQ_GRADE', 0)}")
+
+# Get embedding for a word (returns numpy ndarray)
+embedding = atlas.get_embedding("happiness")
+
+# Find similar words (returns list of (word, score) tuples)
+similar_words = atlas.get_similar_words("happiness", n=10)
+for word, score in similar_words:
+    print(f"{word}: {score:.4f}")
+
+# Check if a word exists in the dataset
+if atlas.has_word("serendipity"):
+    print("Serendipity is in the dataset")
+
+# Get all phrases in the dataset
+phrases = atlas.get_phrases()
+
+# Get all single words
+single_words = atlas.get_single_words()
+
+# Search by regular expression
+regex_matches = atlas.search("happi.*")
+
+# Filter by attributes
+freedom_words = atlas.filter_by_attribute("ROGET_ABSTRACT")
+gsl_words = atlas.filter_by_attribute("GSL")
+
+# Filter by frequency
+common_words = atlas.filter_by_frequency(min_freq=100)
+rare_words = atlas.filter_by_frequency(max_freq=10)
+
+# Filter by syllable count
+three_syllable_words = atlas.filter_by_syllable_count(3)
+
+# Get similarity between two words
+similarity = atlas.word_similarity("happy", "sad")
+```
+
+### Data Access Functions
+
+For advanced usage, you can access the raw data files directly:
+
+```python
+from word_atlas.data import (
+    load_dataset,     # Load the complete dataset with embeddings
+    get_word_data,    # Get word attributes without embeddings
+    get_embeddings,   # Get the raw embedding matrix
+    get_word_index    # Get the mapping of words to embedding indices
+)
+
+# Load the entire dataset with embeddings
+complete_data = load_dataset()
+
+# Access only the word attributes
+word_attributes = get_word_data()
+
+# Get the raw embeddings matrix
+embeddings_matrix = get_embeddings()
+
+# Get the word to index mapping
+word_to_index = get_word_index()
+```
+
+### Command-line Interface
+
+The package includes a comprehensive command-line interface for exploring the dataset:
+
+```bash
+# Get information about a word
+python -m word_atlas info happiness
+
+# Search for words matching a pattern
+python -m word_atlas search "happ.*" --words-only
+
+# Filter by attributes
+python -m word_atlas search ".*" --attribute GSL --min-freq 200
+
+# Show dataset statistics
+python -m word_atlas stats
+
+# Show detailed statistics
+python -m word_atlas stats --detailed
+
+# Get help for a specific command
+python -m word_atlas info --help
+```
+
+### Examples
+
+The package includes example scripts in the `examples/` directory:
+
+```bash
+# Run the basic usage example
+python examples/basic_usage.py
+
+# Run the text analysis example
+python examples/text_analysis.py /path/to/your/text.txt
+```
+
+## Testing
+
+The package includes a comprehensive test suite using pytest. The tests use a mock dataset to ensure they can run without the full dataset.
+
+### Running Tests
+
+```bash
+# Install development dependencies
+pip install -e ".[dev]"
+
+# Run all tests
+python run_tests.py
+
+# Run tests with verbose output
+python run_tests.py -v
+
+# Run specific test modules
+python run_tests.py tests/test_atlas.py
+
+# Run tests that match a pattern
+python run_tests.py -k "similarity"
+
+# Run tests against the real dataset (requires dataset to be installed)
+python run_tests.py --no-mock
+```
+
+### Test Coverage
+
+The test suite covers:
+- Core data loading functionality
+- WordAtlas class methods
+- Command-line interface
+- Example scripts
+
+## Dataset Contents
+
+### Semantic Categories
+- **Roget's Categories** (32 main categories, covering 28.5% at highest)
+  - Abstract Relations
+  - Space
+  - Matter
+  - Intellect
+  - Volition
+  - Affections
+  - Includes numerous multi-word phrases and expressions
+  
+- **Basic English Categories**
+  - Basic Operations and Qualities
+  - Field-specific Vocabularies (19 fields)
+  - Supplementary Technical Terms
+  
+- **Core Vocabulary Lists**
+  - GSL (General Service List): 26.0% coverage
+  - NGSL (New General Service List v1.2): 32.2% coverage
+  - Swadesh Lists (Core 100 and Extended 207)
+
+### Linguistic Features
+- **Embeddings**: ALL-MiniLM-L6-v2 (384 dimensions)
+  - Complete coverage (100% of entries)
+  - Normalized vectors (L2 norm = 1.000)
+  - Distributed semantic space (no dominant components)
+  - Full coverage of both single words and phrases
+
+- **Pronunciations**: ARPABET format
+  - Average 1.24 variants per word
+  - 18.3% of entries have multiple pronunciations
+  - Maximum 8 variants for some phrases
+  - Comprehensive coverage of multi-word expressions
+  - Example: "be so good as" → [('B', 'IY1', 'S', 'OW1', 'G', 'UH1', 'D', 'AE1', 'Z'), ...]
+
+- **Frequencies**: Raw counts and computed grades
+  - Raw frequency counts for single words
+  - Computed frequency grades for all entries (words and phrases)
+  - Phrase frequencies derived from component words
+  - Zero frequencies flagged for review
+  - Example: "take money" → freq_count: 640.76
+
+### Stop Word Classifications
+Multiple standard NLP stop word lists:
+- NLTK (0.9% coverage)
+- scikit-learn (2.4% coverage)
+- spaCy (2.4% coverage)
+- Fox (2.8% coverage)
+
+## Statistics
+
+### Realistic Vocabulary Coverage Analysis
+
+Our analysis of wordlist coverage against SUBTLEX-US frequency data reveals some eye-opening statistics:
+
+#### Key Coverage Findings
+
+- **Standard Wordlists Are Limited**: The widely-used GSL (General Service List) covers only 59.9% of the top 1,000 most frequent English words, despite containing 2,218 words
+- **Vocabulary Efficiency**: The ALL_INTERSECTION set (26 words) appears in all major wordlists and covers 14% of the top 100 most frequent words
+- **Coverage Sweet Spot**: OGDEN_BASIC_ALL (831 words) achieves 46% coverage of the top 100 most frequent words
+- **Frequency Drop-off**: STOP_NLTK (75 words) covers 44% of the top 100 most frequent words, but only 7.2% of the top 1,000
+
+#### Beyond Single-Word Coverage
+
+Unlike most wordlists, English Word Atlas includes:
+- **Common Idiomatic Phrases**: Multi-word expressions like "take heart" and "bear in mind" that are essential for natural language use
+- **Semantic Diversity**: Words deliberately selected to cover the full conceptual space of English, not just frequency-based selection
+- **Rich Annotations**: Each entry includes pronunciation, embeddings, and multiple categorical annotations
+
+#### Word Atlas Capabilities
+
+The English Word Atlas provides accurate coverage statistics and powerful filtering capabilities to:
+- Combine existing wordlists for optimal frequency coverage
+- Filter by syllable count, frequency, and semantic categories
+- Create custom wordlists tailored to specific learning objectives
+- Analyze real coverage against frequency data rather than inflated claims
+
+With 8,536 words and phrases categorized across multiple dimensions, English Word Atlas offers unparalleled flexibility for language learning, teaching, and linguistics research.
+
+### Distribution
+- Total entries: 8,536 words and phrases
+  - Includes both single words and multi-word expressions
+  - Phrases primarily from Roget's Thesaurus categories
+- Syllable distribution:
+  - 1 syllable: 20.1%
+  - 2 syllables: 36.5%
+  - 3 syllables: 26.8%
+  - 4+ syllables: 16.6% (including multi-word phrases)
+
+### Coverage
+- Complete embedding coverage (100%)
+- Category coverage varies from 0.1% to 32.2%
+- Multiple pronunciation variants for 1,564 entries
+
+## Data Format
+
+The dataset is provided as a set of files designed for efficient storage and access:
 
 ```
 data/
-├── wordlists/
-│   ├── categories/           # Semantic category word lists
-│   │   └── roget/           # Roget's Thesaurus categories
-│   │       ├── index.json   # Category index with metadata
-│   │       └── *.json       # Individual category files
-│   │
-│   └── stop_words/          # Stop word lists from various sources
-│       ├── nltk_stop_words.json      # NLTK English corpus (Apache 2.0)
-│       ├── spacy_stop_words.json     # spaCy English model (MIT)
-│       ├── sklearn_stop_words.json   # scikit-learn English corpus (BSD-3)
-│       ├── minimal_stop_words.json   # Common words across all sources
-│       └── comprehensive_stop_words.json  # All words from all sources
-├── frequencies/
-│   ├── subtlex_us.txt                # SUBTLEX-US frequency data
-│   └── precomputed_frequencies.json  # Precomputed frequencies for all words
-├── dictionaries/
-│   ├── cmudict-0.7b                  # CMU Pronunciation Dictionary
-│   └── precomputed_pronunciations.json # Precomputed pronunciations
+├── embeddings.npy          # Word embeddings as numpy array (8536 x 384)
+├── word_index.json         # Mapping of words to embedding indices
+└── word_data.json          # Categorical and pronunciation data
 ```
 
-## Stop Words
+* `embeddings.npy`: Dense numpy array of word embeddings
+* `word_index.json`: Maps words to their position in the embeddings array
+* `word_data.json`: Contains all other word attributes (pronunciations, category flags)
 
-Stop words are common words that are often filtered out in natural language processing tasks. Our collection includes:
+Each word in the dataset has a corresponding entry in `word_data.json` with this structure:
 
-### Source Lists
-- **NLTK** (Apache License 2.0)
-  - From the NLTK English corpus
-  - Comprehensive list of common English stop words
-
-- **spaCy** (MIT License)
-  - From the spaCy English model
-  - Includes contractions and common function words
-
-- **scikit-learn** (BSD 3-Clause License)
-  - From the scikit-learn English corpus
-  - Focused on common English words
-
-### Combined Lists
-- **Minimal Stop Words**
-  - Intersection of words common across all sources
-  - Most conservative approach to stop word filtering
-
-- **Comprehensive Stop Words**
-  - Union of all words from all sources
-  - Most inclusive approach to stop word filtering
-
-## Categories
-
-### Roget's Thesaurus Categories
-Organized semantic categories from Roget's Thesaurus, including:
-- Abstract concepts (being, relation, quantity)
-- Physical concepts (matter, space, time)
-- Mental concepts (intellect, emotion, morality)
-- Social concepts (interaction, communication, behavior)
-
-Each category file contains:
-- Category name and number
-- Section information
-- List of related words with parts of speech
-- Metadata about the category
-
-## Usage
-
-### Stop Words
-```python
-import json
-
-# Load a specific stop word list
-with open('data/wordlists/stop_words/nltk_stop_words.json') as f:
-    stop_words = json.load(f)['words']
-
-# Load the minimal stop word list
-with open('data/wordlists/stop_words/minimal_stop_words.json') as f:
-    minimal_stop_words = json.load(f)['words']
+```json
+{
+    "word": {
+        "EMBEDDINGS_ALL_MINILM_L6_V2": [...],  // 384-dimensional array
+        "ARPABET": [["P", "R", "AH0", "N", "AH1", "N", "S"], ...],  // Pronunciation variants
+        "ROGET_ABSTRACT": true,  // Category flags
+        "GSL_ORIGINAL": false,
+        "FREQ_COUNT": 123.45,    // Raw frequency count (single words)
+        "FREQ_GRADE": 456.78,    // Computed frequency grade (all entries)
+        ...
+    }
+}
 ```
 
-### Categories
+The embedding data is loaded automatically when initializing the `WordAtlas` class:
+
 ```python
-import json
+from word_atlas import WordAtlas
 
-# Load the category index
-with open('data/wordlists/categories/roget/index.json') as f:
-    categories = json.load(f)
+# The class automatically finds and loads the dataset files
+atlas = WordAtlas()
 
-# Load a specific category
-with open('data/wordlists/categories/roget/001_being_in_the_abstract.json') as f:
-    category = json.load(f)
+# Access word information
+word = "freedom"
+info = atlas.get_word(word)
+
+# The embedding is available directly
+embedding = atlas.get_embedding(word)
+```
+
+## Use Cases
+
+The English Word Atlas can be used for a variety of applications:
+
+### Research
+- Psycholinguistic studies (word similarity, frequency effects)
+- Semantic relationship analysis
+- Cross-category lexical analysis
+- Phonological pattern research
+
+### NLP Applications
+- Text analysis and readability assessment
+- Vocabulary complexity measurement
+- Text simplification algorithms
+- Word embedding analysis and benchmarking
+
+### Education
+- Vocabulary teaching and assessment
+- Text material selection and adaptation
+- Language learning applications
+- Readability analysis of educational materials
+
+### Example: Text Analysis
+
+```python
+from word_atlas import WordAtlas
+import re
+from collections import Counter
+
+# Initialize the Word Atlas
+atlas = WordAtlas()
+
+# Analyze a text
+def analyze_text(text):
+    # Tokenize text
+    words = re.findall(r'\b[a-z]+\b', text.lower())
+    
+    # Get unique words
+    unique_words = set(words)
+    
+    # Check coverage in atlas
+    known_words = {word for word in unique_words if atlas.has_word(word)}
+    coverage = len(known_words) / len(unique_words) * 100 if unique_words else 0
+    
+    # Analyze frequency
+    frequencies = [atlas.get_word(word).get('FREQ_GRADE', 0) for word in known_words]
+    avg_frequency = sum(frequencies) / len(frequencies) if frequencies else 0
+    
+    # Count categories
+    categories = Counter()
+    for word in known_words:
+        for attr in atlas.get_word(word):
+            if attr.startswith('ROGET_') and atlas.get_word(word)[attr]:
+                categories[attr] += 1
+    
+    # Return results
+    return {
+        'total_words': len(words),
+        'unique_words': len(unique_words),
+        'coverage': coverage,
+        'avg_frequency': avg_frequency,
+        'top_categories': categories.most_common(5)
+    }
+
+# Example usage
+text = "The pursuit of happiness is a fundamental right. Freedom and liberty are essential concepts."
+results = analyze_text(text)
+print(f"Coverage: {results['coverage']:.1f}%")
+print(f"Average frequency: {results['avg_frequency']:.1f}")
+print("Top categories:")
+for category, count in results['top_categories']:
+    print(f"  {category}: {count}")
 ```
 
 ## License
 
-This project includes data from various sources, each with its own license:
-- NLTK data: Apache License 2.0
-- spaCy data: MIT License
-- scikit-learn data: BSD 3-Clause License
+This dataset is distributed under the Apache License 2.0, as determined by the most restrictive license of its components (NLTK's stop words).
 
-Please refer to individual source files for specific licensing information. 
+## Contributing
+
+Contributions to the English Word Atlas are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## Citation
+
+If you use this dataset in your research, please cite:
+```bibtex
+@dataset{english_word_atlas_2024,
+    title = {English Word Atlas},
+    year = {2024},
+    author = {[Your name]},
+    note = {Combines multiple linguistic resources for comprehensive word analysis},
+    url = {[repository URL]}
+}
+```
+
+## Acknowledgments
+
+### Core Word Lists
+- **Swadesh Lists** (1952, 1955)
+  - Created by Morris Swadesh
+  - 100-word and 207-word lists for comparative linguistics
+  - Public Domain
+
+- **General Service List (GSL)**
+  - Original GSL by Michael West (1953)
+  - New GSL by Browne, Culligan & Phillips (2013)
+  - Tokyo University of Foreign Studies
+
+- **Ogden's Basic English** (1930)
+  - Created by Charles Kay Ogden
+  - Basic English Institute
+  - Public Domain
+
+- **Roget's Thesaurus** (1911, 15a edition)
+  - Originally created by Peter Mark Roget (1779-1869)
+  - 1911 edition edited by Robert A. Dutch
+  - 15a edition extracted for this dataset
+  - Public Domain
+
+### Modern NLP Resources
+- **ALL-MiniLM-L6-v2 Embeddings**
+  - Created by Microsoft Research
+  - MIT License
+  - https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2
+
+### Stop Word Lists
+- **NLTK Stop Words**
+  - Natural Language Toolkit
+  - Bird, Steven, Edward Loper and Ewan Klein (2009)
+  - Apache License 2.0
+
+- **scikit-learn Stop Words**
+  - scikit-learn developers
+  - BSD 3-Clause License
+
+- **spaCy Stop Words**
+  - Explosion AI
+  - MIT License
+
+- **Fox Stop Words**
+  - Christopher Fox (1989)
+  - "A Stop List for General Text"
+  - Technical Report, University of Rochester
+
+### Pronunciation Data
+- **CMU Pronouncing Dictionary**
+  - Carnegie Mellon University
+  - Version 0.7b
+  - Public Domain
+
+## Contact
+
+For questions or issues, please open an issue in the repository. 
