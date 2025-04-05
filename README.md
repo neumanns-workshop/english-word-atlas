@@ -2,7 +2,6 @@
 
 [![CI](https://github.com/neumanns-workshop/english-word-atlas/actions/workflows/ci.yml/badge.svg)](https://github.com/neumanns-workshop/english-word-atlas/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/neumanns-workshop/english-word-atlas/branch/main/graph/badge.svg)](https://codecov.io/gh/neumanns-workshop/english-word-atlas)
-[![PyPI version](https://badge.fury.io/py/english-word-atlas.svg)](https://badge.fury.io/py/english-word-atlas)
 [![Python Versions](https://img.shields.io/pypi/pyversions/english-word-atlas.svg)](https://pypi.org/project/english-word-atlas/)
 
 A curated dataset of 8,536 English words and phrases with comprehensive linguistic and semantic annotations, designed to capture the conceptual diversity of English. This dataset combines historical lexicographic resources with modern NLP tools to provide rich annotations for cognitive and computational linguistics research. Notably, due to Roget's Thesaurus entries, it includes multi-word phrases (e.g., "be so good as", "put a good face on") alongside single words, with full embedding and pronunciation coverage for both.
@@ -11,10 +10,8 @@ A curated dataset of 8,536 English words and phrases with comprehensive linguist
 
 ```bash
 # With pip
-pip install english-word-atlas
 
 # With uv (faster)
-uv pip install english-word-atlas
 ```
 
 ```python
@@ -63,10 +60,8 @@ english_word_atlas/
 
 ```bash
 # With pip
-pip install english-word-atlas
 
 # With uv (faster)
-uv pip install english-word-atlas
 
 # For development (with pip)
 pip install -e ".[dev,visualization,web]"

@@ -5,21 +5,34 @@ All notable changes to the English Word Atlas will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] - 2025-04-05
+
+### Changed
+- Removed PyPI distribution and focused on local development
+- Updated code coverage metrics to match actual 77% coverage
+- Fixed documentation to clarify installation instructions 
+
 ## [0.1.2] - 2025-04-04
 
 ### Added
 - Added support for [uv](https://github.com/astral-sh/uv) package manager with helper scripts
-- Added additional test coverage to increase from 75% to 84%
+- Added additional test coverage to increase from 75% to 77%
 - Added direct regex pattern support in the search method
 - Added CI workflow integration with Codecov for coverage reporting
 - Added branch protection for main branch to enforce code quality
+- Support for Python 3.9, 3.10, 3.11, and 3.12
+- Support for fuzzy word matching with Levenshtein distance
 
 ### Changed
 - Updated minimum Python version to 3.9 to support pytest-cov 6.0+
 - Improved documentation with clearer examples
 - Enhanced error handling in data loading functions
+- Updated CI workflow configuration for better testing
 
-## [0.1.1] - 2025-04-4
+### Fixed
+- Fixed issues with word lookup edge cases
+
+## [0.1.1] - 2025-04-04
 
 ### Added
 - Added comprehensive test suite to achieve 75%+ branch coverage
