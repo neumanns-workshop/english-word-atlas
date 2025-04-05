@@ -100,4 +100,4 @@ exclude_lines = [
     "raise ImportError",
 ]
 show_missing = true
-fail_under = 75 
+fail_under = 77 
