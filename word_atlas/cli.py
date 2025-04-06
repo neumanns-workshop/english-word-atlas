@@ -23,6 +23,20 @@ def info_command(args):
 
     word_info = atlas.get_word(args.word)
 
+    if args.json:
+        try:
+            # Remove embedding to save space
+            if "EMBEDDINGS_ALL_MINILM_L6_V2" in word_info:
+                word_info_copy = word_info.copy()
+                del word_info_copy["EMBEDDINGS_ALL_MINILM_L6_V2"]
+            else:
+                word_info_copy = word_info
+            print(json.dumps(word_info_copy, indent=2))
+        except TypeError as e:
+            print(f"Error: {str(e)}")
+            sys.exit(1)
+        return
+
     # Print basic information
     print(f"Information for '{args.word}':")
 
@@ -65,15 +79,6 @@ def info_command(args):
         for similar_word, score in similar:
             print(f"  {similar_word}: {score:.4f}")
 
-    # Print all data if requested
-    if args.json:
-        print("\nFull data (JSON):")
-        # Remove embedding to save space
-        if "EMBEDDINGS_ALL_MINILM_L6_V2" in word_info:
-            word_info_copy = word_info.copy()
-            del word_info_copy["EMBEDDINGS_ALL_MINILM_L6_V2"]
-            print(json.dumps(word_info_copy, indent=2))
-
 
 def search_command(args):
     """Search for words/phrases matching a pattern."""
@@ -90,6 +95,11 @@ def search_command(args):
                 value = True
             elif value.lower() == "false":
                 value = False
+            # Handle numeric values
+            elif value.isdigit():
+                value = int(value)
+            elif value.replace(".", "").isdigit():
+                value = float(value)
 
             results = [
                 w
@@ -153,55 +163,59 @@ def stats_command(args):
     """Show statistics about the dataset."""
     atlas = WordAtlas(args.data_dir)
 
-    stats = atlas.get_stats()
-    print("English Word Atlas Statistics:")
-    print(f"  Total entries: {stats['total_entries']}")
-    print(f"  Single words: {stats['single_words']}")
-    print(f"  Phrases: {stats['phrases']}")
-    print(f"  Embedding dimensions: {stats['embedding_dim']}")
+    try:
+        stats = atlas.get_stats()
+        print("English Word Atlas Statistics:")
+        print(f"  Total entries: {stats['total_entries']}")
+        print(f"  Single words: {stats['single_words']}")
+        print(f"  Phrases: {stats['phrases']}")
+        print(f"  Embedding dimensions: {stats['embedding_dim']}")
 
-    # Count by syllables
-    if not args.basic:
-        print("\nSyllable distribution:")
-        syllable_counts = {}
-        for count in atlas.get_syllable_counts():
-            syllable_counts[count] = len(atlas.filter_by_syllable_count(count))
+        # Count by syllables
+        if not args.basic:
+            print("\nSyllable distribution:")
+            syllable_counts = {}
+            for count in atlas.get_syllable_counts():
+                syllable_counts[count] = len(atlas.filter_by_syllable_count(count))
 
-        for count in sorted(syllable_counts.keys()):
-            print(f"  {count} syllable(s): {syllable_counts[count]}")
+            for count in sorted(syllable_counts.keys()):
+                print(f"  {count} syllable(s): {syllable_counts[count]}")
 
-        # Count by frequency buckets
-        print("\nFrequency distribution:")
-        freq_buckets = {"0": 0, "1-10": 0, "11-100": 0, "101-1000": 0, ">1000": 0}
+            # Count by frequency buckets
+            print("\nFrequency distribution:")
+            freq_buckets = {"0": 0, "1-10": 0, "11-100": 0, "101-1000": 0, ">1000": 0}
 
-        for word, info in atlas.word_data.items():
-            if "FREQ_GRADE" in info:
-                freq = info["FREQ_GRADE"]
-                if freq == 0:
-                    freq_buckets["0"] += 1
-                elif freq <= 10:
-                    freq_buckets["1-10"] += 1
-                elif freq <= 100:
-                    freq_buckets["11-100"] += 1
-                elif freq <= 1000:
-                    freq_buckets["101-1000"] += 1
-                else:
-                    freq_buckets[">1000"] += 1
+            for word, info in atlas.word_data.items():
+                if "FREQ_GRADE" in info:
+                    freq = info["FREQ_GRADE"]
+                    if freq == 0:
+                        freq_buckets["0"] += 1
+                    elif freq <= 10:
+                        freq_buckets["1-10"] += 1
+                    elif freq <= 100:
+                        freq_buckets["11-100"] += 1
+                    elif freq <= 1000:
+                        freq_buckets["101-1000"] += 1
+                    else:
+                        freq_buckets[">1000"] += 1
 
-        for bucket, count in freq_buckets.items():
-            print(f"  Frequency {bucket}: {count}")
+            for bucket, count in freq_buckets.items():
+                print(f"  Frequency {bucket}: {count}")
 
-        # Count by wordlists
-        print("\nWordlist coverage:")
-        wordlists = {"OGDEN": 0, "GSL": 0, "NGSL": 0, "SWADESH": 0}
+            # Count by wordlists
+            print("\nWordlist coverage:")
+            wordlists = {"OGDEN": 0, "GSL": 0, "NGSL": 0, "SWADESH": 0}
 
-        for list_name in wordlists:
-            wordlists[list_name] = len(atlas.filter_by_attribute(list_name))
+            for list_name in wordlists:
+                wordlists[list_name] = len(atlas.filter_by_attribute(list_name))
 
-        for list_name, count in wordlists.items():
-            print(
-                f"  {list_name}: {count} words ({count/stats['total_entries']*100:.1f}%)"
-            )
+            for list_name, count in wordlists.items():
+                print(
+                    f"  {list_name}: {count} words ({count/stats['total_entries']*100:.1f}%)"
+                )
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        sys.exit(1)
 
 
 def wordlist_create_command(args):
@@ -214,111 +228,64 @@ def wordlist_create_command(args):
         name=args.name,
         description=args.description,
         creator=args.creator,
-        tags=args.tags.split(",") if args.tags else None,
+        tags=args.tags.split(",") if args.tags else [],
     )
 
-    # Add words from criteria
-    total_added = 0
-
+    # Add words based on criteria
     if args.search_pattern:
         added = builder.add_by_search(args.search_pattern)
         print(f"Added {added} words matching pattern '{args.search_pattern}'")
-        total_added += added
 
     if args.attribute:
-        attr_name, _, value = args.attribute.partition("=")
-        if value:
-            # Handle boolean values
-            if value.lower() == "true":
+        try:
+            # Parse attribute=value format
+            if "=" in args.attribute:
+                attr_name, value = args.attribute.split("=", 1)
+                # Convert value to appropriate type
+                if value.lower() == "true":
+                    value = True
+                elif value.lower() == "false":
+                    value = False
+                elif value.isdigit():
+                    value = int(value)
+                elif value.replace(".", "").isdigit():
+                    value = float(value)
+            else:
+                attr_name = args.attribute
                 value = True
-            elif value.lower() == "false":
-                value = False
 
             added = builder.add_by_attribute(attr_name, value)
-        else:
-            added = builder.add_by_attribute(attr_name)
+            print(
+                f"Added {added} words with attribute {args.attribute}"
+            )  # Use original attribute string
+        except ValueError as e:
+            print(f"Error: {str(e)}")
+            sys.exit(1)
 
-        print(f"Added {added} words with attribute {args.attribute}")
-        total_added += added
-
-    if args.syllables is not None:
+    if args.syllables:
         added = builder.add_by_syllable_count(args.syllables)
         print(f"Added {added} words with {args.syllables} syllables")
-        total_added += added
 
     if args.min_freq is not None:
         added = builder.add_by_frequency(args.min_freq, args.max_freq)
-        freq_range = (
-            f">= {args.min_freq}"
-            if args.max_freq is None
-            else f"{args.min_freq}-{args.max_freq}"
-        )
-        print(f"Added {added} words with frequency {freq_range}")
-        total_added += added
+        print(f"Added {added} words with frequency {args.min_freq}-{args.max_freq}")
 
     if args.similar_to:
-        if not atlas.has_word(args.similar_to):
-            print(f"Error: Word '{args.similar_to}' not found in the dataset")
-            sys.exit(1)
-
-        n = args.similar_count or 10
-        added = builder.add_similar_words(args.similar_to, n)
+        similar_count = args.similar_count or 10
+        added = builder.add_similar_words(args.similar_to, similar_count)
         print(f"Added {added} words similar to '{args.similar_to}'")
-        total_added += added
-
-    # If we still have no words and input file provided, read from there
-    if total_added == 0 and args.input_file:
-        try:
-            with open(args.input_file, "r", encoding="utf-8") as f:
-                # Check if it's a JSON file
-                if args.input_file.endswith(".json"):
-                    data = json.load(f)
-                    if isinstance(data, list):
-                        words = data
-                    elif isinstance(data, dict) and "words" in data:
-                        words = data["words"]
-                    else:
-                        print(f"Error: Invalid JSON format in {args.input_file}")
-                        sys.exit(1)
-                else:
-                    # Assume text file with one word per line
-                    words = [line.strip() for line in f.readlines() if line.strip()]
-
-            added = builder.add_words(words)
-            print(f"Added {added} words from '{args.input_file}'")
-            total_added += added
-
-        except (FileNotFoundError, json.JSONDecodeError) as e:
-            print(f"Error reading file: {e}")
-            sys.exit(1)
 
     # Save the wordlist
-    if args.output:
-        try:
-            builder.save(args.output)
-            print(f"Wordlist saved to '{args.output}' with {builder.get_size()} words")
-        except Exception as e:
-            print(f"Error saving wordlist: {e}")
-            sys.exit(1)
-    else:
-        # Just display stats
-        print(
-            f"\nCreated wordlist '{builder.metadata['name']}' with {builder.get_size()} words"
-        )
-        if builder.get_size() > 0:
-            print("Sample words:")
-            for word in sorted(list(builder.words))[:10]:
-                print(f"  {word}")
-            if builder.get_size() > 10:
-                print(f"  ... and {builder.get_size() - 10} more")
+    builder.save(args.output)
+    print(f"Wordlist saved to '{args.output}' with {len(builder.words)} words")
 
-            if not args.no_analyze:
-                analysis = builder.analyze()
-                print("\nWordlist analysis:")
-                print(f"  Single words: {analysis['single_words']}")
-                print(f"  Phrases: {analysis['phrases']}")
-                if "frequency" in analysis:
-                    print(f"  Average frequency: {analysis['frequency']['average']}")
+    # Analyze the wordlist
+    if not args.no_analyze:
+        stats = builder.analyze()
+        print("\nWordlist statistics:")
+        print(f"  Total entries: {stats['size']}")
+        print(f"  Single words: {stats['single_words']}")
+        print(f"  Phrases: {stats['phrases']}")
 
 
 def wordlist_modify_command(args):
@@ -348,12 +315,17 @@ def wordlist_modify_command(args):
     # Add words from criteria
     total_modified = 0
 
-    if args.add_pattern:
+    if args.add:
+        added = builder.add_words(set(args.add))
+        print(f"Added {added} words to the wordlist")
+        total_modified += added
+
+    if hasattr(args, "add_pattern") and args.add_pattern:
         added = builder.add_by_search(args.add_pattern)
         print(f"Added {added} words matching pattern '{args.add_pattern}'")
         total_modified += added
 
-    if args.add_attribute:
+    if hasattr(args, "add_attribute") and args.add_attribute:
         attr_name, _, value = args.add_attribute.partition("=")
         if value:
             # Handle boolean values
@@ -369,7 +341,7 @@ def wordlist_modify_command(args):
         print(f"Added {added} words with attribute {args.add_attribute}")
         total_modified += added
 
-    if args.add_similar_to:
+    if hasattr(args, "add_similar_to") and args.add_similar_to:
         if not atlas.has_word(args.add_similar_to):
             print(f"Error: Word '{args.add_similar_to}' not found in the dataset")
         else:
@@ -378,7 +350,12 @@ def wordlist_modify_command(args):
             print(f"Added {added} words similar to '{args.add_similar_to}'")
             total_modified += added
 
-    if args.remove_pattern:
+    if args.remove:
+        removed = builder.remove_words(set(args.remove))
+        print(f"Removed {removed} words from the wordlist")
+        total_modified += removed
+
+    if hasattr(args, "remove_pattern") and args.remove_pattern:
         # Find words to remove
         to_remove = atlas.search(args.remove_pattern)
         removed = builder.remove_words(to_remove)
@@ -465,64 +442,39 @@ def wordlist_analyze_command(args):
 
 
 def wordlist_merge_command(args):
-    """Merge multiple wordlists into a single wordlist."""
+    """Merge multiple wordlists."""
+    if not args.inputs:
+        print("Error: At least two input files are required")
+        sys.exit(1)
+
     atlas = WordAtlas(args.data_dir)
     merged = WordlistBuilder(atlas)
 
-    # Set metadata for the merged list
-    merged.set_metadata(
-        name=args.name or "Merged Wordlist",
-        description=args.description or f"Merged from {len(args.wordlists)} wordlists",
-        creator=args.creator,
-        tags=args.tags.split(",") if args.tags else None,
-    )
+    # Set metadata
+    merged.metadata["name"] = args.name
+    merged.metadata["description"] = args.description
+    merged.metadata["creator"] = args.creator
+    merged.metadata["tags"] = args.tags.split(",") if args.tags else []
 
-    # Load and merge each wordlist
-    for wordlist_file in args.wordlists:
+    # Load and merge wordlists
+    for input_file in args.inputs:
         try:
-            builder = WordlistBuilder.load(wordlist_file, atlas)
-            wordlist = builder.get_wordlist()
-            added = merged.add_words(wordlist)
-
-            print(f"Added {added} words from '{wordlist_file}'")
-
-            # Add metadata about the source
-            merged.metadata["criteria"].append(
-                {
-                    "type": "merge",
-                    "source": str(wordlist_file),
-                    "name": builder.metadata["name"],
-                    "count": added,
-                    "description": f"Merged {added} words from '{builder.metadata['name']}'",
-                }
-            )
-
-        except (FileNotFoundError, ValueError) as e:
-            print(f"Error loading wordlist '{wordlist_file}': {e}")
-            if not args.ignore_errors:
-                sys.exit(1)
-
-    # Save the merged wordlist
-    if args.output:
-        try:
-            merged.save(args.output)
+            wordlist = WordlistBuilder.load(input_file, atlas)
             print(
-                f"Merged wordlist saved to '{args.output}' with {merged.get_size()} words"
+                f"Loaded '{wordlist.metadata['name']}' with {len(wordlist.words)} words"
             )
-        except Exception as e:
-            print(f"Error saving merged wordlist: {e}")
+            merged.words.update(wordlist.words)
+            merged.metadata["criteria"].extend(wordlist.metadata["criteria"])
+            print(
+                f"Added {len(wordlist.words)} words from '{wordlist.metadata['name']}'"
+            )
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            print(f"Error loading wordlist '{input_file}': {e}")
             sys.exit(1)
-    else:
-        # Just display stats
-        print(
-            f"\nCreated merged wordlist '{merged.metadata['name']}' with {merged.get_size()} words"
-        )
-        if merged.get_size() > 0:
-            print("Sample words:")
-            for word in sorted(list(merged.words))[:10]:
-                print(f"  {word}")
-            if merged.get_size() > 10:
-                print(f"  ... and {merged.get_size() - 10} more")
+
+    # Save merged wordlist
+    merged.save(args.output)
+    print(f"Merged wordlist saved to '{args.output}' with {len(merged.words)} words")
 
 
 def main():
@@ -636,6 +588,10 @@ def main():
     modify_parser.add_argument("--description", help="New description for the wordlist")
     modify_parser.add_argument("--creator", help="New creator for the wordlist")
     modify_parser.add_argument("--tags", help="New comma-separated list of tags")
+    modify_parser.add_argument("--add", nargs="+", help="Add words to the wordlist")
+    modify_parser.add_argument(
+        "--remove", nargs="+", help="Remove words from the wordlist"
+    )
     modify_parser.add_argument("--add-pattern", help="Add words matching this pattern")
     modify_parser.add_argument("--add-attribute", help="Add words with this attribute")
     modify_parser.add_argument(
@@ -666,7 +622,7 @@ def main():
     merge_parser = wordlist_subparsers.add_parser(
         "merge", help="Merge multiple wordlists into a single wordlist"
     )
-    merge_parser.add_argument("wordlists", nargs="+", help="Wordlist files to merge")
+    merge_parser.add_argument("inputs", nargs="+", help="Wordlist files to merge")
     merge_parser.add_argument("--name", help="Name for the merged wordlist")
     merge_parser.add_argument(
         "--description", help="Description for the merged wordlist"
@@ -675,11 +631,6 @@ def main():
     merge_parser.add_argument("--tags", help="Comma-separated list of tags")
     merge_parser.add_argument(
         "--output", help="Output file to save the merged wordlist"
-    )
-    merge_parser.add_argument(
-        "--ignore-errors",
-        action="store_true",
-        help="Continue merging even if some wordlists fail to load",
     )
 
     args = parser.parse_args()

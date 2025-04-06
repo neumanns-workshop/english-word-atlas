@@ -5,6 +5,23 @@ All notable changes to the English Word Atlas will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4] - 2025-04-06
+
+### Fixed
+- Resolved multiple failing unit tests in `tests/unit/test_cli.py` related to mock setups and assertions (`test_info_json_output`, `test_search_numeric_attribute`, `test_search_phrase_filtering`, `test_search_verbose_output`, `test_info_roget_categories_overflow`, `test_wordlist_create_no_tags`, `test_wordlist_modify_file_not_found`).
+- Corrected syntax and test logic issues introduced during test fixing.
+
+### Added
+- New unit tests in `tests/unit/test_main.py` to cover CLI argument parsing and command dispatch logic in `cli.main()`.
+- New unit tests in `tests/unit/test_cli.py` to cover specific branches in command functions (`info_command`, `search_command`, `wordlist_create_command`).
+- New fixture `mock_cli_atlas_many_roget` in `tests/conftest.py` for testing `info_command` edge case.
+
+### Changed
+- Increased overall test coverage from ~77% to 93.41%.
+- Significantly improved test coverage for `word_atlas/cli.py` from ~64% to 87%.
+- Updated `README.md` with current test status, improved API/CLI examples, updated testing instructions, and refined repository structure description.
+- Enhanced mock data in `tests/conftest.py` (`mock_cli_atlas`) to improve coverage of detailed statistics calculation in `stats_command`.
+
 ## [0.1.3] - 2025-04-05
 
 ### Changed

@@ -519,13 +519,19 @@ class WordlistBuilder:
         return stats
 
     def export_text(
-        self, filename: Union[str, Path], include_metadata: bool = True
+        self,
+        filename: Union[str, Path],
+        include_metadata: bool = True,
+        sort_key: Optional[Callable[[str], Any]] = None,
+        word_format: Optional[Callable[[str], str]] = None,
     ) -> None:
         """Export the wordlist to a text file (one word per line).
 
         Args:
             filename: Path to save the wordlist to
             include_metadata: Whether to include metadata as comments
+            sort_key: Optional function to use as sort key (default: alphabetical)
+            word_format: Optional function to format words before writing
         """
         filename = Path(filename)
         # Make sure the directory exists
@@ -545,8 +551,10 @@ class WordlistBuilder:
                 f.write("#\n")
 
             # Write words (one per line)
-            for word in sorted(self.words):
-                f.write(f"{word}\n")
+            words = sorted(self.words, key=sort_key) if sort_key else sorted(self.words)
+            for word in words:
+                formatted_word = word_format(word) if word_format else word
+                f.write(f"{formatted_word}\n")
 
     def __len__(self) -> int:
         """Return the number of words in the wordlist."""

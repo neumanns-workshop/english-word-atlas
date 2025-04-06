@@ -74,10 +74,9 @@ class WordAtlas:
                 self.syllable_index[syllable_count].add(word)
             # Calculate syllable count from ARPABET if SYLLABLE_COUNT not present
             elif "ARPABET" in attributes and attributes["ARPABET"]:
-                # Calculate syllable count using the first pronunciation variant
-                syllable_count = self._count_syllables_from_arpabet(
-                    attributes["ARPABET"][0]
-                )
+                # Get first pronunciation variant
+                phonemes = attributes["ARPABET"][0]
+                syllable_count = self._count_syllables_from_arpabet(phonemes)
                 # Store the syllable count in the word data for quick reference
                 attributes["SYLLABLE_COUNT"] = syllable_count
                 # Index by syllable count
