@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "english-word-atlas"
-version = "0.1.2"
+version = "0.1.3"
 description = "A comprehensive dataset of English words and phrases with linguistic and semantic annotations"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -53,6 +53,7 @@ Homepage = "https://github.com/neumanns-workshop/english-word-atlas"
 Repository = "https://github.com/neumanns-workshop/english-word-atlas.git"
 Issues = "https://github.com/neumanns-workshop/english-word-atlas/issues"
 Changelog = "https://github.com/neumanns-workshop/english-word-atlas/blob/main/CHANGELOG.md"
+Documentation = "https://github.com/neumanns-workshop/english-word-atlas/blob/main/README.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["word_atlas"]
