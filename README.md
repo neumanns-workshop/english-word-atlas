@@ -40,7 +40,7 @@ for word, score in similar_words:
     print(f"{word}: {score:.4f}")
 ```
 
-For uv usage, see [README-uv.md](README-uv.md).
+For `uv` usage, see [README-uv.md](README-uv.md).
 
 ## Repository Structure
 
@@ -50,16 +50,28 @@ english_word_atlas/
 ├── CHANGELOG.md        # Version history
 ├── ROADMAP.md          # Development roadmap
 ├── CONTRIBUTING.md     # Contribution guidelines
-├── requirements.txt    # Development dependencies
-├── pyproject.toml      # Package configuration
-├── run_tests.py        # Test runner script
+├── requirements.txt    # Development dependencies (managed via pyproject.toml)
+├── pyproject.toml      # Package configuration and dependencies
+├── run_tests.py        # Test runner script (deprecated, use pytest)
 ├── run-with-uv.sh      # Helper for uv (Unix/macOS)
 ├── run-with-uv.ps1     # Helper for uv (Windows)
 ├── README-uv.md        # uv usage instructions
 ├── examples/           # Example usage scripts
-├── tests/              # Test suite
-├── word_atlas/         # Python package
-└── data/               # Dataset files
+├── tests/              # Test suite (unit, integration)
+│   ├── conftest.py     # Pytest fixtures
+│   ├── unit/           # Unit tests for modules
+│   └── ...
+├── word_atlas/         # Python package source
+│   ├── __init__.py
+│   ├── __main__.py     # Main script entry point
+│   ├── atlas.py        # WordAtlas class
+│   ├── cli.py          # Command-line interface logic
+│   ├── data.py         # Data loading utilities
+│   └── wordlist.py     # WordlistBuilder class
+└── data/               # Dataset files (git-lfs managed)
+    ├── embeddings.npy
+    ├── word_data.json
+    └── word_index.json
 ```
 
 ## Installation
@@ -91,142 +103,152 @@ source .venv/bin/activate  # or .venv\Scripts\activate on Windows
 python -m venv .venv
 source .venv/bin/activate  # or .venv\Scripts\activate on Windows
 
-# Install dependencies
-pip install -e ".[dev,visualization,web]"
+# Install the package in editable mode with optional dev dependencies
+pip install -e ".[dev]"
 ```
 
 ### Data Files
 
-All data files are included in the `data` directory:
+All data files are included in the `data` directory and managed with Git LFS. Ensure you have Git LFS installed (`git lfs install`).
 
-- `data/word_data.json`: Linguistic and semantic annotations for each word
-- `data/word_index.json`: Indices for the embedding vectors
-- `data/embeddings.npy`: Pre-calculated embedding vectors
+- `data/word_data.json`: Linguistic and semantic annotations for each word/phrase.
+- `data/word_index.json`: Mapping from words/phrases to embedding vector indices.
+- `data/embeddings.npy`: Pre-calculated `all-MiniLM-L6-v2` embedding vectors (384 dimensions).
 
 ## Usage
 
-### Basic Usage
+### Basic Usage (Python API)
 
 ```python
 from word_atlas import WordAtlas
 
-# Initialize the atlas
+# Initialize the atlas (loads data automatically)
 atlas = WordAtlas()
 
 # Get information about a word
 data = atlas.get_word("elephant")
-print(f"Word data: {data}")
+if data:
+    print(f"Syllables: {data.get('SYLLABLE_COUNT')}")
+    print(f"Frequency Grade: {data.get('FREQ_GRADE')}")
+else:
+    print("Word not found.")
 
-# Get embedding vector
+
+# Get embedding vector (NumPy array)
 vector = atlas.get_embedding("elephant")
-print(f"Embedding shape: {vector.shape}")
+if vector is not None:
+    print(f"Embedding shape: {vector.shape}")
 
 # Find similar words
-similar = atlas.find_similar("elephant", n=5)
-print(f"Similar words: {similar}")
+similar = atlas.get_similar_words("elephant", n=5)
+print(f"Words similar to 'elephant': {similar}")
+
+# Check if word exists
+print(f"Has 'platypus'? {atlas.has_word('platypus')}")
 ```
 
-### Advanced Features
+### Advanced Features (Python API)
 
 ```python
-from word_atlas import WordAtlas
+# Filter words by attributes
+gsl_words = atlas.filter_by_attribute("GSL") # Words in the General Service List
+roget_words = atlas.filter_by_attribute("ROGET_ANIMAL") # Words in a Roget category
 
-# Initialize the WordAtlas
-# It will automatically locate the dataset in standard locations
-atlas = WordAtlas()
-
-# Or specify a custom data directory
-# atlas = WordAtlas(data_dir="/path/to/data")
-
-# Get information about a word
-info = atlas.get_word("happiness")
-print(f"Syllables: {info.get('SYLLABLE_COUNT')}")
-print(f"Pronunciation: {info.get('ARPABET', [['?']])[0]}")
-print(f"Frequency: {info.get('FREQ_GRADE', 0)}")
-
-# Get embedding for a word (returns numpy ndarray)
-embedding = atlas.get_embedding("happiness")
-
-# Find similar words (returns list of (word, score) tuples)
-similar_words = atlas.get_similar_words("happiness", n=10)
-for word, score in similar_words:
-    print(f"{word}: {score:.4f}")
-
-# Check if a word exists in the dataset
-if atlas.has_word("serendipity"):
-    print("Serendipity is in the dataset")
-
-# Get all phrases in the dataset
-phrases = atlas.get_phrases()
-
-# Get all single words
-single_words = atlas.get_single_words()
-
-# Search by regular expression
-regex_matches = atlas.search("happi.*")
-
-# Filter by attributes
-freedom_words = atlas.filter_by_attribute("ROGET_ABSTRACT")
-gsl_words = atlas.filter_by_attribute("GSL")
-
-# Filter by frequency
-common_words = atlas.filter_by_frequency(min_freq=100)
-rare_words = atlas.filter_by_frequency(max_freq=10)
+# Filter by frequency grade
+common_words = atlas.filter_by_frequency(min_freq=1, max_freq=10)
 
 # Filter by syllable count
-three_syllable_words = atlas.filter_by_syllable_count(3)
+two_syllable_words = atlas.filter_by_syllable_count(2)
 
-# Get similarity between two words
-similarity = atlas.word_similarity("happy", "sad")
+# Search using regex
+regex_matches = atlas.search(r"happi(ness|ly)")
+
+# Get all phrases
+phrases = atlas.get_phrases()
+
+# Get word similarity
+similarity = atlas.word_similarity("happy", "joyful")
+print(f"Similarity(happy, joyful): {similarity:.4f}")
 ```
 
-### Data Access Functions
-
-For advanced usage, you can access the raw data files directly:
+### Creating Wordlists (Python API)
 
 ```python
-from word_atlas.data import (
-    load_dataset,     # Load the complete dataset with embeddings
-    get_word_data,    # Get word attributes without embeddings
-    get_embeddings,   # Get the raw embedding matrix
-    get_word_index    # Get the mapping of words to embedding indices
-)
+from word_atlas import WordAtlas, WordlistBuilder
 
-# Load the entire dataset with embeddings
-complete_data = load_dataset()
+atlas = WordAtlas()
+builder = WordlistBuilder(atlas)
 
-# Access only the word attributes
-word_attributes = get_word_data()
+# Set metadata
+builder.set_metadata(name="Common GSL Words", description="Words from GSL with freq < 10")
 
-# Get the raw embeddings matrix
-embeddings_matrix = get_embeddings()
+# Add words using criteria
+builder.add_by_attribute("GSL")
+builder.add_by_frequency(max_freq=10)
 
-# Get the word to index mapping
-word_to_index = get_word_index()
+# Save the wordlist
+output_file = "common_gsl.json"
+builder.save(output_file)
+print(f"Wordlist saved to {output_file} with {builder.get_size()} words.")
+
+# Load an existing wordlist
+loaded_builder = WordlistBuilder.load(output_file, atlas)
+print(f"Loaded '{loaded_builder.metadata['name']}' with {loaded_builder.get_size()} words.")
 ```
 
-### Command-line Interface
+### Command-line Interface (CLI)
 
-The package includes a comprehensive command-line interface for exploring the dataset:
+After installation (`pip install -e .`), you can use the `word_atlas` command.
 
 ```bash
 # Get information about a word
-python -m word_atlas info happiness
+word_atlas info happiness
+
+# Get info and similar words
+word_atlas info freedom
 
 # Search for words matching a pattern
-python -m word_atlas search "happ.*" --words-only
+word_atlas search "happ.*" --words-only
 
-# Filter by attributes
-python -m word_atlas search ".*" --attribute GSL --min-freq 200
+# Search and filter by attribute and frequency
+word_atlas search ".*" --attribute GSL=true --min-freq 5
+
+# Search for words with the ROGET_ANIMAL attribute (existence check)
+word_atlas search ".*" --attribute ROGET_ANIMAL
 
 # Show dataset statistics
-python -m word_atlas stats
+word_atlas stats
 
 # Show detailed statistics
-python -m word_atlas stats --detailed
+word_atlas stats --detailed # Use --basic for less detail
+
+# --- Wordlist Commands ---
+
+# Create a wordlist from search and attribute
+word_atlas wordlist create --name "Common Animals" \
+    --search-pattern ".*" --attribute ROGET_ANIMAL \
+    --max-freq 20 --output animals.json
+
+# Create a wordlist of words similar to 'happy'
+word_atlas wordlist create --name "Happy Synonyms" \
+    --similar-to happy --similar-count 15 \
+    --output happy_similar.json
+
+# Modify a wordlist: add and remove words
+word_atlas wordlist modify animals.json --add cat dog --remove elephant
+
+# Modify a wordlist: update metadata
+word_atlas wordlist modify animals.json --description "Common land animals" --tags "fauna,common"
+
+# Analyze a wordlist
+word_atlas wordlist analyze animals.json
+
+# Merge two wordlists
+word_atlas wordlist merge animals.json happy_similar.json --output combined.json --name "Combined List"
 
 # Get help for a specific command
-python -m word_atlas info --help
+word_atlas search --help
+word_atlas wordlist create --help
 ```
 
 ### Examples
@@ -238,128 +260,38 @@ The package includes example scripts in the `examples/` directory:
 python examples/basic_usage.py
 
 # Run the text analysis example
-python examples/text_analysis.py /path/to/your/text.txt
+# python examples/text_analysis.py /path/to/your/text.txt
 ```
 
 ## Testing
 
-The package includes a comprehensive test suite using pytest.
+The package includes a comprehensive test suite using `pytest`. Ensure development dependencies are installed (`pip install -e ".[dev]"`).
+
+Run the tests and generate a coverage report:
 
 ```bash
-# With the run_tests.py script
-python run_tests.py
-
-# With uv
-./run-with-uv.sh test
-
-# Directly with pytest
-pytest
+# Run unit tests with coverage report
+pytest tests/unit/ --cov=word_atlas --cov-report term-missing -v
 ```
 
-## Dataset Contents
+Current status: 101 tests passing, 93.41% coverage.
 
-### Semantic Categories
-- **Roget's Categories** (32 main categories, covering 28.5% at highest)
-  - Abstract Relations
-  - Space
-  - Matter
-  - Intellect
-  - Volition
-  - Affections
-  - Includes numerous multi-word phrases and expressions
-  
-- **Basic English Categories**
-  - Basic Operations and Qualities
-  - Field-specific Vocabularies (19 fields)
-  - Supplementary Technical Terms
-  
-- **Core Vocabulary Lists**
-  - GSL (General Service List): 26.0% coverage
-  - NGSL (New General Service List v1.2): 32.2% coverage
-  - Swadesh Lists (Core 100 and Extended 207)
+## Data Sources
 
-### Linguistic Features
-- **Embeddings**: ALL-MiniLM-L6-v2 (384 dimensions)
-  - Complete coverage (100% of entries)
-  - Normalized vectors (L2 norm = 1.000)
-  - Distributed semantic space (no dominant components)
-  - Full coverage of both single words and phrases
+The dataset integrates information from various sources:
 
-- **Pronunciations**: ARPABET format
-  - Average 1.24 variants per word
-  - 18.3% of entries have multiple pronunciations
-  - Maximum 8 variants for some phrases
-  - Comprehensive coverage of multi-word expressions
-  - Example: "be so good as" → [('B', 'IY1', 'S', 'OW1', 'G', 'UH1', 'D', 'AE1', 'Z'), ...]
+1.  **Roget's Thesaurus (Project Gutenberg):** Semantic categories and headwords.
+2.  **CMU Pronouncing Dictionary:** Phonetic transcriptions (ARPABET).
+3.  **General Service List (GSL) & New General Service List (NGSL):** Core vocabulary lists.
+4.  **Ogden's Basic English:** Simplified English vocabulary.
+5.  **Swadesh List:** Basic concepts for historical linguistics.
+6.  **Word frequency data:** Primarily based on SUBTLEXus frequencies, mapped to logarithmic grades.
+7.  **Sentence Transformers (`all-MiniLM-L6-v2`):** Pre-trained embeddings for semantic similarity.
 
-- **Frequencies**: Raw counts and computed grades
-  - Raw frequency counts for single words
-  - Computed frequency grades for all entries (words and phrases)
-  - Phrase frequencies derived from component words
-  - Zero frequencies flagged for review
-  - Example: "take money" → freq_count: 640.76
+## Contributing
 
-### Stop Word Classifications
-Multiple standard NLP stop word lists:
-- NLTK (0.9% coverage)
-- scikit-learn (2.4% coverage)
-- spaCy (2.4% coverage)
-- Fox (2.8% coverage)
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-## Statistics
+## License
 
-### Realistic Vocabulary Coverage Analysis
-
-Our analysis of wordlist coverage against SUBTLEX-US frequency data reveals some eye-opening statistics:
-
-#### Key Coverage Findings
-
-- **Standard Wordlists Are Limited**: The widely-used GSL (General Service List) covers only 59.9% of the top 1,000 most frequent English words, despite containing 2,218 words
-- **Vocabulary Efficiency**: The ALL_INTERSECTION set (26 words) appears in all major wordlists and covers 14% of the top 100 most frequent words
-- **Coverage Sweet Spot**: OGDEN_BASIC_ALL (831 words) achieves 46% coverage of the top 100 most frequent words
-- **Frequency Drop-off**: STOP_NLTK (75 words) covers 44% of the top 100 most frequent words, but only 7.2% of the top 1,000
-
-#### Beyond Single-Word Coverage
-
-Unlike most wordlists, English Word Atlas includes:
-- **Common Idiomatic Phrases**: Multi-word expressions like "take heart" and "bear in mind" that are essential for natural language use
-- **Semantic Diversity**: Words deliberately selected to cover the full conceptual space of English, not just frequency-based selection
-- **Rich Annotations**: Each entry includes pronunciation, embeddings, and multiple categorical annotations
-
-#### Word Atlas Capabilities
-
-The English Word Atlas provides accurate coverage statistics and powerful filtering capabilities to:
-- Combine existing wordlists for optimal frequency coverage
-- Filter by syllable count, frequency, and semantic categories
-- Create custom wordlists tailored to specific learning objectives
-- Analyze real coverage against frequency data rather than inflated claims
-
-With 8,536 words and phrases categorized across multiple dimensions, English Word Atlas offers unparalleled flexibility for language learning, teaching, and linguistics research.
-
-### Distribution
-- Total entries: 8,536 words and phrases
-  - Includes both single words and multi-word expressions
-  - Phrases primarily from Roget's Thesaurus categories
-- Syllable distribution:
-  - 1 syllable: 20.1%
-  - 2 syllables: 36.5%
-  - 3 syllables: 26.8%
-  - 4+ syllables: 16.6% (including multi-word phrases)
-
-### Coverage
-- Complete embedding coverage (100%)
-- Category coverage varies from 0.1% to 32.2%
-- Multiple pronunciation variants for 1,564 entries
-
-## Data Format
-
-The dataset is provided as a set of files designed for efficient storage and access:
-
-## Development Workflow
-
-This project uses a protected `main` branch and requires all changes to go through pull requests:
-
-1. Development work should be done on the `develop` branch
-2. Create a pull request from `develop` to `main` when ready to release
-3. CI checks must pass before merging
-4. Once approved, changes will be merged to `main`
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. Data sources may have their own licenses.
