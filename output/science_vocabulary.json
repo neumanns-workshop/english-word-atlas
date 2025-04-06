@@ -1,0 +1,282 @@
+{
+  "metadata": {
+    "name": "Scientific Vocabulary",
+    "description": "Terms commonly used in scientific writing and discussion",
+    "creator": "English Word Atlas",
+    "tags": [
+      "science",
+      "academic",
+      "technical",
+      "vocabulary"
+    ],
+    "criteria": [
+      {
+        "type": "attribute",
+        "attribute": "ROGET_MATTER",
+        "value": "True",
+        "count": 78,
+        "description": "Added 78 words with attribute ROGET_MATTER=True"
+      },
+      {
+        "type": "search",
+        "pattern": "log[yi]",
+        "count": 15,
+        "description": "Added 15 words matching 'log[yi]'"
+      },
+      {
+        "type": "search",
+        "pattern": "method",
+        "count": 2,
+        "description": "Added 2 words matching 'method'"
+      },
+      {
+        "type": "search",
+        "pattern": "scien",
+        "count": 6,
+        "description": "Added 6 words matching 'scien'"
+      },
+      {
+        "type": "search",
+        "pattern": "theor",
+        "count": 3,
+        "description": "Added 3 words matching 'theor'"
+      },
+      {
+        "type": "search",
+        "pattern": "analy",
+        "count": 5,
+        "description": "Added 5 words matching 'analy'"
+      },
+      {
+        "type": "search",
+        "pattern": "data",
+        "count": 2,
+        "description": "Added 2 words matching 'data'"
+      },
+      {
+        "type": "search",
+        "pattern": "examin",
+        "count": 3,
+        "description": "Added 3 words matching 'examin'"
+      },
+      {
+        "type": "search",
+        "pattern": "hypoth",
+        "count": 1,
+        "description": "Added 1 words matching 'hypoth'"
+      },
+      {
+        "type": "search",
+        "pattern": "experim",
+        "count": 3,
+        "description": "Added 3 words matching 'experim'"
+      },
+      {
+        "type": "search",
+        "pattern": "observ",
+        "count": 3,
+        "description": "Added 3 words matching 'observ'"
+      },
+      {
+        "type": "search",
+        "pattern": "measur",
+        "count": 5,
+        "description": "Added 5 words matching 'measur'"
+      },
+      {
+        "type": "explicit_words",
+        "count": 5,
+        "description": "Explicitly added 5 words"
+      },
+      {
+        "type": "similar_words",
+        "target_word": "science",
+        "count": 2,
+        "description": "Added 2 words similar to 'science'"
+      },
+      {
+        "type": "explicit_words",
+        "count": 5,
+        "description": "Explicitly added 5 words"
+      },
+      {
+        "type": "similar_words",
+        "target_word": "theory",
+        "count": 2,
+        "description": "Added 2 words similar to 'theory'"
+      },
+      {
+        "type": "explicit_words",
+        "count": 5,
+        "description": "Explicitly added 5 words"
+      },
+      {
+        "type": "similar_words",
+        "target_word": "analysis",
+        "count": 2,
+        "description": "Added 2 words similar to 'analysis'"
+      },
+      {
+        "type": "explicit_words",
+        "count": 5,
+        "description": "Explicitly added 5 words"
+      },
+      {
+        "type": "similar_words",
+        "target_word": "research",
+        "count": 3,
+        "description": "Added 3 words similar to 'research'"
+      },
+      {
+        "type": "explicit_words",
+        "count": 5,
+        "description": "Explicitly added 5 words"
+      },
+      {
+        "type": "similar_words",
+        "target_word": "experiment",
+        "count": 1,
+        "description": "Added 1 words similar to 'experiment'"
+      }
+    ],
+    "size": 136
+  },
+  "words": [
+    "hardness",
+    "scraping",
+    "plain",
+    "tenacious",
+    "zoology",
+    "cloudy",
+    "hypothesis",
+    "muddy",
+    "science",
+    "wind",
+    "measurably",
+    "diluted",
+    "air",
+    "chemistry",
+    "marsh",
+    "experimentally",
+    "apologize",
+    "land",
+    "evaluation",
+    "soft",
+    "unctuous",
+    "dry",
+    "analytical",
+    "examination",
+    "experimental",
+    "examine",
+    "vaporize",
+    "liquefaction",
+    "rarefied",
+    "elasticity",
+    "experiment",
+    "apology",
+    "liquid",
+    "dense",
+    "unyielding",
+    "stretch",
+    "database",
+    "observant",
+    "vascular",
+    "elastic",
+    "density",
+    "scientist",
+    "conscientious",
+    "chronological",
+    "structure",
+    "psychology",
+    "analytic",
+    "softening",
+    "rarity",
+    "dryness",
+    "stream",
+    "data",
+    "observe",
+    "researcher",
+    "reeking",
+    "varnish",
+    "splitting",
+    "theorize",
+    "insular",
+    "bubble",
+    "physiology",
+    "geology",
+    "lubricated",
+    "method",
+    "structural",
+    "flowing",
+    "theory",
+    "test",
+    "blowing",
+    "investigation",
+    "analyze",
+    "theological",
+    "solidified",
+    "lubricate",
+    "fluidity",
+    "psychological",
+    "biology",
+    "blow",
+    "methodically",
+    "water",
+    "scholarly",
+    "principle",
+    "pulverized",
+    "fluent",
+    "champaign",
+    "moist",
+    "vaporization",
+    "conscience",
+    "logic",
+    "physics",
+    "oil",
+    "resin",
+    "analyst",
+    "under examination",
+    "measure",
+    "zoological",
+    "measurement",
+    "yielding",
+    "prescient",
+    "conduit",
+    "flow",
+    "moisture",
+    "powdery",
+    "measuring",
+    "island",
+    "study",
+    "rare",
+    "in no measured terms",
+    "friction",
+    "scientific",
+    "theoretical",
+    "biological",
+    "technology",
+    "watery",
+    "softness",
+    "sea",
+    "observation",
+    "brittle",
+    "sneezing",
+    "analysis",
+    "archaeological",
+    "hard",
+    "dried",
+    "oceanic",
+    "rub",
+    "dropping",
+    "earthy",
+    "concept",
+    "drenching",
+    "bubbling",
+    "gaseous",
+    "liquefied",
+    "washing",
+    "ashore",
+    "fanning",
+    "moisten"
+  ]
+}
