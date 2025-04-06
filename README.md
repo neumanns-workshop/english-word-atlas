@@ -2,16 +2,24 @@
 
 [![CI](https://github.com/neumanns-workshop/english-word-atlas/actions/workflows/ci.yml/badge.svg)](https://github.com/neumanns-workshop/english-word-atlas/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/neumanns-workshop/english-word-atlas/branch/main/graph/badge.svg)](https://codecov.io/gh/neumanns-workshop/english-word-atlas)
-[![Python Versions](https://img.shields.io/pypi/pyversions/english-word-atlas.svg)](https://pypi.org/project/english-word-atlas/)
+[![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://github.com/neumanns-workshop/english-word-atlas)
+[![Version](https://img.shields.io/badge/dynamic/toml?url=https://raw.githubusercontent.com/neumanns-workshop/english-word-atlas/main/pyproject.toml&query=$.project.version&label=version&color=brightgreen)](https://github.com/neumanns-workshop/english-word-atlas/blob/main/CHANGELOG.md)
 
 A curated dataset of 8,536 English words and phrases with comprehensive linguistic and semantic annotations, designed to capture the conceptual diversity of English. This dataset combines historical lexicographic resources with modern NLP tools to provide rich annotations for cognitive and computational linguistics research. Notably, due to Roget's Thesaurus entries, it includes multi-word phrases (e.g., "be so good as", "put a good face on") alongside single words, with full embedding and pronunciation coverage for both.
+
+> **Note:** This project is focused on local development and is not distributed via PyPI. Please use the local installation methods described below.
 
 ## Quick Start
 
 ```bash
-# With pip
+# Clone the repository
+git clone https://github.com/neumanns-workshop/english-word-atlas.git
+cd english-word-atlas
 
-# With uv (faster)
+# Set up environment with uv (recommended)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+./init-uv.sh  # or init-uv.ps1 on Windows
+source .venv/bin/activate  # or .venv\Scripts\activate on Windows
 ```
 
 ```python
@@ -54,23 +62,71 @@ english_word_atlas/
 └── data/               # Dataset files
 ```
 
-## Using the Package
+## Installation
 
-### Installation
+Clone the repository to get started:
 
 ```bash
-# With pip
-
-# With uv (faster)
-
-# For development (with pip)
-pip install -e ".[dev,visualization,web]"
-
-# For development (with uv)
-uv pip install -e ".[dev,visualization,web]"
+git clone https://github.com/neumanns-workshop/english-word-atlas.git
+cd english-word-atlas
 ```
 
+### Installation with uv (recommended)
+
+```bash
+# Install uv if you don't have it
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Set up the virtual environment and install dependencies
+./init-uv.sh  # or init-uv.ps1 on Windows
+
+# Activate the environment
+source .venv/bin/activate  # or .venv\Scripts\activate on Windows
+```
+
+### Installation with pip
+
+```bash
+# Create a virtual environment
+python -m venv .venv
+source .venv/bin/activate  # or .venv\Scripts\activate on Windows
+
+# Install dependencies
+pip install -e ".[dev,visualization,web]"
+```
+
+### Data Files
+
+All data files are included in the `data` directory:
+
+- `data/word_data.json`: Linguistic and semantic annotations for each word
+- `data/word_index.json`: Indices for the embedding vectors
+- `data/embeddings.npy`: Pre-calculated embedding vectors
+
+## Usage
+
 ### Basic Usage
+
+```python
+from word_atlas import WordAtlas
+
+# Initialize the atlas
+atlas = WordAtlas()
+
+# Get information about a word
+data = atlas.get_word("elephant")
+print(f"Word data: {data}")
+
+# Get embedding vector
+vector = atlas.get_embedding("elephant")
+print(f"Embedding shape: {vector.shape}")
+
+# Find similar words
+similar = atlas.find_similar("elephant", n=5)
+print(f"Similar words: {similar}")
+```
+
+### Advanced Features
 
 ```python
 from word_atlas import WordAtlas
