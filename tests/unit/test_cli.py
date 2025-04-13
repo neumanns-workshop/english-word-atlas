@@ -381,6 +381,7 @@ class TestSearchCommand:
         """Test search command handling ValueError for an invalid source attribute."""
         # Mock atlas.filter to raise ValueError when called with the specific source
         original_filter = mock_cli_atlas.filter
+
         def side_effect_filter(*args, **kwargs):
             if kwargs.get("sources") == ["INVALID_SOURCE"]:
                 raise ValueError("Source 'INVALID_SOURCE' not found.")
@@ -396,7 +397,7 @@ class TestSearchCommand:
             args = MagicMock(
                 pattern="a",
                 data_dir="test_dir",
-                attribute="INVALID_SOURCE", # Trigger the error
+                attribute="INVALID_SOURCE",  # Trigger the error
                 min_freq=None,
                 max_freq=None,
                 limit=None,
@@ -424,7 +425,7 @@ class TestSearchCommand:
                 min_freq=None,
                 max_freq=None,
                 limit=None,
-                verbose=False, # Explicitly False
+                verbose=False,  # Explicitly False
             )
             search_command(args)
 
@@ -434,8 +435,8 @@ class TestSearchCommand:
         # Check that words are printed without frequency info
         assert "  apple" in captured.out
         assert "  banana" in captured.out
-        assert "  orange" in captured.out # Add orange based on default mock
-        assert "(freq:" not in captured.out # Ensure frequency is not printed
+        assert "  orange" in captured.out  # Add orange based on default mock
+        assert "(freq:" not in captured.out  # Ensure frequency is not printed
         mock_cli_atlas.search.assert_called_once_with("a")
         # Filter should not be called if no filters applied
         mock_cli_atlas.filter.assert_not_called()
@@ -561,22 +562,22 @@ def mock_wordlist_builder():
 
     # Enhance analyze result for better coverage testing
     builder.analyze.return_value = {
-        "size": 3, # Increase size
+        "size": 3,  # Increase size
         "single_words": 2,
         "phrases": 1,
         "frequency": {
-            "count": 2, # Only 2 words have frequency
+            "count": 2,  # Only 2 words have frequency
             "average": 55.0,
-            "distribution": { # Multiple bins
+            "distribution": {  # Multiple bins
                 "0-10": 1,
                 "100-inf": 1,
             },
             "total": 110.0,
         },
-        "source_coverage": { # Multiple sources
+        "source_coverage": {  # Multiple sources
             "GSL": {"count": 2, "percentage": 66.7},
             "AWL": {"count": 1, "percentage": 33.3},
-            "OTHER": {"count": 0, "percentage": 0.0}, # Include a source with 0 count
+            "OTHER": {"count": 0, "percentage": 0.0},  # Include a source with 0 count
         },
     }
     builder.save.return_value = None
@@ -760,19 +761,24 @@ class TestWordlistCommand:
         mock_wordlist_builder.add_by_frequency.assert_called_once_with(100, None)
         mock_wordlist_builder.save.assert_called_once_with("existing.json")
 
-    def test_wordlist_analyze_basic(self, tmp_path, mock_wordlist_builder, mock_cli_atlas, capsys):
+    def test_wordlist_analyze_basic(
+        self, tmp_path, mock_wordlist_builder, mock_cli_atlas, capsys
+    ):
         """Test the wordlist analyze command directly, avoiding CliRunner."""
         # Setup: Save a mock wordlist using the real builder logic but mock atlas
         list_path = tmp_path / "analyze_test.json"
         real_builder = WordlistBuilder(atlas=mock_cli_atlas)
         # Populate real_builder with mock data for saving
-        real_builder.words = {"apple", "banana", "crab apple"} # Match analyze size=3
+        real_builder.words = {"apple", "banana", "crab apple"}  # Match analyze size=3
         real_builder.metadata = {"name": "Test List", "criteria": ["mock"]}
         real_builder.save(list_path)
 
         # Mock WordlistBuilder.load to return our pre-configured mock
-        with patch("word_atlas.cli.WordlistBuilder.load", return_value=mock_wordlist_builder), \
-             patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas): # Ensure atlas is mocked too
+        with patch(
+            "word_atlas.cli.WordlistBuilder.load", return_value=mock_wordlist_builder
+        ), patch(
+            "word_atlas.cli.WordAtlas", return_value=mock_cli_atlas
+        ):  # Ensure atlas is mocked too
             # Simulate argparse arguments
             args = MagicMock(
                 wordlist_path=str(list_path),
@@ -787,7 +793,10 @@ class TestWordlistCommand:
         # Assertions on stdout/stderr captured by capsys
         captured = capsys.readouterr()
         # Check main sections
-        assert f"Analyzing wordlist '{mock_wordlist_builder.metadata['name']}'" in captured.out
+        assert (
+            f"Analyzing wordlist '{mock_wordlist_builder.metadata['name']}'"
+            in captured.out
+        )
         assert "Basic statistics:" in captured.out
         assert "Frequency distribution:" in captured.out
         assert "Source List Coverage:" in captured.out
@@ -801,20 +810,22 @@ class TestWordlistCommand:
         assert f"Phrases: {mock_analyze_result['phrases']}" in captured.out
 
         # Check Frequency Distribution details
-        freq_stats = mock_analyze_result['frequency']
+        freq_stats = mock_analyze_result["frequency"]
         # Check specific bin outputs (based on enhanced fixture)
-        assert "Frequency 0-10: 1 words (50.0%)" in captured.out # 1 out of 2 with freq
-        assert "Frequency 100-inf: 1 words (50.0%)" in captured.out # 1 out of 2 with freq
+        assert "Frequency 0-10: 1 words (50.0%)" in captured.out  # 1 out of 2 with freq
+        assert (
+            "Frequency 100-inf: 1 words (50.0%)" in captured.out
+        )  # 1 out of 2 with freq
         assert f"Average frequency: {freq_stats['average']:.1f}" in captured.out
 
         # Check Source List Coverage details
-        source_stats = mock_analyze_result['source_coverage']
+        source_stats = mock_analyze_result["source_coverage"]
         # Check specific source outputs (based on enhanced fixture)
-        gsl_count = source_stats['GSL']['count']
-        gsl_perc = source_stats['GSL']['percentage']
+        gsl_count = source_stats["GSL"]["count"]
+        gsl_perc = source_stats["GSL"]["percentage"]
         assert f"GSL: {gsl_count} words ({gsl_perc:.1f}%)" in captured.out
-        awl_count = source_stats['AWL']['count']
-        awl_perc = source_stats['AWL']['percentage']
+        awl_count = source_stats["AWL"]["count"]
+        awl_perc = source_stats["AWL"]["percentage"]
         assert f"AWL: {awl_count} words ({awl_perc:.1f}%)" in captured.out
         # Ensure source with 0 count is NOT printed
         assert "OTHER:" not in captured.out
@@ -828,11 +839,14 @@ class TestWordlistCommand:
 
     def test_wordlist_analyze_json(self, mock_cli_atlas, mock_wordlist_builder, capsys):
         """Test the wordlist analyze command with JSON output (direct call)."""
-        list_path = Path("dummy_path_for_mock.json") # Path doesn't matter as load is mocked
+        list_path = Path(
+            "dummy_path_for_mock.json"
+        )  # Path doesn't matter as load is mocked
 
         # Mock WordlistBuilder.load and WordAtlas
-        with patch("word_atlas.cli.WordlistBuilder.load", return_value=mock_wordlist_builder), \
-             patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
+        with patch(
+            "word_atlas.cli.WordlistBuilder.load", return_value=mock_wordlist_builder
+        ), patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
             # Simulate argparse arguments
             args = MagicMock(
                 wordlist_path=str(list_path),
@@ -863,12 +877,13 @@ class TestWordlistCommand:
         mock_load_exception = FileNotFoundError("Mock load error")
         mock_load = MagicMock(side_effect=mock_load_exception)
 
-        with patch("word_atlas.cli.WordlistBuilder.load", mock_load), \
-             patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
+        with patch("word_atlas.cli.WordlistBuilder.load", mock_load), patch(
+            "word_atlas.cli.WordAtlas", return_value=mock_cli_atlas
+        ):
             # Simulate argparse arguments for modify command
             args = MagicMock(
                 wordlist_path=non_existent_path,
-                add_pattern="test", # Example modification arg
+                add_pattern="test",  # Example modification arg
                 # Add other modification args as None or their defaults
                 remove_pattern=None,
                 add_source=None,
@@ -879,8 +894,8 @@ class TestWordlistCommand:
                 set_description=None,
                 add_tag=None,
                 remove_tag=None,
-                no_analyze=True, # Avoid analyze complexities in this test
-                output=None, # No output override needed for error test
+                no_analyze=True,  # Avoid analyze complexities in this test
+                output=None,  # No output override needed for error test
             )
 
             # Expect SystemExit when calling the command function directly
@@ -891,12 +906,16 @@ class TestWordlistCommand:
         assert exc_info.value.code == 1
         captured = capsys.readouterr()
         # Updated assertion to match the actual error message format
-        assert f"Error loading wordlist: {mock_load_exception}" in captured.out # Check stdout for error message
+        assert (
+            f"Error loading wordlist: {mock_load_exception}" in captured.out
+        )  # Check stdout for error message
 
         # Fix: Simplify assertion to just check if load was called
         mock_load.assert_called_once()
 
-    def test_wordlist_analyze_export(self, tmp_path, mock_cli_atlas, mock_wordlist_builder, capsys):
+    def test_wordlist_analyze_export(
+        self, tmp_path, mock_cli_atlas, mock_wordlist_builder, capsys
+    ):
         """Test wordlist analyze command with --export and --export-text arguments."""
         list_path = tmp_path / "analyze_export_test.json"
         export_path = tmp_path / "output" / "analysis.json"
@@ -909,18 +928,22 @@ class TestWordlistCommand:
         mock_open_func = mock_open()
         mock_mkdir = MagicMock()
 
-        with patch("word_atlas.cli.WordlistBuilder.load", return_value=mock_wordlist_builder), \
-             patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas), \
-             patch("builtins.open", mock_open_func), \
-             patch("pathlib.Path.mkdir", mock_mkdir), \
-             patch("json.dump") as mock_json_dump: # Mock json.dump to check args
+        with patch(
+            "word_atlas.cli.WordlistBuilder.load", return_value=mock_wordlist_builder
+        ), patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas), patch(
+            "builtins.open", mock_open_func
+        ), patch(
+            "pathlib.Path.mkdir", mock_mkdir
+        ), patch(
+            "json.dump"
+        ) as mock_json_dump:  # Mock json.dump to check args
 
             args = MagicMock(
                 wordlist_path=str(list_path),
-                json=False, # Test non-JSON output mode
+                json=False,  # Test non-JSON output mode
                 export=str(export_path),
                 export_text=str(export_text_path),
-                data_dir="dummy_dir", # Needed for atlas init inside command
+                data_dir="dummy_dir",  # Needed for atlas init inside command
             )
 
             wordlist_analyze_command(args)
@@ -949,25 +972,38 @@ class TestWordlistCommand:
             export_text_path, include_metadata=False
         )
 
-    def test_wordlist_modify_add_source_error(self, tmp_path, mock_cli_atlas, mock_wordlist_builder, capsys):
+    def test_wordlist_modify_add_source_error(
+        self, tmp_path, mock_cli_atlas, mock_wordlist_builder, capsys
+    ):
         """Test error handling when adding an invalid source during modify."""
         list_path = tmp_path / "modify_add_source_error.json"
         # Save a dummy file for loading
         WordlistBuilder(atlas=mock_cli_atlas).save(list_path)
 
         # Mock load to return the builder, but mock add_by_source on the builder to fail
-        mock_wordlist_builder.add_by_source.side_effect = ValueError("Invalid source add")
+        mock_wordlist_builder.add_by_source.side_effect = ValueError(
+            "Invalid source add"
+        )
 
-        with patch("word_atlas.cli.WordlistBuilder.load", return_value=mock_wordlist_builder), \
-             patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
+        with patch(
+            "word_atlas.cli.WordlistBuilder.load", return_value=mock_wordlist_builder
+        ), patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
 
             args = MagicMock(
                 wordlist_path=str(list_path),
                 add_source="INVALID_SRC",
                 # Set other modification args to None
-                add_pattern=None, remove_pattern=None, remove_source=None,
-                min_freq=None, max_freq=None, set_name=None, set_description=None,
-                add_tag=None, remove_tag=None, no_analyze=True, output=None,
+                add_pattern=None,
+                remove_pattern=None,
+                remove_source=None,
+                min_freq=None,
+                max_freq=None,
+                set_name=None,
+                set_description=None,
+                add_tag=None,
+                remove_tag=None,
+                no_analyze=True,
+                output=None,
                 data_dir="dummy_dir",
             )
 
@@ -979,24 +1015,37 @@ class TestWordlistCommand:
         # Ensure save is still called (command shouldn't halt on this specific error)
         mock_wordlist_builder.save.assert_called_once()
 
-    def test_wordlist_modify_remove_source_error(self, tmp_path, mock_cli_atlas, mock_wordlist_builder, capsys):
+    def test_wordlist_modify_remove_source_error(
+        self, tmp_path, mock_cli_atlas, mock_wordlist_builder, capsys
+    ):
         """Test error handling when removing an invalid source during modify."""
         list_path = tmp_path / "modify_remove_source_error.json"
         WordlistBuilder(atlas=mock_cli_atlas).save(list_path)
 
         # Mock load to return the builder, but mock remove_by_source on the builder to fail
-        mock_wordlist_builder.remove_by_source.side_effect = ValueError("Invalid source remove")
+        mock_wordlist_builder.remove_by_source.side_effect = ValueError(
+            "Invalid source remove"
+        )
 
-        with patch("word_atlas.cli.WordlistBuilder.load", return_value=mock_wordlist_builder), \
-             patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
+        with patch(
+            "word_atlas.cli.WordlistBuilder.load", return_value=mock_wordlist_builder
+        ), patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
 
             args = MagicMock(
                 wordlist_path=str(list_path),
                 remove_source="INVALID_SRC",
                 # Set other modification args to None
-                add_pattern=None, remove_pattern=None, add_source=None,
-                min_freq=None, max_freq=None, set_name=None, set_description=None,
-                add_tag=None, remove_tag=None, no_analyze=True, output=None,
+                add_pattern=None,
+                remove_pattern=None,
+                add_source=None,
+                min_freq=None,
+                max_freq=None,
+                set_name=None,
+                set_description=None,
+                add_tag=None,
+                remove_tag=None,
+                no_analyze=True,
+                output=None,
                 data_dir="dummy_dir",
             )
 
@@ -1006,7 +1055,9 @@ class TestWordlistCommand:
         assert "Error removing source: Invalid source remove" in captured.err
         mock_wordlist_builder.save.assert_called_once()
 
-    def test_wordlist_modify_save_error(self, tmp_path, mock_cli_atlas, mock_wordlist_builder, capsys):
+    def test_wordlist_modify_save_error(
+        self, tmp_path, mock_cli_atlas, mock_wordlist_builder, capsys
+    ):
         """Test error handling when saving fails during modify."""
         list_path = tmp_path / "modify_save_error.json"
         WordlistBuilder(atlas=mock_cli_atlas).save(list_path)
@@ -1014,16 +1065,25 @@ class TestWordlistCommand:
         # Mock load to return the builder, but mock save on the builder to fail
         mock_wordlist_builder.save.side_effect = IOError("Disk full")
 
-        with patch("word_atlas.cli.WordlistBuilder.load", return_value=mock_wordlist_builder), \
-             patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
+        with patch(
+            "word_atlas.cli.WordlistBuilder.load", return_value=mock_wordlist_builder
+        ), patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
 
             args = MagicMock(
                 wordlist_path=str(list_path),
-                add_pattern="test", # Need at least one modification to trigger save
+                add_pattern="test",  # Need at least one modification to trigger save
                 # Set other modification args to None
-                remove_pattern=None, add_source=None, remove_source=None,
-                min_freq=None, max_freq=None, set_name=None, set_description=None,
-                add_tag=None, remove_tag=None, no_analyze=True, output=None,
+                remove_pattern=None,
+                add_source=None,
+                remove_source=None,
+                min_freq=None,
+                max_freq=None,
+                set_name=None,
+                set_description=None,
+                add_tag=None,
+                remove_tag=None,
+                no_analyze=True,
+                output=None,
                 data_dir="dummy_dir",
             )
 
@@ -1035,20 +1095,24 @@ class TestWordlistCommand:
         assert "Error saving wordlist: Disk full" in captured.err
         mock_wordlist_builder.save.assert_called_once()
 
-    def test_wordlist_analyze_json_type_error(self, tmp_path, mock_cli_atlas, mock_wordlist_builder, capsys):
+    def test_wordlist_analyze_json_type_error(
+        self, tmp_path, mock_cli_atlas, mock_wordlist_builder, capsys
+    ):
         """Test error handling for JSON TypeError in wordlist analyze."""
         list_path = tmp_path / "analyze_json_error.json"
         list_path.touch()
 
         # Mock json.dumps to raise TypeError
-        with patch("word_atlas.cli.WordlistBuilder.load", return_value=mock_wordlist_builder), \
-             patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas), \
-             patch("json.dumps") as mock_json_dumps:
+        with patch(
+            "word_atlas.cli.WordlistBuilder.load", return_value=mock_wordlist_builder
+        ), patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas), patch(
+            "json.dumps"
+        ) as mock_json_dumps:
             mock_json_dumps.side_effect = TypeError("Cannot serialize object")
 
             args = MagicMock(
                 wordlist_path=str(list_path),
-                json=True, # Trigger JSON path
+                json=True,  # Trigger JSON path
                 export=None,
                 export_text=None,
                 data_dir="dummy_dir",
@@ -1062,18 +1126,21 @@ class TestWordlistCommand:
         assert "Error generating JSON: Cannot serialize object" in captured.err
         mock_wordlist_builder.analyze.assert_called_once()
 
-    def test_wordlist_analyze_no_frequency(self, tmp_path, mock_cli_atlas, mock_wordlist_builder, capsys):
+    def test_wordlist_analyze_no_frequency(
+        self, tmp_path, mock_cli_atlas, mock_wordlist_builder, capsys
+    ):
         """Test analyze output when no frequency data is available."""
         list_path = tmp_path / "analyze_no_freq.json"
         list_path.touch()
 
         # Modify mock analyze result to have no frequency data
         original_analyze_result = mock_wordlist_builder.analyze.return_value.copy()
-        original_analyze_result["frequency"] = {"count": 0} # Simulate no freq data
+        original_analyze_result["frequency"] = {"count": 0}  # Simulate no freq data
         mock_wordlist_builder.analyze.return_value = original_analyze_result
 
-        with patch("word_atlas.cli.WordlistBuilder.load", return_value=mock_wordlist_builder), \
-             patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
+        with patch(
+            "word_atlas.cli.WordlistBuilder.load", return_value=mock_wordlist_builder
+        ), patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
 
             args = MagicMock(
                 wordlist_path=str(list_path),
@@ -1090,18 +1157,21 @@ class TestWordlistCommand:
         assert "Basic statistics:" in captured.out
         assert "Source List Coverage:" in captured.out
 
-    def test_wordlist_analyze_no_sources(self, tmp_path, mock_cli_atlas, mock_wordlist_builder, capsys):
+    def test_wordlist_analyze_no_sources(
+        self, tmp_path, mock_cli_atlas, mock_wordlist_builder, capsys
+    ):
         """Test analyze output when no source coverage data is available."""
         list_path = tmp_path / "analyze_no_sources.json"
         list_path.touch()
 
         # Modify mock analyze result to have no source data
         original_analyze_result = mock_wordlist_builder.analyze.return_value.copy()
-        original_analyze_result["source_coverage"] = {} # Simulate no source data
+        original_analyze_result["source_coverage"] = {}  # Simulate no source data
         mock_wordlist_builder.analyze.return_value = original_analyze_result
 
-        with patch("word_atlas.cli.WordlistBuilder.load", return_value=mock_wordlist_builder), \
-             patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
+        with patch(
+            "word_atlas.cli.WordlistBuilder.load", return_value=mock_wordlist_builder
+        ), patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
 
             args = MagicMock(
                 wordlist_path=str(list_path),
@@ -1118,24 +1188,30 @@ class TestWordlistCommand:
         assert "Basic statistics:" in captured.out
         assert "Frequency distribution:" in captured.out
 
-    def test_wordlist_analyze_export_json_error(self, tmp_path, mock_cli_atlas, mock_wordlist_builder, capsys):
+    def test_wordlist_analyze_export_json_error(
+        self, tmp_path, mock_cli_atlas, mock_wordlist_builder, capsys
+    ):
         """Test error handling when JSON export fails."""
         list_path = tmp_path / "analyze_export_json_err.json"
         export_path = tmp_path / "analysis_err.json"
         list_path.touch()
 
         # Mock json.dump to raise an error
-        with patch("word_atlas.cli.WordlistBuilder.load", return_value=mock_wordlist_builder), \
-             patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas), \
-             patch("builtins.open", mock_open()), \
-             patch("pathlib.Path.mkdir"), \
-             patch("json.dump") as mock_json_dump:
+        with patch(
+            "word_atlas.cli.WordlistBuilder.load", return_value=mock_wordlist_builder
+        ), patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas), patch(
+            "builtins.open", mock_open()
+        ), patch(
+            "pathlib.Path.mkdir"
+        ), patch(
+            "json.dump"
+        ) as mock_json_dump:
             mock_json_dump.side_effect = IOError("Cannot write JSON")
 
             args = MagicMock(
                 wordlist_path=str(list_path),
                 json=False,
-                export=str(export_path), # Trigger JSON export
+                export=str(export_path),  # Trigger JSON export
                 export_text=None,
                 data_dir="dummy_dir",
             )
@@ -1144,11 +1220,16 @@ class TestWordlistCommand:
             wordlist_analyze_command(args)
 
         captured = capsys.readouterr()
-        assert f"Error exporting analysis to {export_path}: Cannot write JSON" in captured.err
+        assert (
+            f"Error exporting analysis to {export_path}: Cannot write JSON"
+            in captured.err
+        )
         # Ensure basic analysis still prints
         assert "Analyzing wordlist" in captured.out
 
-    def test_wordlist_analyze_export_text_error(self, tmp_path, mock_cli_atlas, mock_wordlist_builder, capsys):
+    def test_wordlist_analyze_export_text_error(
+        self, tmp_path, mock_cli_atlas, mock_wordlist_builder, capsys
+    ):
         """Test error handling when text export fails."""
         list_path = tmp_path / "analyze_export_text_err.json"
         export_text_path = tmp_path / "wordlist_err.txt"
@@ -1157,14 +1238,15 @@ class TestWordlistCommand:
         # Mock builder.export_text to raise an error
         mock_wordlist_builder.export_text.side_effect = IOError("Cannot write TXT")
 
-        with patch("word_atlas.cli.WordlistBuilder.load", return_value=mock_wordlist_builder), \
-             patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
+        with patch(
+            "word_atlas.cli.WordlistBuilder.load", return_value=mock_wordlist_builder
+        ), patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
 
             args = MagicMock(
                 wordlist_path=str(list_path),
                 json=False,
                 export=None,
-                export_text=str(export_text_path), # Trigger text export
+                export_text=str(export_text_path),  # Trigger text export
                 data_dir="dummy_dir",
             )
 
@@ -1172,7 +1254,10 @@ class TestWordlistCommand:
             wordlist_analyze_command(args)
 
         captured = capsys.readouterr()
-        assert f"Error exporting wordlist to {export_text_path}: Cannot write TXT" in captured.err
+        assert (
+            f"Error exporting wordlist to {export_text_path}: Cannot write TXT"
+            in captured.err
+        )
         # Ensure basic analysis still prints
         assert "Analyzing wordlist" in captured.out
         mock_wordlist_builder.export_text.assert_called_once()
@@ -1189,29 +1274,30 @@ class TestWordlistCommand:
         builder1 = WordlistBuilder(atlas=mock_cli_atlas)
         builder1.words = {"apple", "banana"}
         builder1.metadata["name"] = "List One"
-        builder1.save(input_path1) # This save is NOT mocked
+        builder1.save(input_path1)  # This save is NOT mocked
 
         builder2 = WordlistBuilder(atlas=mock_cli_atlas)
-        builder2.words = {"banana", "orange"} # Overlap with builder1
+        builder2.words = {"banana", "orange"}  # Overlap with builder1
         builder2.metadata["name"] = "List Two"
-        builder2.save(input_path2) # This save is NOT mocked
+        builder2.save(input_path2)  # This save is NOT mocked
 
         # Mock load to return the builders we just created
         mock_load = MagicMock(side_effect=[builder1, builder2])
 
         # Don't mock save - let the command run it
-        with patch("word_atlas.cli.WordlistBuilder.load", mock_load), \
-             patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
+        with patch("word_atlas.cli.WordlistBuilder.load", mock_load), patch(
+            "word_atlas.cli.WordAtlas", return_value=mock_cli_atlas
+        ):
 
             # Fix: Explicitly set string values for args used in metadata
             args = MagicMock()
-            args.inputs=[str(input_path1), str(input_path2)]
-            args.output=str(output_path)
-            args.name="Merged List" # String
-            args.description="A merged list." # String
-            args.creator="Test Merge" # String
-            args.tags="merged,test" # String (will be split by command)
-            args.data_dir="dummy_dir"
+            args.inputs = [str(input_path1), str(input_path2)]
+            args.output = str(output_path)
+            args.name = "Merged List"  # String
+            args.description = "A merged list."  # String
+            args.creator = "Test Merge"  # String
+            args.tags = "merged,test"  # String (will be split by command)
+            args.data_dir = "dummy_dir"
 
             # Run the command, letting it perform the save
             wordlist_merge_command(args)
@@ -1221,7 +1307,7 @@ class TestWordlistCommand:
         merged_builder = WordlistBuilder.load(output_path, mock_cli_atlas)
 
         # Check the state of the loaded instance
-        assert merged_builder.words == {'apple', 'banana', 'orange'}
+        assert merged_builder.words == {"apple", "banana", "orange"}
         assert merged_builder.metadata["name"] == "Merged List"
         assert merged_builder.metadata["description"] == "A merged list."
         assert merged_builder.metadata["creator"] == "Test Merge"
@@ -1233,10 +1319,14 @@ class TestWordlistCommand:
     def test_wordlist_merge_input_error(self, capsys):
         """Test merge command fails with too few input files."""
         args = MagicMock(
-            inputs=["one_file.json"], # Only one input
+            inputs=["one_file.json"],  # Only one input
             output="output.json",
             # Other args don't matter for this error
-            name=None, description=None, creator=None, tags=None, data_dir="dummy"
+            name=None,
+            description=None,
+            creator=None,
+            tags=None,
+            data_dir="dummy",
         )
 
         with pytest.raises(SystemExit) as exc_info:
@@ -1259,27 +1349,34 @@ class TestWordlistCommand:
         builder1.save(input_path1)
 
         # Mock load: succeed first, then raise error
-        mock_load = MagicMock(side_effect=[builder1, FileNotFoundError("Cannot load bad file")])
+        mock_load = MagicMock(
+            side_effect=[builder1, FileNotFoundError("Cannot load bad file")]
+        )
 
-        with patch("word_atlas.cli.WordlistBuilder.load", mock_load), \
-             patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas), \
-             patch("word_atlas.cli.WordlistBuilder.save") as mock_save: # Mock save to prevent side effects
+        with patch("word_atlas.cli.WordlistBuilder.load", mock_load), patch(
+            "word_atlas.cli.WordAtlas", return_value=mock_cli_atlas
+        ), patch(
+            "word_atlas.cli.WordlistBuilder.save"
+        ) as mock_save:  # Mock save to prevent side effects
 
             args = MagicMock()
-            args.inputs=[str(input_path1), str(input_path_bad)]
-            args.output=str(output_path)
-            args.name="Merge Load Fail"
-            args.description=None
-            args.creator=None
-            args.tags=None
-            args.data_dir="dummy_dir"
+            args.inputs = [str(input_path1), str(input_path_bad)]
+            args.output = str(output_path)
+            args.name = "Merge Load Fail"
+            args.description = None
+            args.creator = None
+            args.tags = None
+            args.data_dir = "dummy_dir"
 
             with pytest.raises(SystemExit) as exc_info:
                 wordlist_merge_command(args)
 
         assert exc_info.value.code == 1
         captured = capsys.readouterr()
-        assert f"Error loading wordlist '{str(input_path_bad)}': Cannot load bad file" in captured.err
+        assert (
+            f"Error loading wordlist '{str(input_path_bad)}': Cannot load bad file"
+            in captured.err
+        )
         # Ensure save was NOT called because the command exited early
         mock_save.assert_not_called()
 
@@ -1287,23 +1384,24 @@ class TestWordlistCommand:
         """Test merge command fails if output file is not specified."""
         input_path1 = tmp_path / "merge_no_out1.json"
         input_path2 = tmp_path / "merge_no_out2.json"
-        input_path1.touch() # Just need files to exist for load mock if needed
+        input_path1.touch()  # Just need files to exist for load mock if needed
         input_path2.touch()
 
         # Mock load just to prevent FileNotFoundError during setup check if needed
         mock_load = MagicMock(return_value=WordlistBuilder(atlas=mock_cli_atlas))
 
-        with patch("word_atlas.cli.WordlistBuilder.load", mock_load), \
-             patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
+        with patch("word_atlas.cli.WordlistBuilder.load", mock_load), patch(
+            "word_atlas.cli.WordAtlas", return_value=mock_cli_atlas
+        ):
 
             args = MagicMock()
-            args.inputs=[str(input_path1), str(input_path2)]
-            args.output=None # Explicitly no output file
-            args.name="Merge No Output"
-            args.description=None
-            args.creator=None
-            args.tags=None
-            args.data_dir="dummy_dir"
+            args.inputs = [str(input_path1), str(input_path2)]
+            args.output = None  # Explicitly no output file
+            args.name = "Merge No Output"
+            args.description = None
+            args.creator = None
+            args.tags = None
+            args.data_dir = "dummy_dir"
 
             with pytest.raises(SystemExit) as exc_info:
                 wordlist_merge_command(args)

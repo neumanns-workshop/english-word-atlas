@@ -294,7 +294,7 @@ class WordAtlas:
 
             # Correctly get sources for the word
             # sources = data.get("sources", []) # INCORRECT: data is index (int)
-            sources = self.get_sources(word) # CORRECT: Use the method
+            sources = self.get_sources(word)  # CORRECT: Use the method
 
             for source in sources:
                 if source in words_by_source:
@@ -304,9 +304,11 @@ class WordAtlas:
 
         # Calculate coverage percentage for each source list
         stats["coverage"] = {
-            source: len(words_in_source) / stats["total_entries"] * 100
-            if stats["total_entries"] > 0  # Use the value from stats dict
-            else 0
+            source: (
+                len(words_in_source) / stats["total_entries"] * 100
+                if stats["total_entries"] > 0  # Use the value from stats dict
+                else 0
+            )
             for source, words_in_source in words_by_source.items()
         }
 

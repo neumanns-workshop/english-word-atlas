@@ -155,15 +155,15 @@ class TestWordAtlas:
 
         # Check source coverage from stats - Use correct key
         stats = mock_atlas.get_stats()
-        assert "coverage" in stats # Changed from "source_coverage"
+        assert "coverage" in stats  # Changed from "source_coverage"
         assert set(stats["coverage"].keys()) == set(categories)
 
     def test_word_counts_from_stats(self, mock_atlas):
         """Test phrase and single word counts via get_stats."""
         stats = mock_atlas.get_stats()
         # Use correct keys
-        assert "total_phrases" in stats # Changed from "phrases"
-        assert "total_words" in stats # Changed from "single_words"
+        assert "total_phrases" in stats  # Changed from "phrases"
+        assert "total_words" in stats  # Changed from "single_words"
         # Add assertions for the actual values based on mock data (assuming no phrases in mock)
         assert stats["total_words"] == 3
         assert stats["total_phrases"] == 0
@@ -189,13 +189,18 @@ class TestWordAtlas:
 
         assert stats["total_entries"] == 3
         # Use correct keys
-        assert stats["total_words"] == 3 # Changed from "single_words"
-        assert stats["total_phrases"] == 0 # Changed from "phrases"
+        assert stats["total_words"] == 3  # Changed from "single_words"
+        assert stats["total_phrases"] == 0  # Changed from "phrases"
 
         # Check coverage dictionary structure and values
         assert "coverage" in stats
         assert isinstance(stats["coverage"], dict)
-        assert set(stats["coverage"].keys()) == {"GSL", "OTHER", "ROGET_FOOD", "ROGET_PLANT"}
+        assert set(stats["coverage"].keys()) == {
+            "GSL",
+            "OTHER",
+            "ROGET_FOOD",
+            "ROGET_PLANT",
+        }
         # Example check for one source (adjust based on mock data if needed)
         # GSL has apple, banana (2 words) out of 3 total entries
         assert stats["coverage"]["GSL"] == pytest.approx((2 / 3) * 100)
@@ -215,7 +220,7 @@ class TestWordAtlas:
         atlas.frequencies = {}
 
         # Mock get_source_list_names to return empty list for this empty state
-        with patch.object(atlas, 'get_source_list_names', return_value=[]):
+        with patch.object(atlas, "get_source_list_names", return_value=[]):
             stats = atlas.get_stats()
 
         assert stats["total_words"] == 0

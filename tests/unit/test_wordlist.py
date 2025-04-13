@@ -399,7 +399,9 @@ class TestWordlistBuilder:
     def test_init_invalid_atlas_type(self):
         """Test that WordlistBuilder raises TypeError if atlas is not WordAtlas."""
         # Check the error message for missing methods
-        with pytest.raises(TypeError, match="Provided atlas object does not have the expected methods."):
+        with pytest.raises(
+            TypeError, match="Provided atlas object does not have the expected methods."
+        ):
             WordlistBuilder(atlas="not an atlas")
 
     def test_methods_with_no_atlas(self):
@@ -408,14 +410,19 @@ class TestWordlistBuilder:
         # So, self.atlas is never actually None inside the methods.
         # The `if not self.atlas:` checks in analyze, add_by_freq, remove_by_source
         # are likely unreachable dead code.
-        builder = WordlistBuilder(atlas=None) # Actually creates a real Atlas
+        builder = WordlistBuilder(atlas=None)  # Actually creates a real Atlas
 
         # Test analyze returns the default stats structure (covers 332-333 via init)
         analysis = builder.analyze()
         assert analysis["size"] == 0
         assert analysis["single_words"] == 0
         assert analysis["phrases"] == 0
-        assert analysis["frequency"] == {"count": 0, "total": 0.0, "average": 0.0, "distribution": {}}
+        assert analysis["frequency"] == {
+            "count": 0,
+            "total": 0.0,
+            "average": 0.0,
+            "distribution": {},
+        }
         assert analysis["source_coverage"] == {}
 
         # Cannot reliably test add_by_frequency or remove_by_source for None atlas
@@ -436,7 +443,7 @@ class TestWordlistBuilder:
             # We need the atlas used by the test to see the updated index
             atlas_for_test = WordAtlas(mock_atlas.data_dir)
         else:
-            atlas_for_test = mock_atlas # Use original if kiwi was already there
+            atlas_for_test = mock_atlas  # Use original if kiwi was already there
 
         # REMOVED attempts to mock has_word on the real atlas instance
         # mock_atlas.all_words.add("kiwi")
@@ -490,12 +497,14 @@ class TestWordlistBuilder:
             with pytest.raises(IOError) as excinfo:
                 builder.save(save_path)
             assert "Failed to save wordlist" in str(excinfo.value)
-            assert "Mock generic write error" in str(excinfo.value) # Check original exception is included
+            assert "Mock generic write error" in str(
+                excinfo.value
+            )  # Check original exception is included
 
     def test_load_generic_error(self, mock_atlas, tmp_path):
         """Test load method handles generic exceptions during file read (covers 323)."""
         load_path = tmp_path / "load_fail.json"
-        load_path.touch() # File needs to exist to get past initial check
+        load_path.touch()  # File needs to exist to get past initial check
 
         with patch("builtins.open") as mock_open:
             mock_open.side_effect = Exception("Mock generic read error")
