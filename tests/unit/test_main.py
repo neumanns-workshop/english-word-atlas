@@ -104,18 +104,22 @@ def test_main_dispatch_wordlist_merge(mock_cmd):
 
 # Test help output branches
 def test_main_no_command(capsys):
-    """Test main() prints help when no command is given."""
-    # Argparse might not exit in test context, check stderr
+    """Test main() prints help/error and exits when no command is given."""
     with patch.object(sys, "argv", ["word_atlas"]):
-        main()
-    outerr = capsys.readouterr()
-    # Check stdout for help text
-    assert "usage: word_atlas" in outerr.out
-    assert "{info,search,stats,wordlist}" in outerr.out
+        # Expect SystemExit because argparse exits on required arg error
+        with pytest.raises(SystemExit) as e:
+            main()
+        # Optionally check the exit code
+        assert e.value.code == 2 
+
+    # Check that the error message was printed to stderr
+    captured = capsys.readouterr()
+    assert "usage: word_atlas" in captured.err
+    assert "error: the following arguments are required: command" in captured.err
 
 
 def test_main_wordlist_no_subcommand(capsys):
-    """Test main() prints wordlist help when no subcommand is given."""
+    """Test main() prints help when 'wordlist' is given with no subcommand."""
     # Argparse might not exit in test context, check stderr
     with patch.object(sys, "argv", ["word_atlas", "wordlist"]):
         main()

@@ -44,12 +44,13 @@ def merge_wordlists(data_dir: Path, output_file: Path, source_glob: str = '*.jso
         print(f"Error: Sources directory not found: {sources_dir}", file=sys.stderr)
         sys.exit(1)
 
-    source_files = list(sources_dir.glob(source_glob))
+    # Use rglob for recursive search
+    source_files = list(sources_dir.rglob(source_glob))
     if not source_files:
-        print(f"Warning: No source files found matching '{source_glob}' in {sources_dir}", file=sys.stderr)
+        print(f"Warning: No source files found matching '{source_glob}' recursively in {sources_dir}", file=sys.stderr)
         # Continue without adding sources if none are found matching the glob
     else:
-        print(f"Found {len(source_files)} source files in {sources_dir} matching '{source_glob}':")
+        print(f"Found {len(source_files)} source files recursively in {sources_dir} matching '{source_glob}':")
 
     sources_loaded_count = 0
     for source_path in sorted(source_files): # Sort for deterministic order
@@ -87,10 +88,6 @@ def merge_wordlists(data_dir: Path, output_file: Path, source_glob: str = '*.jso
     except Exception as e:
         print(f"Error saving combined index to {output_file}: {e}", file=sys.stderr)
         sys.exit(1)
-
-    # TODO: Add steps to handle word_data_base.json and frequencies/word_frequencies.json
-    print("\nNote: This script only updates word_index.json.")
-    print("Manual updates or another script may be needed for word_data_base.json and frequencies/word_frequencies.json to include data for newly added words.")
 
 
 if __name__ == "__main__":

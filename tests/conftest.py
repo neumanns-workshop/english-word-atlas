@@ -296,38 +296,22 @@ def mock_wordlist_builder(mock_cli_atlas):
     builder.get_size.return_value = len(builder.words)
     builder.get_wordlist.return_value = builder.words
     builder.add_by_search.return_value = 1
-    builder.add_by_attribute.return_value = 1
-    builder.add_by_syllable_count.return_value = 1
-    builder.add_by_frequency.return_value = 1
-    builder.add_similar_words.return_value = 2
-    builder.add_words.return_value = 2
-    builder.remove_words.return_value = 1
+    # builder.add_by_attribute.return_value = 1 # Removed - Method doesn't exist
 
-    def analyze():
+    # Configure side effects or specific return values for methods if needed
+    def analyze_side_effect(*args, **kwargs):
+        # Simulate basic analysis results
+        wordlist = builder.words
+        total_words = len(wordlist)
+        avg_freq = 5.0 if total_words > 0 else 0
+        sources = {"GSL": total_words} if total_words > 0 else {}
         return {
-            "size": len(builder.words),
-            "single_words": len([w for w in builder.words if " " not in w]),
-            "phrases": len([w for w in builder.words if " " in w]),
-            "syllable_distribution": {
-                2: 1,  # apple
-                4: 1,  # banana split
-            },
-            "frequency": {
-                "distribution": {
-                    "1-10": 1,
-                    "11-100": 1,
-                },
-                "average": 10.5,
-            },
-            "wordlist_coverage": {
-                "GSL": {"count": 1, "percentage": 50.0},
-                "NGSL": {"count": 1, "percentage": 50.0},
-                "OGDEN": {"count": 0, "percentage": 0.0},
-                "SWADESH": {"count": 0, "percentage": 0.0},
-            },
+            "total_words": total_words,
+            "average_frequency": avg_freq,
+            "source_counts": sources,
         }
+    builder.analyze.side_effect = analyze_side_effect
 
-    builder.analyze.side_effect = analyze
     return builder
 
 

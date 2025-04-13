@@ -254,8 +254,21 @@ class WordlistBuilder:
         # Return a copy to prevent external modification
         return self.metadata.copy()
 
-    def save(self, filename: Union[str, Path]) -> None:
-        """Save the wordlist (words and metadata) to a JSON file."""
+    def save(self, filename: Union[str, Path], overwrite: bool = False) -> None:
+        """Save the wordlist (words and metadata) to a JSON file.
+
+        Args:
+            filename: The path to save the JSON file.
+            overwrite: If True, overwrite the file if it exists. Defaults to False.
+        
+        Raises:
+            FileExistsError: If the file exists and overwrite is False.
+            IOError: If there is an error writing the file.
+        """
+        filepath = Path(filename)
+        if filepath.exists() and not overwrite:
+            raise FileExistsError(f"File already exists: {filepath}")
+
         save_path = Path(filename)
         save_path.parent.mkdir(parents=True, exist_ok=True)
         wordlist_data = {

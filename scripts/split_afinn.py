@@ -24,11 +24,10 @@ def generate_output_filename(score: int) -> str:
         return f"AFINN_POS_{score}.json"
 
 def split_afinn_lexicon():
-    """Reads AFINN.txt and writes out 11 JSON files based on score into data/sources/AFINN/."""
+    """Reads AFINN.txt and writes out 11 JSON files based on score."""
     project_root = get_project_root()
     sources_dir = project_root / "data" / "sources"
     input_file = sources_dir / "AFINN.txt"
-    output_subdir = sources_dir / "AFINN"
     
     if not input_file.exists():
         print(f"Error: Input file not found at {input_file}", file=sys.stderr)
@@ -84,9 +83,7 @@ def split_afinn_lexicon():
         if score in words_by_score:
             word_list = sorted(list(set(words_by_score[score]))) # Sort and ensure unique
             output_filename = generate_output_filename(score)
-            # Ensure the output subdirectory exists
-            output_subdir.mkdir(parents=True, exist_ok=True)
-            output_path = output_subdir / output_filename # Write into the subdir
+            output_path = sources_dir / output_filename
             
             try:
                 with open(output_path, 'w', encoding='utf-8') as f:
@@ -98,7 +95,7 @@ def split_afinn_lexicon():
         else:
              print(f"  - No words found for score {score}. Skipping file generation.")
 
-    print(f"\nFinished writing {files_written} JSON files to {output_subdir}")
+    print(f"Finished writing {files_written} JSON files to {sources_dir}")
 
 if __name__ == "__main__":
     # Ensure the script runs from the project root or adjusts paths accordingly

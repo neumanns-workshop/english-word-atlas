@@ -42,8 +42,8 @@ class WordAtlas:
 
     def _discover_sources(self) -> Dict[str, Path]:
         """Scan the data/sources directory recursively for source files (*.json or *.txt).
-        Source names are generated as 'subdirectory_filestem' (e.g., 'AFINN_AFINN_NEG_5')
-        or just 'filestem' if the file is directly in data/sources/.
+        Source names are generated as 'subdirectory_filestem' (e.g., 'GSL_NEW',
+        'AFINN_NEG_5') or just 'filestem' if the file is directly in data/sources/.
         """
         sources = {}
         if not (self.sources_dir.exists() and self.sources_dir.is_dir()):
@@ -56,25 +56,30 @@ class WordAtlas:
              for file_path in self.sources_dir.rglob(extension):
                 # Determine the source name based on location
                 relative_path = file_path.relative_to(self.sources_dir)
+                file_stem = file_path.stem # e.g., 'NEW', 'NEG_5'
+
                 if len(relative_path.parts) > 1: # File is in a subdirectory
-                    subdir_name = relative_path.parts[0]
-                    source_name = f"{subdir_name}_{file_path.stem}"
+                    subdir_name = relative_path.parts[0] # e.g., 'GSL', 'AFINN'
+                    # Combine subdirectory and stem for the internal source name
+                    source_name = f"{subdir_name}_{file_stem}"
                 else: # File is directly in sources_dir
-                    source_name = file_path.stem
+                    source_name = file_stem
 
                 if source_name in sources:
-                    # Handle potential duplicates (e.g., subdir/file.txt and subdir/file.json)
-                    # Or even different_subdir/file.txt if stem is the same
-                    print(f"Warning: Duplicate source name '{source_name}' generated.", file=sys.stderr)
-                    print(f"  Existing: {sources[source_name]}", file=sys.stderr)
-                    print(f"  New (ignored): {file_path}", file=sys.stderr)
+                    # Handle potential duplicates
+                    # If paths are different, it's a true name collision. If paths are same, it's just txt vs json.
+                    if sources[source_name] != file_path:
+                        print(f"Warning: Duplicate source name '{source_name}' generated.", file=sys.stderr)
+                        print(f"  Existing: {sources[source_name]}", file=sys.stderr)
+                        print(f"  New (ignored): {file_path}", file=sys.stderr)
+                    # If paths are the same (just different extension), we implicitly keep the first one found.
                 else:
                     sources[source_name] = file_path
                     # print(f"Discovered source: '{source_name}' -> {file_path}") # Debugging
         return sources
 
     def _load_all_sources(self):
-        """Load all discovered source lists (.json or .txt) into the cache."""
+        """Load all discovered source lists (.json or *.txt) into the cache."""
         for source_name, file_path in self.available_sources.items():
             source_list_words = set()
             unknown_words = set()
@@ -140,7 +145,9 @@ class WordAtlas:
         return self.frequencies.get(word.lower())
 
     def get_sources(self, word: str) -> List[str]:
-        """Get the list of source lists the word belongs to."""
+        """Return a list of source names containing the given word."""
+        if word not in self.word_to_idx:
+            raise KeyError(f"Word '{word}' not found in the main index.")
         # Only return sources where the word is present AND exists in the master index
         return sorted([name for name, words in self._source_lists.items() if word in words])
 

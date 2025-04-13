@@ -175,6 +175,68 @@ class TestInfoCommand:
         assert f"Frequency (SUBTLWF): {frequency:.2f}" in captured.out
         assert f"Sources: {sources_list[0]}" in captured.out
 
+    @patch('word_atlas.cli.WordAtlas') # Mock WordAtlas initialization
+    @patch('json.dumps') # Mock json.dumps directly
+    def test_info_json_type_error(self, mock_dumps, mock_WordAtlas, mock_cli_atlas, capsys):
+        """Test error handling when JSON serialization fails."""
+        # Configure the mock WordAtlas instance if needed (using mock_cli_atlas fixture?)
+        # Instance is returned by mock_WordAtlas(), set attributes on the return_value
+        mock_instance = mock_WordAtlas.return_value
+        mock_instance.has_word.return_value = True
+        mock_instance.get_sources.return_value = ["GSL"]
+        mock_instance.get_frequency.return_value = 10.0
+        
+        # Configure mock_dumps to raise TypeError
+        mock_dumps.side_effect = TypeError("Mocked JSON serialization error")
+
+        # Prepare mock arguments
+        args = MagicMock(word="apple", data_dir="dummy_dir", json=True)
+
+        # Call the command - expect SystemExit(1) due to print+exit in except block
+        with pytest.raises(SystemExit) as exc_info: 
+             info_command(args)
+        
+        assert exc_info.value.code == 1
+        
+        # Check that the error message was printed (to stdout based on cli.py)
+        captured = capsys.readouterr()
+        assert "Error generating JSON: Mocked JSON serialization error" in captured.out
+        
+        # Verify mock_dumps was called
+        mock_dumps.assert_called_once()
+
+    def test_info_no_frequency(self, mock_cli_atlas, capsys):
+        """Test info display when frequency is not available (covers line 50)."""
+        with patch("word_atlas.cli.WordAtlas") as MockWordAtlas:
+            # Configure the instance *returned by the mock*
+            mock_instance = MockWordAtlas.return_value 
+            mock_instance.has_word.return_value = True
+            mock_instance.get_sources.return_value = ["GSL"]
+            mock_instance.get_frequency.return_value = None # Set freq to None
+            
+            args = MagicMock(word="apple", data_dir="dummy_dir", json=False)
+            info_command(args)
+            
+        captured = capsys.readouterr()
+        assert "Frequency: Not available" in captured.out
+        assert "Sources: GSL" in captured.out # Ensure sources still print
+
+    def test_info_no_sources(self, mock_cli_atlas, capsys):
+        """Test info display when sources are not available (covers line 56)."""
+        with patch("word_atlas.cli.WordAtlas") as MockWordAtlas:
+            # Configure the instance *returned by the mock*
+            mock_instance = MockWordAtlas.return_value
+            mock_instance.has_word.return_value = True
+            mock_instance.get_sources.return_value = [] # Set sources to empty
+            mock_instance.get_frequency.return_value = 10.0 # Set a specific freq
+            
+            args = MagicMock(word="apple", data_dir="dummy_dir", json=False)
+            info_command(args)
+            
+        captured = capsys.readouterr()
+        assert "Frequency (SUBTLWF): 10.00" in captured.out
+        assert "Sources: None" in captured.out
+
 
 class TestSearchCommand:
     """Tests for the search command."""
@@ -260,6 +322,28 @@ class TestSearchCommand:
         # Filter is NOT called when no filters are applied
         mock_cli_atlas.filter.assert_not_called()
 
+    def test_search_no_results(self, mock_cli_atlas, capsys):
+        """Test search yielding no results (covers line 92)."""
+        # Mock atlas.search to return empty list
+        mock_cli_atlas.search.return_value = []
+        # Ensure filter also returns empty if called (though it shouldn't be here)
+        mock_cli_atlas.filter.return_value = [] 
+        
+        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
+            args = MagicMock(
+                pattern="xyz", data_dir="test_dir", attribute=None,
+                min_freq=None, max_freq=None, limit=None, verbose=False
+            )
+            search_command(args)
+
+        captured = capsys.readouterr()
+        # Assert the actual output when search returns empty
+        # This covers the branch leading to line 92 (results is empty)
+        assert "Found 0 matches (after filtering from 0):" in captured.out
+        mock_cli_atlas.search.assert_called_with("xyz")
+        # Filter should not be called if the initial search result is empty
+        mock_cli_atlas.filter.assert_not_called() 
+
 
 class TestStatsCommand:
     """Tests for the stats command."""
@@ -308,6 +392,20 @@ class TestStatsCommand:
         assert "Total unique words in index: 0" in captured.out
         assert "Entries with frequency data: 0" in captured.out
         assert "Source List Coverage: No source lists found or loaded." in captured.out
+
+    def test_stats_error(self, capsys):
+        """Test error handling when atlas.get_stats fails."""
+        mock_error_atlas = MagicMock(spec=WordAtlas)
+        mock_error_atlas.get_stats.side_effect = Exception("Mocked stats error")
+        
+        with patch("word_atlas.cli.WordAtlas", return_value=mock_error_atlas):
+            args = MagicMock(data_dir="test_dir")
+            with pytest.raises(SystemExit) as exc_info:
+                stats_command(args)
+                
+        assert exc_info.value.code == 1
+        captured = capsys.readouterr()
+        assert "Error loading or processing stats: Mocked stats error" in captured.out
 
 
 @pytest.fixture
@@ -395,6 +493,66 @@ class TestWordlistCommand:
         mock_wordlist_builder.save.assert_called_once_with("new_list.json")
         mock_wordlist_builder.analyze.assert_called_once()
 
+    # Test various formats for --attribute argument and error handling
+    @pytest.mark.parametrize(
+        "attribute_arg, expected_source_name, expected_value, raises_error",
+        [
+            ("GSL", "GSL", True, False), # Simple name
+            ("AWL=True", "AWL", True, False), # Explicit True
+            ("ROGET=False", "ROGET", False, False), # Explicit False
+            ("COUNT=10", "COUNT", 10, False), # Integer value (though add_by_source ignores value)
+            ("FREQ=9.5", "FREQ", 9.5, False), # Float value (though add_by_source ignores value)
+            ("INVALID_SOURCE", "INVALID_SOURCE", True, True), # Source that causes ValueError
+        ]
+    )
+    def test_wordlist_create_attribute_parsing(
+        self, attribute_arg, expected_source_name, expected_value, raises_error,
+        mock_cli_atlas, mock_wordlist_builder, capsys
+    ):
+        """Test attribute parsing and error handling in wordlist create."""
+        
+        # Configure mock_wordlist_builder.add_by_source to potentially raise error
+        if raises_error:
+            mock_wordlist_builder.add_by_source.side_effect = ValueError("Invalid source")
+        else:
+            # Reset side effect if it was set in a previous parameterization
+            mock_wordlist_builder.add_by_source.side_effect = lambda source: 1 # Simulate adding 1 word
+            
+        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas), \
+             patch("word_atlas.cli.WordlistBuilder") as MockBuilder:
+            MockBuilder.return_value = mock_wordlist_builder
+            
+            args = MagicMock()
+            # Set other required args to minimal values
+            args.output = "attr_test.json"
+            args.name = "Attr Test"
+            args.description = None
+            args.creator = None
+            args.tags = None
+            args.search_pattern = None # Don't call other add methods
+            args.min_freq = None
+            args.max_freq = None
+            args.no_analyze = True # Don't call analyze
+            args.data_dir = "dummy_dir"
+            # Set the attribute arg for this test case
+            args.attribute = attribute_arg
+            
+            if raises_error:
+                with pytest.raises(SystemExit) as exc_info:
+                    wordlist_create_command(args)
+                assert exc_info.value.code == 1
+                captured = capsys.readouterr()
+                assert "Error: Invalid source" in captured.out
+                # Verify add_by_source was called with the correct (parsed) name
+                mock_wordlist_builder.add_by_source.assert_called_once_with(expected_source_name)
+            else:
+                wordlist_create_command(args)
+                # Verify add_by_source was called with the correct (parsed) name
+                # Note: The *value* part (True/False/10/9.5) is parsed but not actually
+                # used by add_by_source in the current cli.py implementation.
+                mock_wordlist_builder.add_by_source.assert_called_once_with(expected_source_name)
+                # Reset mock for next parameterization if needed
+                mock_wordlist_builder.add_by_source.reset_mock()
 
     def test_wordlist_modify(self, mock_cli_atlas, mock_wordlist_builder, capsys):
         """Test modifying a wordlist via CLI."""
