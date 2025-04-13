@@ -365,14 +365,14 @@ class TestWordlistBuilder:
         assert loaded_builder.metadata["creator"] == ""  # Default creator
         assert loaded_builder.metadata["tags"] == []  # Default tags
 
-    def test_load_invalid_json(self, tmp_path):
+    def test_load_invalid_json(self, tmp_path, mock_atlas):
         """Test that load() raises ValueError for invalid JSON."""
         filepath = tmp_path / "invalid.json"
         filepath.write_text("this is not valid json", encoding="utf-8")
 
-        builder = WordlistBuilder()  # Initialize correctly
+        # Call load as a classmethod, passing the mock atlas
         with pytest.raises(ValueError) as excinfo:
-            builder.load(filepath)
+            WordlistBuilder.load(filepath, atlas=mock_atlas)
         # Update assertion to match actual error message
         assert "Invalid JSON in wordlist file" in str(excinfo.value)
 
