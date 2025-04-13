@@ -3,6 +3,14 @@
 !/data/word_data.json
 !/data/word_index.json
 !/data/embeddings.npy
+# Un-ignore frequencies directory and its contents
+!/data/frequencies/
+!/data/frequencies/word_frequencies.json
+# Un-ignore sources directory and its contents
+!/data/sources/
+!/data/sources/*.json
+!/data/sources/*.txt
+
 /working_notebooks/
 /extra_scripts/
 

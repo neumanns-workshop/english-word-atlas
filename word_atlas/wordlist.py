@@ -11,7 +11,7 @@ from word_atlas.atlas import WordAtlas
 
 
 class WordlistBuilder:
-    """Builder for creating custom wordlists from the Word Atlas dataset."""
+    """Builder for creating custom wordlists using WordAtlas (frequency and sources only)."""
 
     def __init__(
         self,
@@ -21,120 +21,153 @@ class WordlistBuilder:
         """Initialize the wordlist builder.
 
         Args:
-            atlas: An existing WordAtlas instance, or None to create a new one
-            data_dir: Directory containing the dataset files (only used if atlas is None)
+            atlas: An existing WordAtlas instance, or None to create a new one.
+            data_dir: Directory containing the dataset files (only used if atlas is None).
         """
-        self.atlas = atlas or WordAtlas(data_dir)
+        # Ensure we have a valid WordAtlas instance
+        if atlas is None:
+            self.atlas = WordAtlas(data_dir=data_dir)
+        else:
+            # Basic check if the provided atlas seems compatible (has expected methods)
+            if not all(
+                hasattr(atlas, method)
+                for method in [
+                    "has_word",
+                    "search",
+                    "filter",
+                    "get_frequency",
+                    "get_sources",
+                    "get_source_list_names",
+                ]
+            ):
+                raise TypeError(
+                    "Provided atlas object does not have the expected methods."
+                )
+            self.atlas = atlas
+
         self.words: Set[str] = set()
         self.metadata: Dict[str, Any] = {
             "name": "Custom Wordlist",
             "description": "",
             "creator": "",
             "tags": [],
-            "criteria": [],
+            "criteria": [],  # Tracks how the list was built
         }
 
-    def add_words(self, words: List[str]) -> int:
-        """Add specific words to the wordlist.
+    def add_words(self, words_to_add: Union[List[str], Set[str]]) -> int:
+        """Add specific words to the wordlist, checking against the atlas.
 
         Args:
-            words: List of words to add
+            words_to_add: List or set of words to add.
 
         Returns:
-            Number of words successfully added (existing in the dataset)
+            Number of words successfully added (i.e., exist in the atlas index).
         """
-        valid_words = [w for w in words if self.atlas.has_word(w)]
-        self.words.update(valid_words)
+        added_count = 0
+        valid_words = set()
+        for word in words_to_add:
+            if self.atlas.has_word(word):
+                if word not in self.words:
+                    valid_words.add(word)
+                    added_count += 1
+            # else: word not in atlas, ignore
 
-        # Record the criteria
         if valid_words:
+            self.words.update(valid_words)
             self.metadata["criteria"].append(
                 {
                     "type": "explicit_words",
-                    "count": len(valid_words),
-                    "description": f"Explicitly added {len(valid_words)} words",
+                    "count": added_count,
+                    "description": f"Added {added_count} valid words explicitly",
                 }
             )
+        return added_count
 
-        return len(valid_words)
-
-    def add_by_search(self, pattern: str) -> int:
+    def add_by_search(self, pattern: str, case_sensitive: bool = False) -> int:
         """Add words matching a search pattern.
 
         Args:
-            pattern: Search pattern (regex or substring)
+            pattern: Search pattern (substring).
+            case_sensitive: Whether the search should be case sensitive.
 
         Returns:
-            Number of words added
+            Number of words added.
         """
-        matching_words = self.atlas.search(pattern)
+        matching_words = self.atlas.search(pattern, case_sensitive=case_sensitive)
         original_count = len(self.words)
         self.words.update(matching_words)
-
-        # Record the criteria
         added_count = len(self.words) - original_count
+
         if added_count > 0:
             self.metadata["criteria"].append(
                 {
                     "type": "search",
                     "pattern": pattern,
+                    "case_sensitive": case_sensitive,
                     "count": added_count,
-                    "description": f"Added {added_count} words matching '{pattern}'",
+                    "description": f"Added {added_count} words matching '{pattern}' (case_sensitive={case_sensitive})",
                 }
             )
-
         return added_count
 
-    def add_by_attribute(self, attribute: str, value: Any = True) -> int:
-        """Add words with a specific attribute.
+    def add_by_source(self, source_name: str) -> int:
+        """Add words belonging to a specific source list.
 
         Args:
-            attribute: Attribute name (e.g., 'ROGET_123', 'GSL')
-            value: Required attribute value (default: True)
+            source_name: The name of the source list (e.g., 'GSL', 'AWL').
 
         Returns:
-            Number of words added
+            Number of words added.
+
+        Raises:
+            ValueError: If the source name is not found.
         """
-        matching_words = self.atlas.filter_by_attribute(attribute, value)
+        # filter handles the ValueError if source_name is invalid
+        matching_words = self.atlas.filter(sources=[source_name])
         original_count = len(self.words)
         self.words.update(matching_words)
-
-        # Record the criteria
         added_count = len(self.words) - original_count
+
         if added_count > 0:
             self.metadata["criteria"].append(
                 {
-                    "type": "attribute",
-                    "attribute": attribute,
-                    "value": str(value),
+                    "type": "source",
+                    "source": source_name,
                     "count": added_count,
-                    "description": f"Added {added_count} words with attribute {attribute}={value}",
+                    "description": f"Added {added_count} words from source '{source_name}'",
                 }
             )
-
         return added_count
 
     def add_by_frequency(
-        self, min_freq: float = 0, max_freq: Optional[float] = None
+        self, min_freq: Optional[float] = None, max_freq: Optional[float] = None
     ) -> int:
-        """Add words within a frequency range.
+        """Add words based on their frequency range.
 
         Args:
-            min_freq: Minimum frequency
-            max_freq: Maximum frequency (None for no upper limit)
+            min_freq: Minimum frequency (inclusive).
+            max_freq: Maximum frequency (inclusive, None for no upper limit).
 
         Returns:
-            Number of words added
+            Number of words added.
         """
-        matching_words = self.atlas.filter_by_frequency(min_freq, max_freq)
-        original_count = len(self.words)
-        self.words.update(matching_words)
+        # Directly use self.atlas as it's guaranteed to exist
+        added_count = 0
+        min_f = min_freq if min_freq is not None else -float("inf")
+        max_f = max_freq if max_freq is not None else float("inf")
 
-        # Record the criteria
-        added_count = len(self.words) - original_count
+        # Iterate through all words known by the atlas with frequencies
+        for word, freq in self.atlas.frequencies.items():
+            if min_f <= freq <= max_f:
+                if word not in self.words and self.atlas.has_word(word):
+                    self.words.add(word)
+                    added_count += 1
+
         if added_count > 0:
             freq_desc = (
-                f">= {min_freq}" if max_freq is None else f"{min_freq}-{max_freq}"
+                f">= {min_freq}"
+                if max_freq is None
+                else f"between {min_freq} and {max_freq}"
             )
             self.metadata["criteria"].append(
                 {
@@ -145,116 +178,21 @@ class WordlistBuilder:
                     "description": f"Added {added_count} words with frequency {freq_desc}",
                 }
             )
-
         return added_count
 
-    def add_by_syllable_count(self, count: int) -> int:
-        """Add words with a specific syllable count.
-
-        Args:
-            count: Number of syllables
-
-        Returns:
-            Number of words added
-        """
-        matching_words = self.atlas.filter_by_syllable_count(count)
-        original_count = len(self.words)
-        self.words.update(matching_words)
-
-        # Record the criteria
-        added_count = len(self.words) - original_count
-        if added_count > 0:
-            self.metadata["criteria"].append(
-                {
-                    "type": "syllable_count",
-                    "count": count,
-                    "added": added_count,
-                    "description": f"Added {added_count} words with {count} syllables",
-                }
-            )
-
-        return added_count
-
-    def add_by_custom_filter(
-        self, filter_func: Callable[[str, Dict[str, Any]], bool], description: str
-    ) -> int:
-        """Add words using a custom filter function.
-
-        Args:
-            filter_func: Function that takes a word and its attributes and returns True to include
-            description: Description of the filter for the metadata
-
-        Returns:
-            Number of words added
-        """
-        matching_words = set()
-        for word, attributes in self.atlas.word_data.items():
-            if filter_func(word, attributes):
-                matching_words.add(word)
-
-        original_count = len(self.words)
-        self.words.update(matching_words)
-
-        # Record the criteria
-        added_count = len(self.words) - original_count
-        if added_count > 0:
-            self.metadata["criteria"].append(
-                {
-                    "type": "custom_filter",
-                    "count": added_count,
-                    "description": f"Added {added_count} words using custom filter: {description}",
-                }
-            )
-
-        return added_count
-
-    def add_similar_words(self, word: str, n: int = 10) -> int:
-        """Add words similar to a given word.
-
-        Args:
-            word: Target word to find similar words for
-            n: Number of similar words to add
-
-        Returns:
-            Number of words added
-        """
-        if not self.atlas.has_word(word):
-            return 0
-
-        similar_words = self.atlas.get_similar_words(word, n)
-        words_to_add = [w for w, _ in similar_words]
-
-        original_count = len(self.words)
-        self.add_words(words_to_add)
-
-        # Add criteria
-        added_count = len(self.words) - original_count
-        if added_count > 0:
-            self.metadata["criteria"].append(
-                {
-                    "type": "similar_words",
-                    "target_word": word,
-                    "count": added_count,
-                    "description": f"Added {added_count} words similar to '{word}'",
-                }
-            )
-
-        return added_count
-
-    def remove_words(self, words: List[str]) -> int:
+    def remove_words(self, words_to_remove: Union[List[str], Set[str]]) -> int:
         """Remove specific words from the wordlist.
 
         Args:
-            words: List of words to remove
+            words_to_remove: List or set of words to remove.
 
         Returns:
-            Number of words removed
+            Number of words actually removed from the list.
         """
         original_count = len(self.words)
-        self.words.difference_update(words)
-
-        # Record the criteria
+        self.words.difference_update(words_to_remove)
         removed_count = original_count - len(self.words)
+
         if removed_count > 0:
             self.metadata["criteria"].append(
                 {
@@ -263,87 +201,65 @@ class WordlistBuilder:
                     "description": f"Removed {removed_count} specific words",
                 }
             )
-
         return removed_count
 
-    def remove_by_search(self, pattern: str) -> int:
+    def remove_by_search(self, pattern: str, case_sensitive: bool = False) -> int:
         """Remove words matching a search pattern.
 
         Args:
-            pattern: Search pattern (regex or substring)
+            pattern: Search pattern (substring).
+            case_sensitive: Whether the search should be case sensitive.
 
         Returns:
-            Number of words removed
+            Number of words removed.
         """
-        matching_words = self.atlas.search(pattern)
-        original_count = len(self.words)
-        self.words.difference_update(matching_words)
+        matching_words = self.atlas.search(pattern, case_sensitive=case_sensitive)
+        return self.remove_words(
+            matching_words
+        )  # Delegate removal and criteria logging
 
-        # Record the criteria
-        removed_count = original_count - len(self.words)
-        if removed_count > 0:
-            self.metadata["criteria"].append(
-                {
-                    "type": "remove_search",
-                    "pattern": pattern,
-                    "count": removed_count,
-                    "description": f"Removed {removed_count} words matching '{pattern}'",
-                }
-            )
-
-        return removed_count
-
-    def remove_by_attribute(self, attribute: str, value: Any = True) -> int:
-        """Remove words with a specific attribute.
+    def remove_by_source(self, source_name: str) -> int:
+        """Remove words belonging to a specific source list.
 
         Args:
-            attribute: Attribute name (e.g., 'ROGET_123', 'GSL')
-            value: Required attribute value (default: True)
+            source_name: The name of the source list.
 
         Returns:
-            Number of words removed
+            Number of words removed.
+
+        Raises:
+            ValueError: If the source name is not found.
         """
-        matching_words = self.atlas.filter_by_attribute(attribute, value)
-        original_count = len(self.words)
-        self.words.difference_update(matching_words)
+        # Directly use self.atlas
+        try:
+            # Get words from the source using the atlas method which handles errors
+            words_in_source = self.atlas.get_words_in_source(source_name)
+        except ValueError as e:
+            # Re-raise if source doesn't exist, as per original behaviour
+            raise ValueError(f"Source '{source_name}' not found in atlas.") from e
 
-        # Record the criteria
-        removed_count = original_count - len(self.words)
-        if removed_count > 0:
-            self.metadata["criteria"].append(
-                {
-                    "type": "remove_attribute",
-                    "attribute": attribute,
-                    "value": str(value),
-                    "count": removed_count,
-                    "description": f"Removed {removed_count} words with attribute {attribute}={value}",
-                }
-            )
-
+        removed_count = 0
+        words_to_remove = self.words.intersection(words_in_source)
+        for word in words_to_remove:
+            self.words.remove(word)
+            removed_count += 1
         return removed_count
 
     def get_wordlist(self) -> List[str]:
-        """Get the current wordlist.
-
-        Returns:
-            Sorted list of words in the wordlist
-        """
+        """Return the current wordlist as a sorted list."""
         return sorted(list(self.words))
 
     def set_metadata(
         self,
-        name: str = None,
-        description: str = None,
-        creator: str = None,
-        tags: List[str] = None,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
+        creator: Optional[str] = None,
+        tags: Optional[List[str]] = None,
     ) -> None:
-        """Set metadata for the wordlist.
+        """Set metadata fields for the wordlist.
 
-        Args:
-            name: Wordlist name
-            description: Wordlist description
-            creator: Creator name/ID
-            tags: List of tags for categorization
+        Existing values are overwritten only if a new value is provided.
+        Tags are replaced entirely if provided.
         """
         if name is not None:
             self.metadata["name"] = name
@@ -351,34 +267,40 @@ class WordlistBuilder:
             self.metadata["description"] = description
         if creator is not None:
             self.metadata["creator"] = creator
-        if tags is not None:
+        if tags is not None:  # Allow replacing with empty list
             self.metadata["tags"] = tags
 
     def get_metadata(self) -> Dict[str, Any]:
-        """Get the wordlist metadata.
+        """Return the current metadata dictionary."""
+        # Return a copy to prevent external modification
+        return self.metadata.copy()
 
-        Returns:
-            Dictionary with metadata
-        """
-        # Add current size to metadata
-        metadata = self.metadata.copy()
-        metadata["size"] = len(self.words)
-        return metadata
-
-    def save(self, filename: Union[str, Path]) -> None:
-        """Save the wordlist to a JSON file.
+    def save(self, filename: Union[str, Path], overwrite: bool = False) -> None:
+        """Save the wordlist (words and metadata) to a JSON file.
 
         Args:
-            filename: Path to save the wordlist to
+            filename: The path to save the JSON file.
+            overwrite: If True, overwrite the file if it exists. Defaults to False.
+
+        Raises:
+            FileExistsError: If the file exists and overwrite is False.
+            IOError: If there is an error writing the file.
         """
-        filename = Path(filename)
-        # Make sure the directory exists
-        os.makedirs(filename.parent, exist_ok=True)
+        filepath = Path(filename)
+        if filepath.exists() and not overwrite:
+            raise FileExistsError(f"File already exists: {filepath}")
 
-        data = {"metadata": self.get_metadata(), "words": list(self.words)}
-
-        with open(filename, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
+        save_path = Path(filename)
+        save_path.parent.mkdir(parents=True, exist_ok=True)
+        wordlist_data = {
+            "metadata": self.metadata,
+            "words": self.get_wordlist(),  # Save sorted list
+        }
+        try:
+            with open(save_path, "w", encoding="utf-8") as f:
+                json.dump(wordlist_data, f, indent=2)
+        except Exception as e:
+            raise IOError(f"Failed to save wordlist to {save_path}: {e}") from e
 
     @classmethod
     def load(
@@ -390,131 +312,140 @@ class WordlistBuilder:
         """Load a wordlist from a JSON file.
 
         Args:
-            filename: Path to the wordlist JSON file
-            atlas: Optional existing WordAtlas instance
-            data_dir: Directory containing dataset files (only used if atlas is None)
+            filename: Path to the wordlist JSON file.
+            atlas: An existing WordAtlas instance, or None to create one.
+            data_dir: Data directory (only used if atlas is None).
 
         Returns:
-            New WordlistBuilder instance with the loaded wordlist
+            A new WordlistBuilder instance populated with the loaded data.
+
+        Raises:
+            FileNotFoundError: If the file does not exist.
+            ValueError: If the file is not valid JSON or has incorrect structure.
         """
-        with open(filename, "r", encoding="utf-8") as f:
-            data = json.load(f)
-
-        # Create a new builder
-        builder = cls(atlas, data_dir)
-
-        # Load metadata
-        if "metadata" in data:
-            metadata = data["metadata"]
-            builder.set_metadata(
-                name=metadata.get("name"),
-                description=metadata.get("description"),
-                creator=metadata.get("creator"),
-                tags=metadata.get("tags"),
+        load_path = Path(filename)
+        # Ensure FileNotFoundError is raised if file doesn't exist
+        if not load_path.is_file():  # Check if it's a file specifically
+            raise FileNotFoundError(
+                f"Wordlist file not found or is not a file: {load_path}"
             )
 
-            # Copy criteria if available
-            if "criteria" in metadata and isinstance(metadata["criteria"], list):
-                builder.metadata["criteria"] = metadata["criteria"]
+        try:
+            with open(load_path, "r", encoding="utf-8") as f:
+                wordlist_data = json.load(f)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Invalid JSON in wordlist file {load_path}: {e}") from e
+        except Exception as e:
+            raise IOError(f"Failed to read wordlist file {load_path}: {e}") from e
 
-        # Add words
-        builder.add_words(data["words"])
+        if (
+            not isinstance(wordlist_data, dict)
+            or "metadata" not in wordlist_data
+            or "words" not in wordlist_data
+            or not isinstance(wordlist_data["words"], list)
+        ):
+            raise ValueError(
+                f"Invalid wordlist file format in {load_path}. Expected dict with 'metadata' and 'words' list."
+            )
+
+        # Create a new builder instance
+        builder = cls(atlas=atlas, data_dir=data_dir)
+
+        # Populate metadata directly
+        loaded_meta = wordlist_data.get("metadata", {})
+        builder.metadata = {
+            "name": loaded_meta.get("name", "Loaded Wordlist"),
+            "description": loaded_meta.get("description", ""),
+            "creator": loaded_meta.get("creator", ""),
+            "tags": loaded_meta.get("tags", []),
+            "criteria": loaded_meta.get(
+                "criteria", []
+            ),  # Directly assign loaded criteria
+        }
+
+        # Directly assign validated words, don't use add_words
+        loaded_words = wordlist_data.get("words", [])
+        valid_words = set()
+        for word in loaded_words:
+            if builder.atlas.has_word(word):
+                valid_words.add(word)
+            # else: word not in atlas, ignore
+
+        builder.words = valid_words  # Assign the validated set directly
 
         return builder
 
     def analyze(self) -> Dict[str, Any]:
-        """Analyze the wordlist and provide statistics.
+        """Analyze the current wordlist (size, frequency, source coverage)."""
 
-        Returns:
-            Dictionary with statistics about the wordlist
-        """
-        if not self.words:
-            return {"size": 0}
-
-        # Basic stats
-        stats = {
+        stats: Dict[str, Any] = {
             "size": len(self.words),
-            "single_words": sum(1 for w in self.words if " " not in w),
-            "phrases": sum(1 for w in self.words if " " in w),
+            "single_words": 0,
+            "phrases": 0,
+            "frequency": {  # Added average init
+                "total": 0.0,
+                "count": 0,
+                "average": 0.0,
+                "distribution": {},
+            },
+            "source_coverage": {},
         }
 
-        # Syllable distribution
-        syllable_counts = {}
-        for word in self.words:
-            word_data = self.atlas.get_word(word)
-            if "SYLLABLE_COUNT" in word_data:
-                count = word_data["SYLLABLE_COUNT"]
-                syllable_counts[count] = syllable_counts.get(count, 0) + 1
+        if not self.words:
+            return stats  # Return defaults if wordlist is empty
 
-        stats["syllable_distribution"] = {
-            str(count): value for count, value in sorted(syllable_counts.items())
-        }
-
-        # Identify all wordlist attributes in the data
-        wordlist_attributes = {}
-        for attr in self.atlas.word_data.get(next(iter(self.atlas.word_data)), {}):
-            if (
-                attr.startswith("GSL_")
-                or attr.startswith("SWADESH_")
-                or attr.startswith("NGSL_")
-                or attr.startswith("OGDEN_")
-                or attr == "GSL"
-                or attr == "SWADESH"
-                or attr == "NGSL"
-                or attr == "OGDEN"
-            ):
-                wordlist_attributes[attr] = 0
-
-        # Count words in each wordlist
-        for word in self.words:
-            word_data = self.atlas.get_word(word)
-            for attr in wordlist_attributes:
-                if attr in word_data and word_data[attr]:
-                    wordlist_attributes[attr] += 1
-
-        # Format the wordlist coverage stats
-        stats["wordlist_coverage"] = {
-            attr: {
-                "count": count,
-                "percentage": (
-                    round(count / len(self.words) * 100, 1) if self.words else 0
-                ),
-            }
-            for attr, count in wordlist_attributes.items()
-        }
-
-        # Frequency stats
-        freq_buckets = {"0": 0, "1-10": 0, "11-100": 0, "101-1000": 0, ">1000": 0}
-        total_freq = 0
-        freq_words = 0
+        all_source_names = self.atlas.get_source_list_names()
+        for src_name in all_source_names:
+            stats["source_coverage"][src_name] = {"count": 0, "percentage": 0.0}
 
         for word in self.words:
-            word_data = self.atlas.get_word(word)
-            if "FREQ_GRADE" in word_data:
-                freq = word_data["FREQ_GRADE"]
-                total_freq += freq
-                freq_words += 1
+            # Count single words vs phrases
+            if " " in word:
+                stats["phrases"] += 1
+            else:
+                stats["single_words"] += 1
 
-                if freq == 0:
-                    freq_buckets["0"] += 1
-                elif freq <= 10:
-                    freq_buckets["1-10"] += 1
-                elif freq <= 100:
-                    freq_buckets["11-100"] += 1
-                elif freq <= 1000:
-                    freq_buckets["101-1000"] += 1
+            # Frequency statistics
+            frequency = self.atlas.get_frequency(word)
+            if frequency is not None:
+                stats["frequency"]["total"] += frequency
+                stats["frequency"]["count"] += 1
+                # Example distribution bins (can be adjusted)
+                if frequency <= 10:
+                    bin_label = "0-10"
+                elif frequency <= 100:
+                    bin_label = "11-100"
+                elif frequency <= 1000:
+                    bin_label = "101-1000"
                 else:
-                    freq_buckets[">1000"] += 1
+                    bin_label = ">1000"
+                stats["frequency"]["distribution"][bin_label] = (
+                    stats["frequency"]["distribution"].get(bin_label, 0) + 1
+                )
 
-        # Store raw counts for programmatic access
-        freq_distribution = {}
-        for bucket, count in freq_buckets.items():
-            freq_distribution[bucket] = count
+            # Source list coverage
+            word_sources = self.atlas.get_sources(word)
+            for src_name in word_sources:
+                # Ensure src_name is valid before incrementing
+                if src_name in stats["source_coverage"]:
+                    stats["source_coverage"][src_name]["count"] += 1
 
-        stats["frequency"] = {
-            "distribution": freq_distribution,
-            "average": round(total_freq / freq_words, 2) if freq_words > 0 else 0,
-        }
+        # Calculate frequency average
+        if stats["frequency"]["count"] > 0:
+            stats["frequency"]["average"] = (
+                stats["frequency"]["total"] / stats["frequency"]["count"]
+            )
+        # else: average remains 0.0
+
+        # Calculate source percentages
+        total_words = len(self.words)
+        # Check total_words > 0 before division
+        if total_words > 0:
+            for src_name in stats["source_coverage"]:
+                count = stats["source_coverage"][src_name]["count"]
+                stats["source_coverage"][src_name]["percentage"] = (
+                    count / total_words
+                ) * 100
 
         return stats
 
@@ -525,50 +456,50 @@ class WordlistBuilder:
         sort_key: Optional[Callable[[str], Any]] = None,
         word_format: Optional[Callable[[str], str]] = None,
     ) -> None:
-        """Export the wordlist to a text file (one word per line).
+        """Export the wordlist to a plain text file.
 
         Args:
-            filename: Path to save the wordlist to
-            include_metadata: Whether to include metadata as comments
-            sort_key: Optional function to use as sort key (default: alphabetical)
-            word_format: Optional function to format words before writing
+            filename: Path to the output text file.
+            include_metadata: Whether to include metadata as comments at the top.
+            sort_key: Optional function to sort words before saving.
+            word_format: Optional function to format each word before saving.
         """
-        filename = Path(filename)
-        # Make sure the directory exists
-        os.makedirs(filename.parent, exist_ok=True)
+        export_path = Path(filename)
+        export_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(filename, "w", encoding="utf-8") as f:
-            # Write metadata as comments if requested
-            if include_metadata:
-                f.write(f"# {self.metadata['name']}\n")
-                if self.metadata["description"]:
-                    f.write(f"# Description: {self.metadata['description']}\n")
-                if self.metadata["creator"]:
-                    f.write(f"# Creator: {self.metadata['creator']}\n")
-                if self.metadata["tags"]:
-                    f.write(f"# Tags: {', '.join(self.metadata['tags'])}\n")
-                f.write(f"# Size: {len(self.words)} words\n")
-                f.write("#\n")
+        words_to_export = list(self.words)
+        if sort_key:
+            words_to_export.sort(key=sort_key)
+        else:
+            words_to_export.sort()  # Default sort alphabetically
 
-            # Write words (one per line)
-            words = sorted(self.words, key=sort_key) if sort_key else sorted(self.words)
-            for word in words:
-                formatted_word = word_format(word) if word_format else word
-                f.write(f"{formatted_word}\n")
+        try:
+            with open(export_path, "w", encoding="utf-8") as f:
+                if include_metadata:
+                    f.write(f"# Wordlist Name: {self.metadata.get('name', 'N/A')}\n")
+                    f.write(
+                        f"# Description: {self.metadata.get('description', 'N/A')}\n"
+                    )
+                    f.write(f"# Creator: {self.metadata.get('creator', 'N/A')}\n")
+                    f.write(f"# Tags: {self.metadata.get('tags', [])}\n")
+                    f.write(f"# Criteria: {self.metadata.get('criteria', [])}\n")
+                    f.write(f"# Total Words: {len(words_to_export)}\n\n")
+
+                for word in words_to_export:
+                    formatted_word = word_format(word) if word_format else word
+                    f.write(f"{formatted_word}\n")
+        except Exception as e:
+            raise IOError(f"Failed to export wordlist to {export_path}: {e}") from e
 
     def __len__(self) -> int:
         """Return the number of words in the wordlist."""
         return len(self.words)
 
     def clear(self) -> None:
-        """Clear the wordlist, removing all words and criteria."""
+        """Remove all words and reset criteria from the wordlist."""
         self.words.clear()
-        self.metadata["criteria"] = []  # Clear criteria history
+        self.metadata["criteria"] = []
 
     def get_size(self) -> int:
-        """Get the number of words in the wordlist.
-
-        Returns:
-            Number of words in the wordlist
-        """
+        """Return the number of words currently in the wordlist."""
         return len(self.words)

@@ -5,7 +5,7 @@
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://github.com/neumanns-workshop/english-word-atlas)
 [![Version](https://img.shields.io/badge/dynamic/toml?url=https://raw.githubusercontent.com/neumanns-workshop/english-word-atlas/main/pyproject.toml&query=$.project.version&label=version&color=brightgreen)](https://github.com/neumanns-workshop/english-word-atlas/blob/main/CHANGELOG.md)
 
-A curated dataset of 8,536 English words and phrases with comprehensive linguistic and semantic annotations, designed to capture the conceptual diversity of English. This dataset combines historical lexicographic resources with modern NLP tools to provide rich annotations for cognitive and computational linguistics research. Notably, due to Roget's Thesaurus entries, it includes multi-word phrases (e.g., "be so good as", "put a good face on") alongside single words, with full embedding and pronunciation coverage for both.
+A curated dataset of English words and phrases with comprehensive linguistic and semantic annotations, designed to capture the conceptual diversity of English. This dataset combines historical lexicographic resources with modern NLP tools to provide rich annotations for cognitive and computational linguistics research. Notably, due to Roget's Thesaurus entries, it includes multi-word phrases (e.g., "be so good as", "put a good face on") alongside single words, with full embedding and pronunciation coverage for both.
 
 > **Note:** This project is focused on local development and is not distributed via PyPI. Please use the local installation methods described below.
 
@@ -29,15 +29,32 @@ from word_atlas import WordAtlas
 # Initialize the dataset
 atlas = WordAtlas()
 
-# Explore a word
-word_info = atlas.get_word("freedom")
-print(f"Freedom has {word_info['SYLLABLE_COUNT']} syllables")
-print(f"Freedom pronunciation: {word_info['ARPABET'][0]}")
+# Check if a word exists and get its basic info
+word = "freedom"
+if atlas.has_word(word):
+    print(f"Information for '{word}':")
+    try:
+        sources = atlas.get_sources(word)
+        print(f"  Sources: {sources}")
+    except KeyError:
+        print("  Sources: Not found in any source list.") # Should not happen if has_word is true
 
-# Find similar words
-similar_words = atlas.get_similar_words("freedom", n=5)
-for word, score in similar_words:
-    print(f"{word}: {score:.4f}")
+    try:
+        freq = atlas.get_frequency(word)
+        print(f"  Frequency: {freq:.2f}")
+    except KeyError:
+        print("  Frequency: N/A") # Word might exist but have no frequency data
+
+    # Get embedding (if needed)
+    # embedding = atlas.get_embedding(word)
+    # if embedding is not None:
+    #     print(f"  Embedding dimensions: {embedding.shape[0]}")
+else:
+    print(f"Word '{word}' not found.")
+
+# Search for words matching a pattern
+matches = atlas.search("libert.*")
+print(f"\nWords matching 'libert.*': {matches}")
 ```
 
 For `uv` usage, see [README-uv.md](README-uv.md).
@@ -69,9 +86,13 @@ english_word_atlas/
 │   ├── data.py         # Data loading utilities
 │   └── wordlist.py     # WordlistBuilder class
 └── data/               # Dataset files (git-lfs managed)
-    ├── embeddings.npy
-    ├── word_data.json
-    └── word_index.json
+    ├── frequencies/
+    │   └── word_frequencies.json # SUBTLWF frequency data
+    ├── sources/
+    │   ├── gsl.txt           # Example source list (General Service List)
+    │   └── ...               # Other source lists (.txt or .json)
+    ├── embeddings.npy          # Pre-calculated embedding vectors
+    └── word_index.json         # Word/phrase to index mapping
 ```
 
 ## Installation
@@ -111,7 +132,8 @@ pip install -e ".[dev]"
 
 All data files are included in the `data` directory and managed with Git LFS. Ensure you have Git LFS installed (`git lfs install`).
 
-- `data/word_data.json`: Linguistic and semantic annotations for each word/phrase.
+- `data/frequencies/word_frequencies.json`: Word frequency data derived from SUBTLEX-US.
+- `data/sources/`: Directory containing various source lists (e.g., `gsl.txt`, `awl.txt`) as simple text files or JSON lists, indicating word membership in those lists.
 - `data/word_index.json`: Mapping from words/phrases to embedding vector indices.
 - `data/embeddings.npy`: Pre-calculated `all-MiniLM-L6-v2` embedding vectors (384 dimensions).
 
@@ -122,53 +144,39 @@ All data files are included in the `data` directory and managed with Git LFS. En
 ```python
 from word_atlas import WordAtlas
 
-# Initialize the atlas (loads data automatically)
+# Initialize the atlas (loads data automatically from default data directory)
+# Optionally provide a custom path: WordAtlas(data_dir='/path/to/custom/data')
 atlas = WordAtlas()
 
-# Get information about a word
-data = atlas.get_word("elephant")
-if data:
-    print(f"Syllables: {data.get('SYLLABLE_COUNT')}")
-    print(f"Frequency Grade: {data.get('FREQ_GRADE')}")
-else:
-    print("Word not found.")
+# Check if a word or phrase exists
+print(f"Has 'platypus'? {atlas.has_word('platypus')}")
+print(f"Has 'kick the bucket'? {atlas.has_word('kick the bucket')}")
 
+# Get sources and frequency
+try:
+    sources = atlas.get_sources("elephant")
+    print(f"Sources for 'elephant': {sources}")
+except KeyError:
+    print("Word 'elephant' not found in any source list.") # Should not happen based on mock data
+
+try:
+    freq = atlas.get_frequency("elephant")
+    print(f"Frequency of 'elephant': {freq:.2f}")
+except KeyError:
+    print("Word 'elephant' has no frequency data.")
 
 # Get embedding vector (NumPy array)
 vector = atlas.get_embedding("elephant")
 if vector is not None:
     print(f"Embedding shape: {vector.shape}")
 
-# Find similar words
-similar = atlas.get_similar_words("elephant", n=5)
-print(f"Words similar to 'elephant': {similar}")
-
-# Check if word exists
-print(f"Has 'platypus'? {atlas.has_word('platypus')}")
-```
-
-### Advanced Features (Python API)
-
-```python
-# Filter words by attributes
-gsl_words = atlas.filter_by_attribute("GSL") # Words in the General Service List
-roget_words = atlas.filter_by_attribute("ROGET_ANIMAL") # Words in a Roget category
-
-# Filter by frequency grade
-common_words = atlas.filter_by_frequency(min_freq=1, max_freq=10)
-
-# Filter by syllable count
-two_syllable_words = atlas.filter_by_syllable_count(2)
-
-# Search using regex
+# Search for words using regex
 regex_matches = atlas.search(r"happi(ness|ly)")
+print(f"Words matching pattern: {regex_matches}")
 
-# Get all phrases
-phrases = atlas.get_phrases()
-
-# Get word similarity
-similarity = atlas.word_similarity("happy", "joyful")
-print(f"Similarity(happy, joyful): {similarity:.4f}")
+# Filter words (example: find words in 'GSL' source list with frequency > 100)
+filtered_words = atlas.filter(sources=["GSL"], min_freq=100)
+print(f"Filtered words: {filtered_words[:10]}...") # Show first 10
 ```
 
 ### Creating Wordlists (Python API)
@@ -180,113 +188,104 @@ atlas = WordAtlas()
 builder = WordlistBuilder(atlas)
 
 # Set metadata
-builder.set_metadata(name="Common GSL Words", description="Words from GSL with freq < 10")
+builder.set_metadata(name="Common GSL Words", description="Words from GSL with freq < 1000")
 
 # Add words using criteria
-builder.add_by_attribute("GSL")
-builder.add_by_frequency(max_freq=10)
+builder.add_by_source("GSL") # Add all words from the GSL source list
+builder.add_by_frequency(max_freq=1000) # Add words with frequency <= 1000
+builder.add_by_search(".*ness") # Add words ending in 'ness'
+
+# Remove specific words
+builder.remove_words(["apple", "banana"])
 
 # Save the wordlist
 output_file = "common_gsl.json"
 builder.save(output_file)
-print(f"Wordlist saved to {output_file} with {builder.get_size()} words.")
+print(f"Wordlist saved to {output_file} with {len(builder.words)} words.")
 
 # Load an existing wordlist
 loaded_builder = WordlistBuilder.load(output_file, atlas)
-print(f"Loaded '{loaded_builder.metadata['name']}' with {loaded_builder.get_size()} words.")
+print(f"Loaded '{loaded_builder.metadata['name']}' with {len(loaded_builder.words)} words.")
 ```
 
 ### Command-line Interface (CLI)
 
-After installation (`pip install -e .`), you can use the `word_atlas` command.
+After installation (`pip install -e .` or using `uv`), you can use the `word_atlas` command. Use `--data-dir` to specify a custom data directory if needed.
 
 ```bash
-# Get information about a word
+# Get information about a word (sources, frequency)
 word_atlas info happiness
 
-# Get info and similar words
-word_atlas info freedom
+# Search for words matching a regex pattern
+word_atlas search "happ.*"
 
-# Search for words matching a pattern
-word_atlas search "happ.*" --words-only
+# Search and filter by source list and frequency
+word_atlas search ".*" --source GSL --max-freq 100
 
-# Search and filter by attribute and frequency
-word_atlas search ".*" --attribute GSL=true --min-freq 5
-
-# Search for words with the ROGET_ANIMAL attribute (existence check)
-word_atlas search ".*" --attribute ROGET_ANIMAL
+# Search and filter, showing verbose output (includes frequency)
+word_atlas search "an.*" --source GSL --verbose
 
 # Show dataset statistics
 word_atlas stats
 
-# Show detailed statistics
-word_atlas stats --detailed # Use --basic for less detail
-
 # --- Wordlist Commands ---
 
-# Create a wordlist from search and attribute
-word_atlas wordlist create --name "Common Animals" \
-    --search-pattern ".*" --attribute ROGET_ANIMAL \
-    --max-freq 20 --output animals.json
+# Create a wordlist from search, source, and frequency criteria
+word_atlas wordlist create --name "Common GSL Words" --output common_gsl.json \\
+    --source GSL --max-freq 1000 --search-pattern ".*ness"
 
-# Create a wordlist of words similar to 'happy'
-word_atlas wordlist create --name "Happy Synonyms" \
-    --similar-to happy --similar-count 15 \
-    --output happy_similar.json
+# Modify a wordlist: add/remove specific words, update metadata
+word_atlas wordlist modify common_gsl.json --add cat dog --remove happiness \\
+    --description "Updated description" --tags "common,gsl"
 
-# Modify a wordlist: add and remove words
-word_atlas wordlist modify animals.json --add cat dog --remove elephant
+# Modify a wordlist: add/remove based on patterns, sources, frequency
+word_atlas wordlist modify common_gsl.json --add-pattern "^a" --remove-pattern "ness$" \\
+    --add-source AWL --remove-source OTHER \\
+    --add-min-freq 50 --add-max-freq 200
 
-# Modify a wordlist: update metadata
-word_atlas wordlist modify animals.json --description "Common land animals" --tags "fauna,common"
+# Analyze a wordlist (show stats: size, single/phrase count, frequency info, source coverage)
+word_atlas wordlist analyze common_gsl.json
 
-# Analyze a wordlist
-word_atlas wordlist analyze animals.json
+# Analyze and export analysis results to JSON
+word_atlas wordlist analyze common_gsl.json --export analysis_results.json
+
+# Analyze and export the wordlist itself to a text file
+word_atlas wordlist analyze common_gsl.json --export-text wordlist_plain.txt
 
 # Merge two wordlists
-word_atlas wordlist merge animals.json happy_similar.json --output combined.json --name "Combined List"
+word_atlas wordlist merge list1.json list2.json --output combined.json --name "Combined List"
 
 # Get help for a specific command
-word_atlas search --help
-word_atlas wordlist create --help
+word_atlas wordlist modify --help
 ```
 
-### Examples
+## Data Details
 
-The package includes example scripts in the `examples/` directory:
+```python
+# Example entry in word_data_base.json
+# (Note: actual file might be structured differently, e.g., as a list)
+{
+  "aardvark": {
+    "ARPABET": ["AA1 R D V AA2 R K"],
+    "SYLLABLE_COUNT": 2
+    # Other potential base annotations...
+  },
+  // ... more words
+}
 
-```bash
-# Run the basic usage example
-python examples/basic_usage.py
+# Example entry in word_frequencies.json
+{
+  "aardvark": 1.23,
+  "abandon": 45.67,
+  // ... more words
+}
 
-# Run the text analysis example
-# python examples/text_analysis.py /path/to/your/text.txt
+# Example source file (e.g., data/sources/gsl.txt)
+# Can be .txt (one word per line) or .json (list of strings)
+apple
+banana
+# ... more words
 ```
-
-## Testing
-
-The package includes a comprehensive test suite using `pytest`. Ensure development dependencies are installed (`pip install -e ".[dev]"`).
-
-Run the tests and generate a coverage report:
-
-```bash
-# Run unit tests with coverage report
-pytest tests/unit/ --cov=word_atlas --cov-report term-missing -v
-```
-
-Current status: 101 tests passing, 93.41% coverage.
-
-## Data Sources
-
-The dataset integrates information from various sources:
-
-1.  **Roget's Thesaurus (Project Gutenberg):** Semantic categories and headwords.
-2.  **CMU Pronouncing Dictionary:** Phonetic transcriptions (ARPABET).
-3.  **General Service List (GSL) & New General Service List (NGSL):** Core vocabulary lists.
-4.  **Ogden's Basic English:** Simplified English vocabulary.
-5.  **Swadesh List:** Basic concepts for historical linguistics.
-6.  **Word frequency data:** Primarily based on SUBTLEXus frequencies, mapped to logarithmic grades.
-7.  **Sentence Transformers (`all-MiniLM-L6-v2`):** Pre-trained embeddings for semantic similarity.
 
 ## Contributing
 

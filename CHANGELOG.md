@@ -5,6 +5,22 @@ All notable changes to the English Word Atlas will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2025-04-13
+
+### Added
+- Added support for Academic Word List (AWL) and Academic Vocabulary List (AVL) source lists.
+- Added support for AFINN-111 sentiment word list as a source.
+- Added numerous unit tests to improve coverage for `word_atlas.atlas`, `word_atlas.data`, and `word_atlas.wordlist` modules, focusing on error handling and edge cases.
+- Added `overwrite` parameter to `WordlistBuilder.save()` method.
+
+### Changed
+- Regenerated `word_index.json` to include AWL and AVL words.
+- Refactored tests in `tests/unit/test_data.py` for `get_data_dir` search logic using more robust mocking.
+- Refactored tests in `tests/unit/test_atlas.py` for handling failed source loads during initialization and subsequent method calls.
+- Improved overall test coverage significantly, ensuring all modules meet the 77% target (overall ~87%).
+- Updated `README.md` to reflect current API usage (`get_sources`, `get_frequency`), remove references to obsolete data files (`word_data_base.json`), and clarify CLI command descriptions.
+- Reformatted codebase using `black`.
+
 ## [0.1.4] - 2025-04-06
 
 ### Fixed

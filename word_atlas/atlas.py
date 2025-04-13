@@ -2,331 +2,326 @@
 Word Atlas - Main interface for working with the English Word Atlas dataset.
 """
 
-import numpy as np
 from pathlib import Path
 import re
 from typing import Dict, List, Any, Optional, Set, Tuple, Union
+import json
+import os
+import sys  # Added for warnings
 
-from word_atlas.data import get_data_dir, get_embeddings, get_word_index, get_word_data
+from word_atlas.data import get_data_dir, get_word_index, get_word_frequencies
 
 
 class WordAtlas:
-    """Main interface for the English Word Atlas dataset."""
+    """Main interface for the English Word Atlas dataset (word index, frequency, sources ONLY)."""
 
     def __init__(self, data_dir: Union[str, Path, None] = None):
         """Initialize the Word Atlas with the dataset.
 
         Args:
-            data_dir: Directory containing the dataset files.
-                If None, uses the package's default data location.
+            data_dir: Directory containing the dataset files (word_index.json,
+                frequencies/word_frequencies.json, sources/ directory).
+                If None, searches common locations.
 
         Raises:
-            FileNotFoundError: If the dataset files cannot be found
+            FileNotFoundError: If the required dataset files cannot be found
         """
         self.data_dir = get_data_dir(data_dir)
-        self._load_dataset()
+        self._load_data()
 
-    def _load_dataset(self):
-        """Load the dataset and build indices for efficient lookups."""
-        # Load embeddings and word data
-        self.embeddings = get_embeddings(self.data_dir)
+    def _load_data(self):
+        """Load the core dataset components (index, frequencies, sources)."""
         self.word_to_idx = get_word_index(self.data_dir)
-        self.word_data = get_word_data(self.data_dir)
+        self.frequencies = get_word_frequencies(self.data_dir)
+        self.all_words = set(self.word_to_idx.keys())
 
-        # Create reverse mapping
-        self.idx_to_word = {v: k for k, v in self.word_to_idx.items()}
+        self.sources_dir = self.data_dir / "sources"
+        self.available_sources = self._discover_sources()
+        self._source_lists = {}  # Cache for loaded source lists (Set[str])
+        self._load_all_sources()  # Load all sources into cache at init
 
-        # Build indices for faster lookup
-        self._build_indices()
-
-        # Statistics
-        self.stats = {
-            "total_entries": len(self.word_data),
-            "single_words": sum(1 for w in self.word_data if " " not in w),
-            "phrases": sum(1 for w in self.word_data if " " in w),
-            "embedding_dim": (
-                self.embeddings.shape[1] if self.embeddings.shape[0] > 0 else 0
-            ),
-        }
-
-    def _build_indices(self):
-        """Build indices for faster attribute-based lookups."""
-        # Index for Roget categories
-        self.roget_category_index = {}
-        # Index for words by syllable count
-        self.syllable_index = {}
-        # Index for frequency ranges
-        self.frequency_index = {}
-
-        for word, attributes in self.word_data.items():
-            # Index Roget categories
-            for attr, value in attributes.items():
-                if attr.startswith("ROGET_") and value:
-                    if attr not in self.roget_category_index:
-                        self.roget_category_index[attr] = set()
-                    self.roget_category_index[attr].add(word)
-
-            # Use SYLLABLE_COUNT attribute for syllable indexing
-            if "SYLLABLE_COUNT" in attributes:
-                syllable_count = attributes["SYLLABLE_COUNT"]
-                if syllable_count not in self.syllable_index:
-                    self.syllable_index[syllable_count] = set()
-                self.syllable_index[syllable_count].add(word)
-            # Calculate syllable count from ARPABET if SYLLABLE_COUNT not present
-            elif "ARPABET" in attributes and attributes["ARPABET"]:
-                # Get first pronunciation variant
-                phonemes = attributes["ARPABET"][0]
-                syllable_count = self._count_syllables_from_arpabet(phonemes)
-                # Store the syllable count in the word data for quick reference
-                attributes["SYLLABLE_COUNT"] = syllable_count
-                # Index by syllable count
-                if syllable_count not in self.syllable_index:
-                    self.syllable_index[syllable_count] = set()
-                self.syllable_index[syllable_count].add(word)
-
-            # Index by frequency (logarithmic buckets)
-            if "FREQ_GRADE" in attributes:
-                freq = attributes["FREQ_GRADE"]
-                if freq > 0:
-                    bucket = int(np.log10(freq) * 2) if freq > 1 else 0
-                    if bucket not in self.frequency_index:
-                        self.frequency_index[bucket] = set()
-                    self.frequency_index[bucket].add(word)
-
-    def _count_syllables_from_arpabet(self, pronunciation: List[str]) -> int:
-        """Count syllables based on ARPABET pronunciation.
-
-        In ARPABET, syllables are marked by vowel phonemes, which contain stress markers (0, 1, 2).
-
-        Args:
-            pronunciation: List of ARPABET phonemes
-
-        Returns:
-            Number of syllables
+    def _discover_sources(self) -> Dict[str, Path]:
+        """Scan the data/sources directory recursively for source files (*.json or *.txt).
+        Source names are generated as 'subdirectory_filestem' (e.g., 'GSL_NEW',
+        'AFINN_NEG_5') or just 'filestem' if the file is directly in data/sources/.
         """
-        # Count phonemes containing digits (stress markers) which indicate vowels/syllables
-        vowel_phonemes = [p for p in pronunciation if any(c.isdigit() for c in p)]
-        return len(vowel_phonemes)
+        sources = {}
+        if not (self.sources_dir.exists() and self.sources_dir.is_dir()):
+            print(
+                f"Warning: Sources directory not found or is not a directory: {self.sources_dir}",
+                file=sys.stderr,
+            )
+            return sources
 
-    # ---- Basic Word Retrieval ----
+        # Scan for both .json and .txt files recursively
+        for extension in ["*.json", "*.txt"]:
+            # Use rglob to search recursively
+            for file_path in self.sources_dir.rglob(extension):
+                # Determine the source name based on location
+                relative_path = file_path.relative_to(self.sources_dir)
+                file_stem = file_path.stem  # e.g., 'NEW', 'NEG_5'
 
-    def get_word(self, word: str) -> Dict[str, Any]:
-        """Retrieve all data for a specific word.
+                if len(relative_path.parts) > 1:  # File is in a subdirectory
+                    subdir_name = relative_path.parts[0]  # e.g., 'GSL', 'AFINN'
+                    # Combine subdirectory and stem for the internal source name
+                    source_name = f"{subdir_name}_{file_stem}"
+                else:  # File is directly in sources_dir
+                    source_name = file_stem
 
-        Args:
-            word: The word to look up
+                if source_name in sources:
+                    # Handle potential duplicates
+                    # If paths are different, it's a true name collision. If paths are same, it's just txt vs json.
+                    if sources[source_name] != file_path:
+                        print(
+                            f"Warning: Duplicate source name '{source_name}' generated.",
+                            file=sys.stderr,
+                        )
+                        print(f"  Existing: {sources[source_name]}", file=sys.stderr)
+                        print(f"  New (ignored): {file_path}", file=sys.stderr)
+                    # If paths are the same (just different extension), we implicitly keep the first one found.
+                else:
+                    sources[source_name] = file_path
+                    # print(f"Discovered source: '{source_name}' -> {file_path}") # Debugging
+        return sources
 
-        Returns:
-            Dictionary of word attributes or empty dict if not found
-        """
-        return self.word_data.get(word, {})
+    def _load_all_sources(self):
+        """Load all discovered source lists (.json or *.txt) into the cache."""
+        for source_name, file_path in self.available_sources.items():
+            source_list_words = set()
+            unknown_words = set()
+            invalid_items = 0
+            try:
+                with open(file_path, "r", encoding="utf-8") as f:
+                    if file_path.suffix == ".json":
+                        source_data = json.load(f)
+                        if isinstance(source_data, list):
+                            for item in source_data:
+                                if isinstance(item, str):
+                                    if self.has_word(item):
+                                        source_list_words.add(item)
+                                    else:
+                                        unknown_words.add(item)
+                                else:
+                                    invalid_items += 1
+                        else:
+                            print(
+                                f"Warning: Source JSON '{source_name}' ignored (not a JSON list).",
+                                file=sys.stderr,
+                            )
+                            continue  # Skip to next source
+                    elif file_path.suffix == ".txt":
+                        for line in f:
+                            word = line.strip()
+                            if word and not word.startswith(
+                                "#"
+                            ):  # Ignore empty lines and comments
+                                if self.has_word(word):
+                                    source_list_words.add(word)
+                                else:
+                                    unknown_words.add(word)
+                    else:
+                        # Should not happen due to discovery filter, but safeguard
+                        print(
+                            f"Warning: Unknown source file type for '{source_name}': {file_path.suffix}",
+                            file=sys.stderr,
+                        )
+                        continue
 
-    def get_embedding(self, word: str) -> Optional[np.ndarray]:
-        """Get the embedding vector for a word.
+            except FileNotFoundError:
+                print(
+                    f"Warning: Source file '{source_name}' disappeared before loading: {file_path}",
+                    file=sys.stderr,
+                )
+            except json.JSONDecodeError as e:
+                print(
+                    f"Warning: Could not parse source JSON '{source_name}' from {file_path}: {e}",
+                    file=sys.stderr,
+                )
+            except Exception as e:  # Catch other potential read errors
+                print(
+                    f"Warning: Could not load source '{source_name}' from {file_path}: {e}",
+                    file=sys.stderr,
+                )
 
-        Args:
-            word: The word to get the embedding for
+            # Report warnings after processing file
+            if invalid_items:
+                print(
+                    f"Warning: Source '{source_name}' contained {invalid_items} non-string items.",
+                    file=sys.stderr,
+                )
+            if unknown_words:
+                print(
+                    f"Warning: Source '{source_name}' contains {len(unknown_words)} words not found in master index (e.g., '{next(iter(unknown_words))}'). These will be ignored.",
+                    file=sys.stderr,
+                )
 
-        Returns:
-            Numpy array containing the embedding, or None if not found
-        """
-        if word not in self.word_to_idx:
-            return None
+            # Store the successfully loaded and validated words
+            self._source_lists[source_name] = source_list_words
 
-        idx = self.word_to_idx[word]
-        return self.embeddings[idx]
+    # ---- Basic Data Retrieval ----
 
     def has_word(self, word: str) -> bool:
-        """Check if a word exists in the dataset.
-
-        Args:
-            word: The word to check
-
-        Returns:
-            True if the word exists, False otherwise
-        """
-        return word in self.word_data
+        """Check if a word exists in the master index."""
+        return word in self.all_words
 
     def get_all_words(self) -> List[str]:
-        """Get all words in the dataset.
+        """Get a sorted list of all words in the master index."""
+        return sorted(list(self.all_words))
 
-        Returns:
-            List of all words and phrases
+    def get_frequency(self, word: str) -> Optional[float]:
+        """Get the frequency for a word."""
+        # Frequencies might be stored case-insensitively, check lowercase
+        return self.frequencies.get(word.lower())
+
+    def get_sources(self, word: str) -> List[str]:
+        """Return a list of source names containing the given word."""
+        if word not in self.word_to_idx:
+            raise KeyError(f"Word '{word}' not found in the main index.")
+        # Only return sources where the word is present AND exists in the master index
+        return sorted(
+            [name for name, words in self._source_lists.items() if word in words]
+        )
+
+    def get_source_list_names(self) -> List[str]:
+        """Get a sorted list of all available source list names."""
+        return sorted(list(self.available_sources.keys()))
+
+    def get_words_in_source(self, source_name: str) -> Set[str]:
+        """Get the set of words belonging to a specific source list.
+        Words returned are guaranteed to exist in the master index.
         """
-        return list(self.word_data.keys())
+        if source_name not in self._source_lists:
+            if source_name not in self.available_sources:
+                raise ValueError(f"Source '{source_name}' not found.")
+            else:
+                # Source exists but failed to load or was invalid
+                print(
+                    f"Warning: Returning empty set for source '{source_name}' which failed to load or was invalid.",
+                    file=sys.stderr,
+                )
+                return set()
+        # Return the cached set (already filtered for master index membership)
+        return self._source_lists[source_name]
 
     # ---- Search and Filtering ----
 
-    def search(self, pattern: str) -> List[str]:
-        """Search for words matching a pattern.
+    def search(self, pattern: str, case_sensitive: bool = False) -> List[str]:
+        """Search for words matching a pattern (substring search)."""
+        if not case_sensitive:
+            pattern = pattern.lower()
+            return [word for word in self.all_words if pattern in word.lower()]
+        else:
+            return [word for word in self.all_words if pattern in word]
+
+    def filter(
+        self,
+        sources: Optional[List[str]] = None,
+        min_freq: Optional[float] = None,
+        max_freq: Optional[float] = None,
+    ) -> Set[str]:
+        """Filter words based on source lists and frequency.
 
         Args:
-            pattern: Regular expression pattern
+            sources: List of source list names. Word must be in ALL listed sources.
+            min_freq: Minimum frequency (inclusive).
+            max_freq: Maximum frequency (inclusive).
 
         Returns:
-            List of matching words
+            Set of words matching ALL specified criteria.
         """
-        try:
-            regex = re.compile(pattern)
-            return [word for word in self.word_data if regex.search(word)]
-        except re.error:
-            # Fall back to substring search for invalid regex
-            return [word for word in self.word_data if pattern.lower() in word.lower()]
+        # Start with all words if no criteria specified, otherwise start filtering
+        if not any([sources, min_freq is not None, max_freq is not None]):
+            return self.all_words.copy()
 
-    def get_phrases(self) -> List[str]:
-        """Get all multi-word phrases in the dataset.
+        filtered_words = self.all_words.copy()
 
-        Returns:
-            List of phrases
-        """
-        return [word for word in self.word_data if " " in word]
+        # 1. Filter by Source Lists (Intersection)
+        if sources:
+            source_intersection = set()
+            first_source = True
+            for src_name in sources:
+                # get_words_in_source handles errors and returns set() of known words
+                words_in_src = self.get_words_in_source(src_name)
+                if first_source:
+                    source_intersection.update(words_in_src)
+                    first_source = False
+                else:
+                    source_intersection.intersection_update(words_in_src)
+                    # Optimization: if intersection is empty, no need to check more sources
+                    if not source_intersection:
+                        return set()
+            filtered_words.intersection_update(source_intersection)
+            if not filtered_words:
+                return set()  # Early exit if no words match sources
 
-    def get_single_words(self) -> List[str]:
-        """Get all single words in the dataset.
+        # 2. Filter by Frequency
+        if min_freq is not None or max_freq is not None:
+            freq_matches = set()
+            min_f = min_freq if min_freq is not None else -float("inf")
+            max_f = max_freq if max_freq is not None else float("inf")
 
-        Returns:
-            List of single words
-        """
-        return [word for word in self.word_data if " " not in word]
+            for word in filtered_words:
+                freq = self.get_frequency(word)
+                if freq is not None:
+                    if min_f <= freq <= max_f:
+                        freq_matches.add(word)
+            filtered_words.intersection_update(freq_matches)
 
-    def filter_by_attribute(self, attribute: str, value: Any = True) -> Set[str]:
-        """Filter words by a specific attribute.
+        return filtered_words
 
-        Args:
-            attribute: Attribute name (e.g., 'ROGET_123', 'GSL')
-            value: Required attribute value (default: True)
+    # ---- Statistics ----
 
-        Returns:
-            Set of words matching the criteria
-        """
-        if attribute.startswith("ROGET_") and attribute in self.roget_category_index:
-            return self.roget_category_index[attribute]
+    def get_stats(self) -> dict:
+        """Calculate and return statistics about the loaded dataset."""
+        # Initialize stats with defaults
+        stats = {
+            "total_words": 0,
+            "total_phrases": 0,
+            "total_entries": 0,
+            "coverage": {},
+        }
+        # No need for separate counters now
+        # total_words = 0
+        # total_phrases = 0
+        words_by_source = {source: set() for source in self.get_source_list_names()}
 
-        return {
-            word
-            for word, attrs in self.word_data.items()
-            if attribute in attrs and attrs[attribute] == value
+        for word, data in self.word_to_idx.items():
+            is_phrase = " " in word
+            if is_phrase:
+                stats["total_phrases"] += 1
+            else:
+                stats["total_words"] += 1
+
+            # Correctly get sources for the word
+            # sources = data.get("sources", []) # INCORRECT: data is index (int)
+            sources = self.get_sources(word)  # CORRECT: Use the method
+
+            for source in sources:
+                if source in words_by_source:
+                    words_by_source[source].add(word)
+
+        stats["total_entries"] = stats["total_words"] + stats["total_phrases"]
+
+        # Calculate coverage percentage for each source list
+        stats["coverage"] = {
+            source: (
+                len(words_in_source) / stats["total_entries"] * 100
+                if stats["total_entries"] > 0  # Use the value from stats dict
+                else 0
+            )
+            for source, words_in_source in words_by_source.items()
         }
 
-    def filter_by_syllable_count(self, count: int) -> Set[str]:
-        """Get words with a specific syllable count.
+        # Add embedding dimension if present
+        # ... existing code ...
 
-        Args:
-            count: Number of syllables
+        return stats
 
-        Returns:
-            Set of words with that syllable count
-        """
-        return self.syllable_index.get(count, set())
-
-    def filter_by_frequency(
-        self, min_freq: float = 0, max_freq: Optional[float] = None
-    ) -> List[str]:
-        """Filter words by frequency grade.
-
-        Args:
-            min_freq: Minimum frequency
-            max_freq: Maximum frequency (if None, no upper limit)
-
-        Returns:
-            List of words within frequency range
-        """
-        results = []
-        for word, attrs in self.word_data.items():
-            if "FREQ_GRADE" in attrs:
-                freq = attrs["FREQ_GRADE"]
-                if freq >= min_freq and (max_freq is None or freq <= max_freq):
-                    results.append(word)
-        return results
-
-    # ---- Similarity and Embeddings ----
-
-    def word_similarity(self, word1: str, word2: str) -> float:
-        """Calculate cosine similarity between two words.
-
-        Args:
-            word1: First word
-            word2: Second word
-
-        Returns:
-            Similarity score (0-1) or 0.0 if either word is not found
-        """
-        emb1 = self.get_embedding(word1)
-        emb2 = self.get_embedding(word2)
-
-        if emb1 is None or emb2 is None:
-            return 0.0
-
-        # Compute cosine similarity
-        return np.dot(emb1, emb2) / (np.linalg.norm(emb1) * np.linalg.norm(emb2))
-
-    def get_similar_words(self, word: str, n: int = 10) -> List[Tuple[str, float]]:
-        """Find words with similar embeddings.
-
-        Args:
-            word: Target word
-            n: Number of similar words to return
-
-        Returns:
-            List of (word, similarity_score) tuples
-        """
-        if word not in self.word_to_idx:
-            return []
-
-        query_embedding = self.get_embedding(word)
-
-        # Calculate cosine similarity with all words
-        similarities = []
-        for w, idx in self.word_to_idx.items():
-            if w == word:
-                continue
-
-            embedding = self.embeddings[idx]
-
-            # Calculate cosine similarity
-            similarity = np.dot(query_embedding, embedding) / (
-                np.linalg.norm(query_embedding) * np.linalg.norm(embedding)
-            )
-
-            similarities.append((w, similarity))
-
-        # Return top n most similar words
-        return sorted(similarities, key=lambda x: x[1], reverse=True)[:n]
-
-    # ---- Statistics and Metadata ----
-
-    def get_stats(self) -> Dict[str, Any]:
-        """Get statistics about the dataset.
-
-        Returns:
-            Dictionary of statistics
-        """
-        return self.stats
-
-    def get_roget_categories(self) -> List[str]:
-        """Get all available Roget's Thesaurus categories.
-
-        Returns:
-            List of Roget category codes
-        """
-        return sorted(self.roget_category_index.keys())
-
-    def get_syllable_counts(self) -> List[int]:
-        """Get all syllable counts in the dataset.
-
-        Returns:
-            List of syllable counts
-        """
-        return sorted(self.syllable_index.keys())
-
+    # ---- Utility Methods ----
     def __len__(self) -> int:
-        """Get the number of words in the dataset.
-
-        Returns:
-            Number of words
-        """
-        return len(self.word_data)
+        """Return the total number of unique words in the master index."""
+        return len(self.all_words)
 
     def __contains__(self, word: str) -> bool:
-        """Check if a word exists in the dataset."""
-        return word in self.word_data
+        """Check if a word is in the master index."""
+        return word in self.all_words

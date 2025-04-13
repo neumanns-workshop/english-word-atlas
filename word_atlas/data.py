@@ -37,53 +37,66 @@ def get_data_dir(data_dir: Optional[Union[str, Path]] = None) -> Path:
 
     for path in possible_paths:
         if path.exists():
-            # Verify required files exist
-            required_files = ["word_index.json", "embeddings.npy", "word_data.json"]
-            if all((path / file).exists() for file in required_files):
+            # Verify required base files exist
+            # Now requires word_index.json and the frequencies file
+            required_files = ["word_index.json"]
+            required_dirs = ["sources"]  # Require sources dir
+            required_freq_file = Path("frequencies/word_frequencies.json")
+
+            base_files_exist = all((path / file).exists() for file in required_files)
+            dirs_exist = all((path / d).is_dir() for d in required_dirs)
+            freq_file_exists = (path / required_freq_file).exists()
+
+            if base_files_exist and dirs_exist and freq_file_exists:
                 return path
 
+    # Update error message
     raise FileNotFoundError(
-        "Could not find the English Word Atlas dataset. "
-        "Please specify the path to the data directory containing "
-        "word_index.json, embeddings.npy, and word_data.json."
+        "Could not find the required English Word Atlas dataset components.\n"
+        "Please ensure the data directory contains: "
+        "- word_index.json\n"
+        "- frequencies/word_frequencies.json\n"
+        "- sources/ (directory)\n"
+        "Or specify the correct path using --data-dir."
     )
 
 
-def load_dataset(
-    data_dir: Optional[Union[str, Path]] = None,
-) -> Dict[str, Dict[str, Any]]:
-    """Load the complete English Word Atlas dataset.
-
-    Args:
-        data_dir: Optional directory containing the dataset files
-
-    Returns:
-        Dictionary mapping words to their attributes including embeddings
-
-    Raises:
-        FileNotFoundError: If the dataset files cannot be found
-    """
-    data_path = get_data_dir(data_dir)
-
-    # Load word index
-    with open(data_path / "word_index.json", "r") as f:
-        word_to_idx = json.load(f)
-
-    # Load embeddings
-    embeddings = np.load(data_path / "embeddings.npy")
-
-    # Load main data
-    with open(data_path / "word_data.json", "r") as f:
-        word_data = json.load(f)
-
-    # Reconstruct complete data structure
-    for word in word_data:
-        if word in word_to_idx:
-            word_data[word]["EMBEDDINGS_ALL_MINILM_L6_V2"] = embeddings[
-                word_to_idx[word]
-            ].tolist()
-
-    return word_data
+# Deprecated: load_dataset - WordAtlas now loads components directly
+# def load_dataset(
+#     data_dir: Optional[Union[str, Path]] = None,
+# ) -> Dict[str, Dict[str, Any]]:
+#     """Load the complete English Word Atlas dataset.
+#
+#     Args:
+#         data_dir: Optional directory containing the dataset files
+#
+#     Returns:
+#         Dictionary mapping words to their attributes including embeddings
+#
+#     Raises:
+#         FileNotFoundError: If the dataset files cannot be found
+#     """
+#     data_path = get_data_dir(data_dir)
+#
+#     # Load word index
+#     with open(data_path / "word_index.json", "r") as f:
+#         word_to_idx = json.load(f)
+#
+#     # Load embeddings
+#     embeddings = np.load(data_path / "embeddings.npy")
+#
+#     # Load main data
+#     with open(data_path / "word_data.json", "r") as f:
+#         word_data = json.load(f)
+#
+#     # Reconstruct complete data structure
+#     for word in word_data:
+#         if word in word_to_idx:
+#             word_data[word]["EMBEDDINGS_ALL_MINILM_L6_V2"] = embeddings[
+#                 word_to_idx[word]
+#             ].tolist()
+#
+#     return word_data
 
 
 def get_word_index(data_dir: Optional[Union[str, Path]] = None) -> Dict[str, int]:
@@ -101,58 +114,32 @@ def get_word_index(data_dir: Optional[Union[str, Path]] = None) -> Dict[str, int
         return json.load(f)
 
 
-def get_embeddings(data_dir: Optional[Union[str, Path]] = None) -> np.ndarray:
-    """Get the raw embedding matrix.
+def get_word_frequencies(
+    data_dir: Optional[Union[str, Path]] = None,
+) -> Dict[str, float]:
+    """Load the word frequency map from frequencies/word_frequencies.json.
 
     Args:
         data_dir: Optional directory containing the dataset files
 
     Returns:
-        NumPy array containing word embeddings
+        Dictionary mapping words to their frequencies
+
+    Raises:
+        FileNotFoundError: If the frequency file cannot be found
+        ValueError: If there is an error decoding the JSON from the frequency file
+        RuntimeError: If there is an error loading the frequency file
     """
     data_path = get_data_dir(data_dir)
+    freq_file = data_path / "frequencies" / "word_frequencies.json"
 
-    return np.load(data_path / "embeddings.npy")
+    if not freq_file.exists():
+        raise FileNotFoundError(f"Frequency file not found: {freq_file}")
 
-
-def get_word_data(
-    data_dir: Optional[Union[str, Path]] = None,
-) -> Dict[str, Dict[str, Any]]:
-    """Get the word attribute data (without embeddings).
-
-    Args:
-        data_dir: Optional directory containing the dataset files
-
-    Returns:
-        Dictionary mapping words to their attributes (without embeddings)
-    """
-    data_path = get_data_dir(data_dir)
-
-    with open(data_path / "word_data.json", "r") as f:
-        return json.load(f)
-
-
-def get_available_attributes(
-    data_dir: Optional[Union[str, Path]] = None,
-) -> Dict[str, int]:
-    """Get a list of available attributes and their coverage.
-
-    Args:
-        data_dir: Optional directory containing the dataset files
-
-    Returns:
-        Dictionary mapping attribute names to the count of words having that attribute
-    """
-    word_data = get_word_data(data_dir)
-
-    attributes = {}
-    for word, attrs in word_data.items():
-        for attr in attrs:
-            if attr not in attributes:
-                attributes[attr] = 0
-
-            # Count truthy values for boolean flags
-            if attrs[attr]:
-                attributes[attr] += 1
-
-    return attributes
+    try:
+        with open(freq_file, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Error decoding JSON from frequency file {freq_file}: {e}")
+    except Exception as e:
+        raise RuntimeError(f"Could not load frequency file {freq_file}: {e}")

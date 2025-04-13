@@ -14,207 +14,125 @@ from word_atlas.wordlist import WordlistBuilder
 
 
 def info_command(args):
-    """Show information about a word or phrase."""
+    """Show information about a word or phrase (sources and frequency)."""
     atlas = WordAtlas(args.data_dir)
 
-    if not atlas.has_word(args.word):
-        print(f"Word or phrase '{args.word}' not found in the dataset.")
+    word_to_check = args.word
+    if not atlas.has_word(word_to_check):
+        print(f"Word or phrase '{word_to_check}' not found in the master index.")
         sys.exit(1)
 
-    word_info = atlas.get_word(args.word)
+    # Get available information: sources and frequency
+    word_sources = atlas.get_sources(word_to_check)
+    word_frequency = atlas.get_frequency(word_to_check)
 
     if args.json:
         try:
-            # Remove embedding to save space
-            if "EMBEDDINGS_ALL_MINILM_L6_V2" in word_info:
-                word_info_copy = word_info.copy()
-                del word_info_copy["EMBEDDINGS_ALL_MINILM_L6_V2"]
-            else:
-                word_info_copy = word_info
-            print(json.dumps(word_info_copy, indent=2))
+            # Combine info for JSON output
+            info = {
+                "word": word_to_check,
+                "sources": word_sources,
+                "frequency": word_frequency,  # Could be None
+            }
+            print(json.dumps(info, indent=2))
         except TypeError as e:
-            print(f"Error: {str(e)}")
+            print(f"Error generating JSON: {str(e)}")
             sys.exit(1)
         return
 
     # Print basic information
-    print(f"Information for '{args.word}':")
+    print(f"Information for '{word_to_check}':")
 
-    if "SYLLABLE_COUNT" in word_info:
-        print(f"  Syllables: {word_info['SYLLABLE_COUNT']}")
+    # Print Frequency
+    if word_frequency is not None:
+        print(f"  Frequency (SUBTLWF): {word_frequency:.2f}")
+    else:
+        print("  Frequency: Not available")
 
-    if "ARPABET" in word_info:
-        print(f"  Pronunciation: /{word_info['ARPABET'][0]}/")
-
-    if "FREQ_COUNT" in word_info:
-        print(f"  Frequency count: {word_info['FREQ_COUNT']:.2f}")
-
-    if "FREQ_GRADE" in word_info:
-        print(f"  Frequency grade: {word_info['FREQ_GRADE']:.2f}")
-
-    # Check if word is in various lists
-    wordlists = []
-    for list_name in ["OGDEN", "GSL", "NGSL", "SWADESH"]:
-        if list_name in word_info and word_info[list_name]:
-            wordlists.append(list_name)
-
-    if wordlists:
-        print(f"  In wordlists: {', '.join(wordlists)}")
-
-    # Show Roget categories
-    categories = [
-        key for key in word_info if key.startswith("ROGET_") and word_info[key]
-    ]
-    if categories:
-        print(f"  Roget categories: {len(categories)}")
-        for cat in sorted(categories)[:5]:
-            print(f"    - {cat}")
-        if len(categories) > 5:
-            print(f"    - ... and {len(categories) - 5} more")
-
-    # Find similar words
-    if not args.no_similar:
-        print("\nSimilar words/phrases:")
-        similar = atlas.get_similar_words(args.word, n=5)
-        for similar_word, score in similar:
-            print(f"  {similar_word}: {score:.4f}")
+    # Show source list membership
+    if word_sources:
+        print(f"  Sources: {', '.join(word_sources)}")
+    else:
+        print("  Sources: None")
 
 
 def search_command(args):
-    """Search for words/phrases matching a pattern."""
+    """Search for words/phrases matching a pattern, optionally filter by source/frequency."""
     atlas = WordAtlas(args.data_dir)
 
-    results = atlas.search(args.pattern)
+    # Initial search based on pattern
+    search_results = set(atlas.search(args.pattern))
+    initial_count = len(search_results)
+    final_results = search_results.copy()
 
-    # Filter by attribute if specified
+    # Filter by source attribute if specified
     if args.attribute:
-        attr_name, _, value = args.attribute.partition("=")
-        if value:
-            # Handle boolean values
-            if value.lower() == "true":
-                value = True
-            elif value.lower() == "false":
-                value = False
-            # Handle numeric values
-            elif value.isdigit():
-                value = int(value)
-            elif value.replace(".", "").isdigit():
-                value = float(value)
-
-            results = [
-                w
-                for w in results
-                if atlas.has_word(w)
-                and attr_name in atlas.get_word(w)
-                and atlas.get_word(w)[attr_name] == value
-            ]
-        else:
-            # Just check if attribute exists and is truthy
-            results = [
-                w
-                for w in results
-                if atlas.has_word(w)
-                and attr_name in atlas.get_word(w)
-                and atlas.get_word(w)[attr_name]
-            ]
+        # This argument now ONLY filters by source name
+        source_name = args.attribute
+        try:
+            source_filtered_set = atlas.filter(sources=[source_name])
+            final_results.intersection_update(source_filtered_set)
+        except ValueError as e:  # Handle case where source doesn't exist
+            print(f"Warning: {e}", file=sys.stderr)
+            final_results = set()  # No results if source is invalid
 
     # Filter by frequency if specified
-    if args.min_freq is not None:
-        results = [
-            w
-            for w in results
-            if atlas.has_word(w)
-            and "FREQ_GRADE" in atlas.get_word(w)
-            and atlas.get_word(w)["FREQ_GRADE"] >= args.min_freq
-        ]
+    if args.min_freq is not None or args.max_freq is not None:
+        min_f = args.min_freq if args.min_freq is not None else 0
+        max_f = args.max_freq
+        # Use the new filter method
+        freq_filtered_set = atlas.filter(min_freq=min_f, max_freq=max_f)
+        final_results.intersection_update(freq_filtered_set)
 
-    if args.max_freq is not None:
-        results = [
-            w
-            for w in results
-            if atlas.has_word(w)
-            and "FREQ_GRADE" in atlas.get_word(w)
-            and atlas.get_word(w)["FREQ_GRADE"] <= args.max_freq
-        ]
-
-    # Filter phrases or single words if specified
-    if args.phrases_only:
-        results = [w for w in results if " " in w]
-    elif args.words_only:
-        results = [w for w in results if " " not in w]
+    # Convert final set to sorted list for output
+    results_list = sorted(list(final_results))
 
     # Limit results
     if args.limit:
-        results = results[: args.limit]
+        results_list = results_list[: args.limit]
 
     # Print results
-    print(f"Found {len(results)} matches:")
-    for result in results:
+    print(f"Found {len(results_list)} matches (after filtering from {initial_count}):")
+    for result in results_list:
         if args.verbose:
-            word_info = atlas.get_word(result)
-            freq = word_info.get("FREQ_GRADE", 0)
-            syl = word_info.get("SYLLABLE_COUNT", "?")
-            print(f"  {result} (freq: {freq:.1f}, syl: {syl})")
+            # Show word and its frequency if available
+            freq = atlas.get_frequency(result)
+            freq_str = f" (freq: {freq:.2f})" if freq is not None else " (freq: N/A)"
+            print(f"  {result}{freq_str}")
         else:
             print(f"  {result}")
 
 
 def stats_command(args):
-    """Show statistics about the dataset."""
+    """Show statistics about the dataset (entry count and source coverage)."""
     atlas = WordAtlas(args.data_dir)
 
     try:
         stats = atlas.get_stats()
         print("English Word Atlas Statistics:")
-        print(f"  Total entries: {stats['total_entries']}")
-        print(f"  Single words: {stats['single_words']}")
-        print(f"  Phrases: {stats['phrases']}")
-        print(f"  Embedding dimensions: {stats['embedding_dim']}")
+        print(f"  Total unique words in index: {stats.get('total_entries', 0)}")
+        print(f"    Single words: {stats.get('single_words', 0)}")
+        print(f"    Phrases: {stats.get('phrases', 0)}")
+        print(
+            f"  Entries with frequency data: {stats.get('entries_with_frequency', 0)}"
+        )
 
-        # Count by syllables
-        if not args.basic:
-            print("\nSyllable distribution:")
-            syllable_counts = {}
-            for count in atlas.get_syllable_counts():
-                syllable_counts[count] = len(atlas.filter_by_syllable_count(count))
-
-            for count in sorted(syllable_counts.keys()):
-                print(f"  {count} syllable(s): {syllable_counts[count]}")
-
-            # Count by frequency buckets
-            print("\nFrequency distribution:")
-            freq_buckets = {"0": 0, "1-10": 0, "11-100": 0, "101-1000": 0, ">1000": 0}
-
-            for word, info in atlas.word_data.items():
-                if "FREQ_GRADE" in info:
-                    freq = info["FREQ_GRADE"]
-                    if freq == 0:
-                        freq_buckets["0"] += 1
-                    elif freq <= 10:
-                        freq_buckets["1-10"] += 1
-                    elif freq <= 100:
-                        freq_buckets["11-100"] += 1
-                    elif freq <= 1000:
-                        freq_buckets["101-1000"] += 1
-                    else:
-                        freq_buckets[">1000"] += 1
-
-            for bucket, count in freq_buckets.items():
-                print(f"  Frequency {bucket}: {count}")
-
-            # Count by wordlists
-            print("\nWordlist coverage:")
-            wordlists = {"OGDEN": 0, "GSL": 0, "NGSL": 0, "SWADESH": 0}
-
-            for list_name in wordlists:
-                wordlists[list_name] = len(atlas.filter_by_attribute(list_name))
-
-            for list_name, count in wordlists.items():
+        # Show source list coverage (from stats dict)
+        source_coverage = stats.get("source_coverage", {})
+        if source_coverage:
+            print("\nSource List Coverage:")
+            total_entries = stats.get("total_entries", 0)
+            for source_name, count in sorted(source_coverage.items()):
+                # Calculate percentage against master word index size
+                percentage = (count / total_entries * 100) if total_entries > 0 else 0
                 print(
-                    f"  {list_name}: {count} words ({count/stats['total_entries']*100:.1f}%)"
+                    f"  {source_name}: {count} entries ({percentage:.1f}% of total index)"
                 )
+        else:
+            print("\nSource List Coverage: No source lists found or loaded.")
+
     except Exception as e:
-        print(f"Error: {str(e)}")
+        print(f"Error loading or processing stats: {str(e)}")
         sys.exit(1)
 
 
@@ -254,26 +172,20 @@ def wordlist_create_command(args):
                 attr_name = args.attribute
                 value = True
 
-            added = builder.add_by_attribute(attr_name, value)
-            print(
-                f"Added {added} words with attribute {args.attribute}"
-            )  # Use original attribute string
+            # Use the simplified add_by_source method
+            added = builder.add_by_source(attr_name)
+            print(f"Added {added} words from source {attr_name}")
         except ValueError as e:
             print(f"Error: {str(e)}")
             sys.exit(1)
 
-    if args.syllables:
-        added = builder.add_by_syllable_count(args.syllables)
-        print(f"Added {added} words with {args.syllables} syllables")
-
-    if args.min_freq is not None:
-        added = builder.add_by_frequency(args.min_freq, args.max_freq)
-        print(f"Added {added} words with frequency {args.min_freq}-{args.max_freq}")
-
-    if args.similar_to:
-        similar_count = args.similar_count or 10
-        added = builder.add_similar_words(args.similar_to, similar_count)
-        print(f"Added {added} words similar to '{args.similar_to}'")
+    if args.min_freq is not None or args.max_freq is not None:
+        min_f = args.min_freq if args.min_freq is not None else 0
+        added = builder.add_by_frequency(min_f, args.max_freq)
+        freq_range = (
+            f">= {min_f}" if args.max_freq is None else f"{min_f} - {args.max_freq}"
+        )
+        print(f"Added {added} words with frequency {freq_range}")
 
     # Save the wordlist
     builder.save(args.output)
@@ -325,30 +237,13 @@ def wordlist_modify_command(args):
         print(f"Added {added} words matching pattern '{args.add_pattern}'")
         total_modified += added
 
-    if hasattr(args, "add_attribute") and args.add_attribute:
-        attr_name, _, value = args.add_attribute.partition("=")
-        if value:
-            # Handle boolean values
-            if value.lower() == "true":
-                value = True
-            elif value.lower() == "false":
-                value = False
-
-            added = builder.add_by_attribute(attr_name, value)
-        else:
-            added = builder.add_by_attribute(attr_name)
-
-        print(f"Added {added} words with attribute {args.add_attribute}")
-        total_modified += added
-
-    if hasattr(args, "add_similar_to") and args.add_similar_to:
-        if not atlas.has_word(args.add_similar_to):
-            print(f"Error: Word '{args.add_similar_to}' not found in the dataset")
-        else:
-            n = args.similar_count or 10
-            added = builder.add_similar_words(args.add_similar_to, n)
-            print(f"Added {added} words similar to '{args.add_similar_to}'")
+    if hasattr(args, "add_source") and args.add_source:
+        try:
+            added = builder.add_by_source(args.add_source)
+            print(f"Added {added} words from source '{args.add_source}'")
             total_modified += added
+        except ValueError as e:
+            print(f"Error adding source: {e}", file=sys.stderr)
 
     if args.remove:
         removed = builder.remove_words(set(args.remove))
@@ -362,182 +257,269 @@ def wordlist_modify_command(args):
         print(f"Removed {removed} words matching pattern '{args.remove_pattern}'")
         total_modified += removed
 
-    # Save the wordlist
-    if args.output:
-        output_path = args.output
-    else:
-        output_path = args.wordlist
+    if hasattr(args, "remove_source") and args.remove_source:
+        try:
+            removed = builder.remove_by_source(args.remove_source)
+            print(f"Removed {removed} words from source '{args.remove_source}'")
+            total_modified += removed
+        except ValueError as e:
+            print(f"Error removing source: {e}", file=sys.stderr)
 
+    # Add/Remove by Frequency
+    if hasattr(args, "add_min_freq") and args.add_min_freq is not None:
+        min_f = args.add_min_freq
+        max_f = args.add_max_freq
+        added = builder.add_by_frequency(min_f, max_f)
+        freq_range = f">= {min_f}" if max_f is None else f"{min_f} - {max_f}"
+        print(f"Added {added} words with frequency {freq_range}")
+        total_modified += added
+
+    # Save the wordlist
+    output_file = args.output if args.output else args.wordlist
     try:
-        builder.save(output_path)
-        print(f"Wordlist saved to '{output_path}' with {builder.get_size()} words")
+        builder.save(output_file)
+        print(f"Wordlist saved to '{output_file}' with {len(builder.words)} words")
     except Exception as e:
-        print(f"Error saving wordlist: {e}")
+        print(f"Error saving wordlist: {e}", file=sys.stderr)
         sys.exit(1)
 
 
 def wordlist_analyze_command(args):
     """Analyze a wordlist and show statistics."""
     atlas = WordAtlas(args.data_dir)
-
-    # Load existing wordlist
     try:
         builder = WordlistBuilder.load(args.wordlist, atlas)
+        stats = builder.analyze()
+
+        # Handle JSON output first
+        if args.json:
+            try:
+                print(json.dumps(stats, indent=2))
+            except TypeError as e:
+                print(f"Error generating JSON: {str(e)}", file=sys.stderr)
+                sys.exit(1)
+            return  # Exit after printing JSON
+
+        # --- Regular text output --- (Only runs if args.json is False)
+
         print(
-            f"Analyzing wordlist '{builder.metadata['name']}' with {builder.get_size()} words"
+            f"Analyzing wordlist '{builder.metadata.get('name', 'Unnamed')}' with {len(builder.words)} words"
         )
-    except (FileNotFoundError, ValueError) as e:
-        print(f"Error loading wordlist: {e}")
-        sys.exit(1)
 
-    # Perform analysis
-    analysis = builder.analyze()
+        # Print basic stats
+        print("\nBasic statistics:")
+        print(f"  Total words: {stats['size']}")
+        print(f"  Single words: {stats['single_words']}")
+        print(f"  Phrases: {stats['phrases']}")
 
-    # Print analysis
-    print("\nBasic statistics:")
-    print(f"  Total words: {analysis['size']}")
-    print(f"  Single words: {analysis['single_words']}")
-    print(f"  Phrases: {analysis['phrases']}")
-
-    # Syllable distribution
-    if "syllable_distribution" in analysis:
-        print("\nSyllable distribution:")
-        for count, num in analysis["syllable_distribution"].items():
+        # Print frequency distribution
+        freq_stats = stats.get("frequency", {})
+        if freq_stats.get("count", 0) > 0:
+            print("\nFrequency distribution:")
+            dist = freq_stats.get("distribution", {})
+            total_freq_words = freq_stats["count"]
+            for bin_label, count in sorted(dist.items()):
+                percentage = (count / total_freq_words) * 100 if total_freq_words else 0
+                print(f"  Frequency {bin_label}: {count} words ({percentage:.1f}%)")
+            print(f"  Average frequency: {freq_stats.get('average', 0.0):.1f}")
+        else:
             print(
-                f"  {count} syllable(s): {num} words ({num/analysis['size']*100:.1f}%)"
+                "\nFrequency distribution: No frequency data available for words in list."
             )
 
-    # Frequency distribution
-    if "frequency" in analysis:
-        print("\nFrequency distribution:")
-        for bucket, count in analysis["frequency"]["distribution"].items():
-            percentage = count / analysis["size"] * 100 if analysis["size"] > 0 else 0
-            print(f"  Frequency {bucket}: {count} words ({percentage:.1f}%)")
-        print(f"  Average frequency: {analysis['frequency']['average']}")
+        # Print source coverage
+        coverage_stats = stats.get("source_coverage", {})
+        if coverage_stats:
+            print("\nSource List Coverage:")
+            for src_name, src_data in sorted(coverage_stats.items()):
+                count = src_data.get("count", 0)
+                percentage = src_data.get("percentage", 0.0)
+                if count > 0:
+                    print(f"  {src_name}: {count} words ({percentage:.1f}%)")
+        else:
+            print("\nSource List Coverage: No source lists analyzed.")
 
-    # Wordlist coverage
-    if "wordlist_coverage" in analysis:
-        print("\nWordlist coverage:")
-        for list_name, data in analysis["wordlist_coverage"].items():
-            print(f"  {list_name}: {data['count']} words ({data['percentage']}%)")
+        # Optional exports
+        if args.export:
+            export_path = Path(args.export)
+            try:
+                export_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(export_path, "w", encoding="utf-8") as f:
+                    json.dump(stats, f, indent=2)
+                print(f"\nAnalysis exported to '{export_path}'")
+            except Exception as e:
+                print(
+                    f"\nError exporting analysis to {export_path}: {e}", file=sys.stderr
+                )
 
-    # Export analysis if requested
-    if args.export:
-        try:
-            with open(args.export, "w", encoding="utf-8") as f:
-                json.dump(analysis, f, indent=2)
-            print(f"\nAnalysis exported to '{args.export}'")
-        except Exception as e:
-            print(f"Error exporting analysis: {e}")
-            sys.exit(1)
+        if args.export_text:
+            export_text_path = Path(args.export_text)
+            try:
+                builder.export_text(
+                    export_text_path, include_metadata=False
+                )  # Export only words
+                print(f"\nWordlist exported to '{export_text_path}'")
+            except Exception as e:
+                print(
+                    f"\nError exporting wordlist to {export_text_path}: {e}",
+                    file=sys.stderr,
+                )
 
-    # Export wordlist in text format if requested
-    if args.export_text:
-        try:
-            builder.export_text(args.export_text)
-            print(f"\nWordlist exported to '{args.export_text}'")
-        except Exception as e:
-            print(f"Error exporting wordlist: {e}")
-            sys.exit(1)
+    except (FileNotFoundError, ValueError, IOError) as e:
+        print(f"Error loading or analyzing wordlist: {str(e)}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"An unexpected error occurred during analysis: {str(e)}")
+        sys.exit(1)
 
 
 def wordlist_merge_command(args):
     """Merge multiple wordlists."""
-    if not args.inputs:
-        print("Error: At least two input files are required")
+    if not args.inputs or len(args.inputs) < 2:
+        print("Error: At least two input files are required for merging")
         sys.exit(1)
 
     atlas = WordAtlas(args.data_dir)
     merged = WordlistBuilder(atlas)
 
-    # Set metadata
-    merged.metadata["name"] = args.name
-    merged.metadata["description"] = args.description
-    merged.metadata["creator"] = args.creator
-    merged.metadata["tags"] = args.tags.split(",") if args.tags else []
+    # Set metadata for the merged list
+    merged.set_metadata(
+        name=args.name if args.name else "Merged Wordlist",
+        description=args.description,
+        creator=args.creator,
+        tags=args.tags.split(",") if args.tags else [],
+    )
 
     # Load and merge wordlists
+    total_added = 0
     for input_file in args.inputs:
         try:
             wordlist = WordlistBuilder.load(input_file, atlas)
             print(
-                f"Loaded '{wordlist.metadata['name']}' with {len(wordlist.words)} words"
+                f"Loaded '{wordlist.metadata.get('name', 'Unnamed')}' with {len(wordlist.words)} words"
             )
-            merged.words.update(wordlist.words)
-            merged.metadata["criteria"].extend(wordlist.metadata["criteria"])
+            added = merged.add_words(wordlist.words)
             print(
-                f"Added {len(wordlist.words)} words from '{wordlist.metadata['name']}'"
+                f"Added {added} unique words from '{wordlist.metadata.get('name', input_file)}'"
             )
-        except (FileNotFoundError, json.JSONDecodeError) as e:
-            print(f"Error loading wordlist '{input_file}': {e}")
+            total_added += added
+            # Safely extend criteria using .get()
+            merged.metadata["criteria"].extend(wordlist.metadata.get("criteria", []))
+        except (FileNotFoundError, ValueError, IOError) as e:
+            print(f"Error loading wordlist '{input_file}': {e}", file=sys.stderr)
             sys.exit(1)
 
-    # Save merged wordlist
-    merged.save(args.output)
-    print(f"Merged wordlist saved to '{args.output}' with {len(merged.words)} words")
+    # Save the merged wordlist
+    output_file = args.output
+    if not output_file:
+        print("Error: Output file must be specified for merge.", file=sys.stderr)
+        sys.exit(1)
+
+    try:
+        merged.save(output_file)
+        print(
+            f"\nMerged wordlist saved to '{output_file}' with {len(merged.words)} unique words ({total_added} added in total)."
+        )
+    except Exception as e:
+        print(f"Error saving merged wordlist: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+def sources_command(args):
+    """Handle the 'sources' command."""
+    try:
+        atlas = WordAtlas(data_dir=args.data_dir)
+        source_names = atlas.get_source_list_names()
+
+        if not source_names:
+            print("No source lists found in the data directory.")
+        else:
+            print("Available source lists:")
+            for name in source_names:
+                print(f"- {name}")
+
+    except FileNotFoundError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        print(
+            "Please ensure the data directory and required files exist.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+def setup_common_args(parser):
+    """Add common arguments like --data-dir to a parser."""
+    parser.add_argument(
+        "--data-dir",
+        help="Directory containing the dataset files (overrides default search paths)",
+    )
 
 
 def main():
+    """Main entry point for the CLI."""
     parser = argparse.ArgumentParser(
-        description="English Word Atlas - Explore the linguistic dataset"
+        description="CLI for the English Word Atlas (wordlists & frequency)."
     )
-    parser.add_argument("--data-dir", help="Directory containing the dataset files")
+    # Add --data-dir to the main parser as well, so it's available before subcommand parsing if needed
+    setup_common_args(parser)
 
-    subparsers = parser.add_subparsers(dest="command", help="Command to run")
+    subparsers = parser.add_subparsers(
+        dest="command", help="Available commands", required=True
+    )
 
     # Info command
-    info_parser = subparsers.add_parser(
-        "info", help="Show information about a word or phrase"
+    parser_info = subparsers.add_parser(
+        "info", help="Show source lists and frequency for a specific word."
     )
-    info_parser.add_argument("word", help="Word or phrase to look up")
-    info_parser.add_argument(
-        "--no-similar", action="store_true", help="Don't show similar words"
+    parser_info.add_argument("word", type=str, help="Word or phrase to look up.")
+    parser_info.add_argument(
+        "--json", action="store_true", help="Output information in JSON format."
     )
-    info_parser.add_argument(
-        "--json", action="store_true", help="Include full data in JSON format"
-    )
+    parser_info.set_defaults(func=info_command)
 
     # Search command
-    search_parser = subparsers.add_parser(
-        "search", help="Search for words/phrases matching a pattern"
+    parser_search = subparsers.add_parser(
+        "search", help="Search words, optionally filter by source or frequency."
     )
-    search_parser.add_argument(
-        "pattern", help="Regular expression pattern or substring to search for"
+    parser_search.add_argument("pattern", type=str, help="Regex pattern to search for.")
+    # Simplified attribute filter to only accept source name
+    parser_search.add_argument(
+        "--attribute",
+        type=str,
+        help="Filter results to words present in this source list (e.g., GSL).",
     )
-    search_parser.add_argument(
-        "--attribute", help="Filter by attribute (e.g., 'GSL=true', 'ROGET_123')"
+    parser_search.add_argument(
+        "--min-freq", type=float, help="Minimum frequency (SUBTLWF) to include."
     )
-    search_parser.add_argument("--min-freq", type=float, help="Minimum frequency")
-    search_parser.add_argument("--max-freq", type=float, help="Maximum frequency")
-    search_parser.add_argument(
-        "--phrases-only", action="store_true", help="Only show multi-word phrases"
+    parser_search.add_argument(
+        "--max-freq", type=float, help="Maximum frequency (SUBTLWF) to include."
     )
-    search_parser.add_argument(
-        "--words-only", action="store_true", help="Only show single words"
+    # Removed phrase/word only args
+    # parser_search.add_argument(...)
+    parser_search.add_argument(
+        "--limit", type=int, help="Limit the number of results displayed."
     )
-    search_parser.add_argument(
-        "--limit", type=int, help="Maximum number of results to show"
+    parser_search.add_argument(
+        "--verbose", action="store_true", help="Show frequency with results."
     )
-    search_parser.add_argument(
-        "--verbose",
-        "-v",
-        action="store_true",
-        help="Show additional information about each result",
-    )
+    parser_search.set_defaults(func=search_command)
 
     # Stats command
-    stats_parser = subparsers.add_parser(
-        "stats", help="Show statistics about the dataset"
+    parser_stats = subparsers.add_parser(
+        "stats", help="Show overall statistics (word count, source coverage)."
     )
-    stats_parser.add_argument(
-        "--basic", action="store_true", help="Only show basic statistics"
-    )
+    # Removed --basic flag as detailed stats are removed
+    # parser_stats.add_argument(...)
+    parser_stats.set_defaults(func=stats_command)
 
-    # Wordlist commands
-    wordlist_parser = subparsers.add_parser(
-        "wordlist", help="Work with custom wordlists"
+    # Wordlist command group (will need updates later)
+    parser_wordlist = subparsers.add_parser(
+        "wordlist", help="Create, modify, or analyze wordlists."
     )
-    wordlist_subparsers = wordlist_parser.add_subparsers(
+    wordlist_subparsers = parser_wordlist.add_subparsers(
         dest="wordlist_command", help="Wordlist operation"
     )
 
@@ -558,26 +540,17 @@ def main():
     create_parser.add_argument(
         "--attribute", help="Filter by attribute (e.g., 'GSL=true', 'ROGET_123')"
     )
-    create_parser.add_argument("--syllables", type=int, help="Filter by syllable count")
     create_parser.add_argument("--min-freq", type=float, help="Minimum frequency")
     create_parser.add_argument("--max-freq", type=float, help="Maximum frequency")
-    create_parser.add_argument("--similar-to", help="Find words similar to this word")
     create_parser.add_argument(
-        "--similar-count",
-        type=int,
-        help="Number of similar words to include (default: 10)",
-    )
-    create_parser.add_argument(
-        "--input-file", help="File containing words to include (one per line or JSON)"
+        "--no-analyze",
+        action="store_true",
+        help="Skip analyzing the wordlist after creation.",
     )
     create_parser.add_argument(
         "--output", help="Output file to save the wordlist (.json)"
     )
-    create_parser.add_argument(
-        "--no-analyze",
-        action="store_true",
-        help="Don't show analysis of the created wordlist",
-    )
+    create_parser.set_defaults(func=wordlist_create_command)
 
     # Modify wordlist
     modify_parser = wordlist_subparsers.add_parser(
@@ -593,12 +566,15 @@ def main():
         "--remove", nargs="+", help="Remove words from the wordlist"
     )
     modify_parser.add_argument("--add-pattern", help="Add words matching this pattern")
-    modify_parser.add_argument("--add-attribute", help="Add words with this attribute")
+    modify_parser.add_argument("--add-source", help="Add words from this source list")
     modify_parser.add_argument(
-        "--add-similar-to", help="Add words similar to this word"
+        "--remove-source", help="Remove words from this source list"
     )
     modify_parser.add_argument(
-        "--similar-count", type=int, help="Number of similar words to add (default: 10)"
+        "--add-min-freq", type=float, help="Add words with frequency >= this value"
+    )
+    modify_parser.add_argument(
+        "--add-max-freq", type=float, help="Add words with frequency <= this value"
     )
     modify_parser.add_argument(
         "--remove-pattern", help="Remove words matching this pattern"
@@ -607,6 +583,7 @@ def main():
         "--output",
         help="Output file to save the modified wordlist (default: overwrite input)",
     )
+    modify_parser.set_defaults(func=wordlist_modify_command)
 
     # Analyze wordlist
     analyze_parser = wordlist_subparsers.add_parser(
@@ -617,6 +594,7 @@ def main():
     analyze_parser.add_argument(
         "--export-text", help="Export wordlist to a text file (one word per line)"
     )
+    analyze_parser.set_defaults(func=wordlist_analyze_command)
 
     # Merge wordlists
     merge_parser = wordlist_subparsers.add_parser(
@@ -632,28 +610,31 @@ def main():
     merge_parser.add_argument(
         "--output", help="Output file to save the merged wordlist"
     )
+    merge_parser.set_defaults(func=wordlist_merge_command)
+
+    # --- Sources Command ---
+    sources_parser = subparsers.add_parser(
+        "sources", help="List available source wordlists discovered in data/sources"
+    )
+    setup_common_args(sources_parser)
+    sources_parser.set_defaults(func=sources_command)
 
     args = parser.parse_args()
 
-    # Handle commands
-    if args.command == "info":
-        info_command(args)
-    elif args.command == "search":
-        search_command(args)
-    elif args.command == "stats":
-        stats_command(args)
-    elif args.command == "wordlist":
-        if args.wordlist_command == "create":
-            wordlist_create_command(args)
-        elif args.wordlist_command == "modify":
-            wordlist_modify_command(args)
-        elif args.wordlist_command == "analyze":
-            wordlist_analyze_command(args)
-        elif args.wordlist_command == "merge":
-            wordlist_merge_command(args)
+    # Updated dispatch logic to handle wordlist subcommands
+    if args.command == "wordlist":
+        # Check if a wordlist subcommand was provided
+        if hasattr(args, "func") and args.wordlist_command:
+            args.func(args)
         else:
-            wordlist_parser.print_help()
+            # If no subcommand (like 'create', 'modify') is given for 'wordlist',
+            # print the help for the 'wordlist' subparser itself.
+            parser_wordlist.print_help()
+    elif hasattr(args, "func"):
+        # Handle top-level commands (info, search, stats)
+        args.func(args)
     else:
+        # No command or subcommand provided, print main help
         parser.print_help()
 
 

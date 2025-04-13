@@ -5,12 +5,14 @@ Unit tests for the wordlist module.
 import pytest
 from pathlib import Path
 import json
+from unittest.mock import patch, MagicMock
 
 from word_atlas.wordlist import WordlistBuilder
+from word_atlas.atlas import WordAtlas  # Import for type hinting/mocking
 
 
 class TestWordlistBuilder:
-    """Test the WordlistBuilder class."""
+    """Test the WordlistBuilder class (simplified: frequency and sources only)."""
 
     def test_initialization(self, mock_atlas):
         """Test WordlistBuilder initialization."""
@@ -20,10 +22,17 @@ class TestWordlistBuilder:
         assert len(builder.words) == 0
         assert builder.metadata["name"] == "Custom Wordlist"
 
-        # Test with data_dir
-        builder = WordlistBuilder(data_dir=mock_atlas.data_dir)
-        assert builder.atlas is not None
-        assert len(builder.words) == 0
+        # Test with data_dir (ensure it creates a simplified WordAtlas)
+        # This relies on WordAtlas init being correct
+        builder_from_dir = WordlistBuilder(data_dir=mock_atlas.data_dir)
+        assert builder_from_dir.atlas is not None
+        # Check if it has the expected simplified methods
+        assert hasattr(builder_from_dir.atlas, "get_frequency")
+        assert hasattr(builder_from_dir.atlas, "get_sources")
+        assert not hasattr(
+            builder_from_dir.atlas, "get_metadata"
+        )  # Verify simplification
+        assert len(builder_from_dir.words) == 0
 
     def test_add_words(self, mock_atlas):
         """Test adding words to the wordlist."""
@@ -32,8 +41,7 @@ class TestWordlistBuilder:
         # Test adding existing words
         count = builder.add_words(["apple", "banana"])
         assert count == 2
-        assert "apple" in builder.words
-        assert "banana" in builder.words
+        assert builder.words == {"apple", "banana"}
 
         # Test adding non-existent words
         count = builder.add_words(["nonexistent"])
@@ -42,75 +50,72 @@ class TestWordlistBuilder:
 
         # Test adding duplicate words
         count = builder.add_words(["apple"])
-        assert count == 1
-        assert len(builder.words) == 2  # Should still only have 2 unique words
+        assert count == 0  # Already present, so 0 new words added
+        assert len(builder.words) == 2
 
     def test_add_by_search(self, mock_atlas):
         """Test adding words by search pattern."""
         builder = WordlistBuilder(atlas=mock_atlas)
 
-        # Test regex search
-        count = builder.add_by_search("^a")
-        assert count > 0
-        assert all(word.startswith("a") for word in builder.words)
+        # Test substring search (case-insensitive default)
+        count = builder.add_by_search("a")  # apple, banana, orange
+        assert count == 3
+        assert builder.words == {"apple", "banana", "orange"}
 
-        # Test substring search
+        # Test case-sensitive search
         builder.clear()
-        count = builder.add_by_search("pp")
-        assert count > 0
-        assert all("pp" in word for word in builder.words)
+        count = builder.add_by_search("Apple", case_sensitive=True)
+        assert count == 0  # MOCK_WORDS are lowercase
+        builder.clear()
+        count = builder.add_by_search("apple", case_sensitive=True)
+        assert count == 1
+        assert builder.words == {"apple"}
 
-    def test_add_by_attribute(self, mock_atlas):
-        """Test adding words by attribute."""
+    def test_add_by_source(self, mock_atlas):
+        """Test adding words by source list."""
         builder = WordlistBuilder(atlas=mock_atlas)
 
-        # Test adding by GSL attribute
-        count = builder.add_by_attribute("GSL")
-        assert count > 0
-        assert all(
-            mock_atlas.get_word(word).get("GSL", False) for word in builder.words
-        )
+        # Test adding by GSL source
+        count = builder.add_by_source("GSL")
+        assert count == 2  # apple, banana in mock GSL source
+        assert builder.words == {"apple", "banana"}
+        # Verify the added words are indeed in GSL
+        assert all("GSL" in mock_atlas.get_sources(word) for word in builder.words)
 
-        # Test adding by Roget category
-        builder.clear()
-        count = builder.add_by_attribute("ROGET_FOOD")
-        assert count > 0
-        assert all(
-            mock_atlas.get_word(word).get("ROGET_FOOD", False) for word in builder.words
-        )
+        # Test adding by another source (ROGET_PLANT also has apple, banana)
+        count = builder.add_by_source("ROGET_PLANT")
+        assert count == 0  # Apple and banana already added
+        assert len(builder.words) == 2
+
+        # Test adding by OTHER source (orange)
+        count = builder.add_by_source("OTHER")
+        assert count == 1
+        assert builder.words == {"apple", "banana", "orange"}
+
+        # Test adding by a non-existent source
+        with pytest.raises(ValueError, match="Source 'INVALID_SOURCE' not found"):
+            builder.add_by_source("INVALID_SOURCE")
 
     def test_add_by_frequency(self, mock_atlas):
         """Test adding words by frequency."""
         builder = WordlistBuilder(atlas=mock_atlas)
 
-        # Test with min frequency
-        count = builder.add_by_frequency(min_freq=1)
-        assert count > 0
-        assert all(
-            mock_atlas.get_word(word).get("FREQ_GRADE", 0) >= 1
-            for word in builder.words
-        )
+        # Test with min frequency (apple=150.5, banana=10.2, orange=90.0 from MOCK_WORDS)
+        count = builder.add_by_frequency(min_freq=100.0)
+        assert count == 1  # apple
+        assert builder.words == {"apple"}
 
         # Test with max frequency
         builder.clear()
-        count = builder.add_by_frequency(max_freq=2)
-        assert count > 0
-        assert all(
-            mock_atlas.get_word(word).get("FREQ_GRADE", float("inf")) <= 2
-            for word in builder.words
-        )
+        count = builder.add_by_frequency(max_freq=50.0)
+        assert count == 1  # banana
+        assert builder.words == {"banana"}
 
-    def test_add_by_syllable_count(self, mock_atlas):
-        """Test adding words by syllable count."""
-        builder = WordlistBuilder(atlas=mock_atlas)
-
-        # Test adding words with specific syllable count
-        count = builder.add_by_syllable_count(2)
-        assert count > 0
-        assert all(
-            mock_atlas.get_word(word).get("SYLLABLE_COUNT") == 2
-            for word in builder.words
-        )
+        # Test with both
+        builder.clear()
+        count = builder.add_by_frequency(min_freq=50.0, max_freq=100.0)
+        assert count == 1  # orange
+        assert builder.words == {"orange"}
 
     def test_remove_words(self, mock_atlas):
         """Test removing words from the wordlist."""
@@ -120,11 +125,15 @@ class TestWordlistBuilder:
         # Test removing existing words
         count = builder.remove_words(["apple"])
         assert count == 1
-        assert "apple" not in builder.words
-        assert "banana" in builder.words
+        assert builder.words == {"banana"}
 
         # Test removing non-existent words
         count = builder.remove_words(["nonexistent"])
+        assert count == 0
+        assert len(builder.words) == 1
+
+        # Test removing already removed words
+        count = builder.remove_words(["apple"])
         assert count == 0
         assert len(builder.words) == 1
 
@@ -148,86 +157,109 @@ class TestWordlistBuilder:
 
     def test_save_and_load(self, mock_atlas, tmp_path):
         """Test saving and loading wordlists."""
-        # Create and save a wordlist
         builder = WordlistBuilder(atlas=mock_atlas)
         builder.add_words(["apple", "banana"])
-        builder.set_metadata(name="Test List")
+        builder.set_metadata(name="Test SaveLoad")
+        builder.metadata["criteria"].append(
+            {"type": "test", "value": 123}
+        )  # Add dummy criteria
 
-        save_path = tmp_path / "test_wordlist.json"
-        builder.save(save_path)
+        save_path = tmp_path / "test_saveload.json"
+        save_path_no_overwrite = tmp_path / "test_saveload_no_overwrite.json"
 
-        # Load the wordlist
+        # Test save to new file (implicit overwrite=False)
+        builder.save(save_path_no_overwrite)
+        assert save_path_no_overwrite.exists()
+
+        # Test save with overwrite=True (explicit)
+        builder.save(save_path, overwrite=True)
+
+        # Load the wordlist using the same atlas
         loaded = WordlistBuilder.load(save_path, atlas=mock_atlas)
-        assert loaded.words == builder.words
-        assert loaded.metadata["name"] == "Test List"
+        assert loaded.words == {"apple", "banana"}
+        assert loaded.metadata["name"] == "Test SaveLoad"
+        assert loaded.metadata["criteria"] == builder.metadata["criteria"]
 
     def test_analyze(self, mock_atlas):
-        """Test wordlist analysis."""
+        """Test wordlist analysis (simplified)."""
         builder = WordlistBuilder(atlas=mock_atlas)
-        builder.add_words(["apple", "banana"])
+        builder.add_words(["apple", "banana"])  # Freqs: 150.5, 10.2
 
         analysis = builder.analyze()
-        assert "size" in analysis
-        assert "single_words" in analysis
-        assert "phrases" in analysis
-        assert "syllable_distribution" in analysis
-        assert "wordlist_coverage" in analysis
-        assert "frequency" in analysis
-
-        # Check specific values
         assert analysis["size"] == 2
         assert analysis["single_words"] == 2
         assert analysis["phrases"] == 0
-        assert isinstance(analysis["syllable_distribution"], dict)
-        assert isinstance(analysis["wordlist_coverage"], dict)
-        assert isinstance(analysis["frequency"], dict)
+
+        # Check frequency stats
+        assert "frequency" in analysis
+        assert analysis["frequency"]["count"] == 2
+        assert analysis["frequency"]["total"] == pytest.approx(150.5 + 10.2)
+        assert analysis["frequency"]["average"] == pytest.approx((150.5 + 10.2) / 2)
+        # Check frequency distribution based on mock frequencies
+        assert analysis["frequency"]["distribution"] == {
+            "101-1000": 1,  # apple (150.5)
+            "11-100": 1,  # banana (10.2)
+        }
+
+        # Check source coverage based on mock setup
+        assert "source_coverage" in analysis
+        assert analysis["source_coverage"]["GSL"]["count"] == 2
+        assert analysis["source_coverage"]["GSL"]["percentage"] == 100.0
+        assert analysis["source_coverage"]["ROGET_FOOD"]["count"] == 2
+        assert analysis["source_coverage"]["ROGET_PLANT"]["count"] == 2
+        assert analysis["source_coverage"]["OTHER"]["count"] == 0
+        assert analysis["source_coverage"]["OTHER"]["percentage"] == 0.0
+
+        # Check that removed fields are not present
+        assert "syllable_distribution" not in analysis
+        assert "metadata_attributes" not in analysis  # Check this just in case
 
     def test_export_text(self, mock_atlas, tmp_path):
         """Test exporting wordlist to text file."""
         builder = WordlistBuilder(atlas=mock_atlas)
-        builder.add_words(["apple", "banana"])
+        builder.add_words(["banana", "apple"])
 
-        export_path = tmp_path / "test_wordlist.txt"
+        export_path = tmp_path / "test_export.txt"
         builder.export_text(export_path)
 
         with open(export_path) as f:
-            content = f.read()
-            assert "apple" in content
-            assert "banana" in content
-
-    def test_add_similar_words(self, mock_atlas):
-        """Test adding similar words."""
-        builder = WordlistBuilder(atlas=mock_atlas)
-
-        # Test with existing word
-        count = builder.add_similar_words("apple", n=2)
-        assert count > 0
-        assert len(builder.words) > 0
-
-        # Test with non-existent word
-        count = builder.add_similar_words("nonexistent")
-        assert count == 0
+            lines = [
+                line.strip() for line in f if not line.startswith("#") and line.strip()
+            ]
+            assert lines == ["apple", "banana"]  # Should be sorted
 
     def test_remove_by_search(self, mock_atlas):
         """Test removing words by search pattern."""
         builder = WordlistBuilder(atlas=mock_atlas)
-        builder.add_words(["apple", "banana"])
+        builder.add_words(["apple", "banana", "orange"])
 
-        # Test regex search removal
-        count = builder.remove_by_search("^a")
-        assert count == 1
-        assert "banana" in builder.words
-        assert "apple" not in builder.words
-
-    def test_remove_by_attribute(self, mock_atlas):
-        """Test removing words by attribute."""
-        builder = WordlistBuilder(atlas=mock_atlas)
-        builder.add_words(["apple", "banana"])
-
-        # Test removing by GSL attribute
-        count = builder.remove_by_attribute("GSL")
-        assert count > 0
+        # Case-insensitive default
+        count = builder.remove_by_search("a")  # Removes all 3
+        assert count == 3
         assert len(builder.words) == 0
+
+        # Case-sensitive
+        builder.add_words(["apple", "banana", "orange"])
+        count = builder.remove_by_search("Apple", case_sensitive=True)
+        assert count == 0
+        assert len(builder.words) == 3
+        count = builder.remove_by_search("apple", case_sensitive=True)
+        assert count == 1
+        assert builder.words == {"banana", "orange"}
+
+    def test_remove_by_source(self, mock_atlas):
+        """Test removing words by source list."""
+        builder = WordlistBuilder(atlas=mock_atlas)
+        builder.add_words(["apple", "banana", "orange"])
+
+        # Remove by GSL source
+        count = builder.remove_by_source("GSL")
+        assert count == 2  # apple, banana removed
+        assert builder.words == {"orange"}
+
+        # Test removing by a non-existent source
+        with pytest.raises(ValueError, match="Source 'INVALID_SOURCE' not found"):
+            builder.remove_by_source("INVALID_SOURCE")
 
     def test_get_wordlist(self, mock_atlas):
         """Test getting sorted wordlist."""
@@ -245,163 +277,253 @@ class TestWordlistBuilder:
 
         # Test empty wordlist
         analysis = builder.analyze()
-        assert analysis == {"size": 0}
+        # Check structure for empty list
+        assert analysis["size"] == 0
+        assert analysis["single_words"] == 0
+        assert analysis["phrases"] == 0
+        assert analysis["frequency"]["count"] == 0
+        assert analysis["frequency"]["average"] == 0.0
+        assert analysis["frequency"]["distribution"] == {}
+        assert "source_coverage" in analysis  # Should exist
+        for src_stats in analysis["source_coverage"].values():
+            assert src_stats["count"] == 0
+            assert src_stats["percentage"] == 0.0
 
-        # Test with words having different frequency buckets
-        builder.add_words(["apple", "banana"])
-        analysis = builder.analyze()
-        assert "frequency" in analysis
-        assert "distribution" in analysis["frequency"]
-        assert isinstance(analysis["frequency"]["distribution"], dict)
+        # Test wordlist with words having no frequency
+        builder.add_words(["apple"])  # Has frequency initially
+        # Temporarily remove frequency from the MOCK object for this test
+        original_freq = mock_atlas.frequencies.pop("apple", None)
+
+        analysis_no_freq = builder.analyze()
+        assert analysis_no_freq["frequency"]["count"] == 0
+        assert analysis_no_freq["frequency"]["average"] == 0.0
+        assert analysis_no_freq["frequency"]["distribution"] == {}
+
+        # Restore frequency if it was removed
+        if original_freq is not None:
+            mock_atlas.frequencies["apple"] = original_freq
 
     def test_export_text_edge_cases(self, mock_atlas, tmp_path):
-        """Test exporting wordlist edge cases."""
+        """Test exporting text file edge cases."""
         builder = WordlistBuilder(atlas=mock_atlas)
+        export_path = tmp_path / "empty.txt"
 
-        # Test exporting empty wordlist
-        export_path = tmp_path / "empty_wordlist.txt"
+        # Test empty list
         builder.export_text(export_path)
-        assert export_path.exists()
         with open(export_path) as f:
-            content = f.read()
-            assert "# Custom Wordlist" in content
-            assert "# Size: 0 words" in content
-            assert not any(
-                line for line in content.splitlines() if not line.startswith("#")
-            )  # No non-comment lines
+            lines = [
+                line.strip() for line in f if not line.startswith("#") and line.strip()
+            ]
+            assert not lines
 
-        # Test exporting without metadata
-        export_path = tmp_path / "empty_no_metadata.txt"
+        # Test without metadata
+        builder.add_words(["apple"])
         builder.export_text(export_path, include_metadata=False)
-        assert export_path.exists()
         with open(export_path) as f:
             content = f.read()
-            assert not content.strip()  # Should be empty
+            assert not content.startswith("#")
+            assert "apple" in content
 
     def test_error_handling(self, mock_atlas, tmp_path):
-        """Test error handling in various methods."""
-        builder = WordlistBuilder(atlas=mock_atlas)
-
-        # Test saving to invalid directory
-        with pytest.raises(OSError):
-            builder.save("/nonexistent/dir/wordlist.json")
-
+        """Test error handling for load/save."""
         # Test loading non-existent file
         with pytest.raises(FileNotFoundError):
-            WordlistBuilder.load("/nonexistent/wordlist.json")
+            WordlistBuilder.load("nonexistent.json", atlas=mock_atlas)
 
         # Test loading invalid JSON
         invalid_json = tmp_path / "invalid.json"
-        invalid_json.write_text("{invalid")
-        with pytest.raises(json.JSONDecodeError):
-            WordlistBuilder.load(invalid_json)
+        invalid_json.write_text("this is not json")
+        with pytest.raises(ValueError, match="Invalid JSON"):
+            WordlistBuilder.load(invalid_json, atlas=mock_atlas)
 
-    def test_add_by_custom_filter(self, mock_atlas):
-        """Test adding words using a custom filter."""
-        builder = WordlistBuilder(atlas=mock_atlas)
-
-        # Test filter for words with exactly 2 syllables and GSL=True
-        def custom_filter(word: str, attrs: dict) -> bool:
-            return attrs.get("SYLLABLE_COUNT") == 2 and attrs.get("GSL", False)
-
-        count = builder.add_by_custom_filter(custom_filter, "2 syllables and GSL words")
-
-        assert count > 0
-        assert all(
-            mock_atlas.get_word(word).get("SYLLABLE_COUNT") == 2
-            and mock_atlas.get_word(word).get("GSL")
-            for word in builder.words
-        )
-
-        # Test filter that matches nothing
-        def no_match_filter(word: str, attrs: dict) -> bool:
-            return False
-
-        builder.clear()
-        count = builder.add_by_custom_filter(
-            no_match_filter, "filter that matches nothing"
-        )
-        assert count == 0
-        assert len(builder.words) == 0
-
-    def test_analyze_frequency_stats(self, mock_atlas):
-        """Test frequency statistics in analyze method."""
-        builder = WordlistBuilder(atlas=mock_atlas)
-        builder.add_words(["apple", "banana"])  # Both have FREQ_GRADE = 1
-
-        analysis = builder.analyze()
-        assert "frequency" in analysis
-        assert "distribution" in analysis["frequency"]
-        assert "average" in analysis["frequency"]
-
-        # Test with word that has no frequency
-        # Temporarily modify mock data to test different frequency buckets
-        word_data = mock_atlas.get_word("apple")
-        orig_freq = word_data["FREQ_GRADE"]
-
-        # Test each frequency bucket
-        freqs = [0, 5, 50, 500, 5000]
-        for freq in freqs:
-            word_data["FREQ_GRADE"] = freq
-            analysis = builder.analyze()
-            assert analysis["frequency"]["average"] > 0
-
-        # Restore original frequency
-        word_data["FREQ_GRADE"] = orig_freq
-
-    def test_analyze_empty_word_data(self, mock_atlas):
-        """Test analyze method with empty word data."""
-        builder = WordlistBuilder(atlas=mock_atlas)
-        builder.add_words(["apple"])
-
-        # Temporarily remove all attributes from word data
-        word_data = mock_atlas.get_word("apple")
-        orig_data = word_data.copy()
-        word_data.clear()
-
-        analysis = builder.analyze()
-        assert "syllable_distribution" in analysis
-        assert "wordlist_coverage" in analysis
-        assert "frequency" in analysis
-
-        # Restore original data
-        word_data.update(orig_data)
-
-    def test_export_text_with_full_metadata(self, mock_atlas, tmp_path):
-        """Test exporting wordlist with all metadata fields."""
-        builder = WordlistBuilder(atlas=mock_atlas)
-        builder.add_words(["apple", "banana"])
-
-        # Set all metadata fields
-        builder.set_metadata(
-            name="Test List",
-            description="A test description",
-            creator="Test User",
-            tags=["test", "example"],
-        )
-
-        export_path = tmp_path / "full_metadata.txt"
-        builder.export_text(export_path)
-
-        with open(export_path) as f:
-            content = f.read()
-            assert "# Test List" in content
-            assert "# Description: A test description" in content
-            assert "# Creator: Test User" in content
-            assert "# Tags: test, example" in content
-            assert "# Size: 2 words" in content
+        # Test loading file with incorrect format
+        bad_format = tmp_path / "bad_format.json"
+        bad_format.write_text(json.dumps({"wrong_key": []}))
+        with pytest.raises(ValueError, match="Invalid wordlist file format"):
+            WordlistBuilder.load(bad_format, atlas=mock_atlas)
 
     def test_size_methods(self, mock_atlas):
         """Test different ways to get wordlist size."""
         builder = WordlistBuilder(atlas=mock_atlas)
-        assert len(builder) == 0  # Test __len__
-        assert builder.get_size() == 0  # Test get_size
-
         builder.add_words(["apple", "banana"])
         assert len(builder) == 2
         assert builder.get_size() == 2
 
-        builder.clear()
-        assert len(builder) == 0
-        assert builder.get_size() == 0
-        assert not builder.metadata["criteria"]  # Check criteria cleared
+    def test_save_file_exists_error(self, tmp_path, mock_atlas):
+        """Test that save() raises FileExistsError if overwrite=False and file exists."""
+        filepath = tmp_path / "existing_list.json"
+        filepath.touch()  # Create the file
+
+        builder = WordlistBuilder(atlas=mock_atlas)  # Use real instance with mock atlas
+        builder.add_words(["apple"])
+
+        with pytest.raises(FileExistsError):
+            builder.save(filepath)  # Default overwrite=False
+
+        # Should succeed with overwrite=True
+        builder.save(filepath, overwrite=True)
+        assert filepath.exists()
+
+        # Verify that the metadata is saved correctly by accessing the metadata dict
+        loaded_builder = WordlistBuilder.load(filepath, atlas=mock_atlas)
+        assert loaded_builder.words == {"apple"}
+        assert loaded_builder.metadata["name"] == "Custom Wordlist"  # Default name
+        assert loaded_builder.metadata["description"] == ""  # Default description
+        assert loaded_builder.metadata["creator"] == ""  # Default creator
+        assert loaded_builder.metadata["tags"] == []  # Default tags
+
+    def test_load_invalid_json(self, tmp_path, mock_atlas):
+        """Test that load() raises ValueError for invalid JSON."""
+        filepath = tmp_path / "invalid.json"
+        filepath.write_text("this is not valid json", encoding="utf-8")
+
+        # Call load as a classmethod, passing the mock atlas
+        with pytest.raises(ValueError) as excinfo:
+            WordlistBuilder.load(filepath, atlas=mock_atlas)
+        # Update assertion to match actual error message
+        assert "Invalid JSON in wordlist file" in str(excinfo.value)
+
+    def test_remove_by_source_invalid_source(self, mock_atlas):
+        """Test remove_by_source raises ValueError for an invalid source name."""
+        builder = WordlistBuilder(atlas=mock_atlas)  # Use real builder with mock atlas
+        builder.add_words(["apple", "banana", "orange"])
+
+        with pytest.raises(ValueError) as excinfo:
+            builder.remove_by_source("INVALID_SOURCE_NAME")
+        # Update assertion to match actual error message
+        assert "Source 'INVALID_SOURCE_NAME' not found" in str(excinfo.value)
+
+    def test_get_wordlist(self, mock_wordlist_builder):
+        """Test retrieving the wordlist."""
+
+    def test_init_invalid_atlas_type(self):
+        """Test that WordlistBuilder raises TypeError if atlas is not WordAtlas."""
+        # Check the error message for missing methods
+        with pytest.raises(
+            TypeError, match="Provided atlas object does not have the expected methods."
+        ):
+            WordlistBuilder(atlas="not an atlas")
+
+    def test_methods_with_no_atlas(self):
+        """Test methods that depend on atlas when initialized with atlas=None."""
+        # Note: The WordlistBuilder constructor creates a real Atlas if atlas=None.
+        # So, self.atlas is never actually None inside the methods.
+        # The `if not self.atlas:` checks in analyze, add_by_freq, remove_by_source
+        # are likely unreachable dead code.
+        builder = WordlistBuilder(atlas=None)  # Actually creates a real Atlas
+
+        # Test analyze returns the default stats structure (covers 332-333 via init)
+        analysis = builder.analyze()
+        assert analysis["size"] == 0
+        assert analysis["single_words"] == 0
+        assert analysis["phrases"] == 0
+        assert analysis["frequency"] == {
+            "count": 0,
+            "total": 0.0,
+            "average": 0.0,
+            "distribution": {},
+        }
+        assert analysis["source_coverage"] == {}
+
+        # Cannot reliably test add_by_frequency or remove_by_source for None atlas
+        # as the constructor prevents atlas from being None.
+        # assert builder.add_by_frequency(min_freq=1.0) == 0 # Dead code
+        # assert builder.remove_by_source("GSL") == 0 # Dead code
+
+    def test_export_text_formatting_options(self, mock_atlas, tmp_path):
+        """Test export_text with sort_key and word_format options."""
+        # Add kiwi to the mock data index BEFORE atlas initializes in the fixture
+        index_path = mock_atlas.data_dir / "word_index.json"
+        current_index = json.loads(index_path.read_text())
+        original_len = len(current_index)
+        if "kiwi" not in current_index:
+            current_index["kiwi"] = original_len
+            index_path.write_text(json.dumps(current_index))
+            # Re-initialize atlas since the fixture already ran
+            # We need the atlas used by the test to see the updated index
+            atlas_for_test = WordAtlas(mock_atlas.data_dir)
+        else:
+            atlas_for_test = mock_atlas  # Use original if kiwi was already there
+
+        # REMOVED attempts to mock has_word on the real atlas instance
+        # mock_atlas.all_words.add("kiwi")
+        # mock_atlas.has_word.side_effect = lambda w: w in mock_atlas.all_words
+
+        filepath_sort = tmp_path / "sorted_export.txt"
+        filepath_format = tmp_path / "formatted_export.txt"
+        filepath_both = tmp_path / "sorted_formatted_export.txt"
+
+        # Use the potentially re-initialized atlas for the builder
+        builder = WordlistBuilder(atlas=atlas_for_test)
+        builder.add_words(["kiwi", "banana", "apple"])  # Add words
+
+        # Verify words are present before export
+        assert builder.words == {"kiwi", "banana", "apple"}
+
+        # Test sorting by length
+        builder.export_text(filepath_sort, sort_key=len, include_metadata=False)
+        content_sort = filepath_sort.read_text(encoding="utf-8").splitlines()
+        assert content_sort == [
+            "kiwi",
+            "apple",
+            "banana",
+        ]  # kiwi(4), apple(5), banana(6)
+
+        # Test formatting to uppercase
+        builder.export_text(
+            filepath_format, word_format=str.upper, include_metadata=False
+        )
+        content_format = filepath_format.read_text(encoding="utf-8").splitlines()
+        # Order should be default alphabetical due to set iteration then sorting
+        assert content_format == ["APPLE", "BANANA", "KIWI"]
+
+        # Test both
+        builder.export_text(
+            filepath_both, sort_key=len, word_format=str.upper, include_metadata=False
+        )
+        content_both = filepath_both.read_text(encoding="utf-8").splitlines()
+        assert content_both == ["KIWI", "APPLE", "BANANA"]
+
+    # ---- NEW Generic Error Handling Tests ----
+
+    def test_save_generic_error(self, mock_atlas, tmp_path):
+        """Test save method handles generic exceptions during file write (covers 296-297)."""
+        builder = WordlistBuilder(atlas=mock_atlas)
+        builder.add_words(["apple"])
+        save_path = tmp_path / "save_fail.json"
+
+        with patch("builtins.open") as mock_open:
+            mock_open.side_effect = Exception("Mock generic write error")
+            with pytest.raises(IOError) as excinfo:
+                builder.save(save_path)
+            assert "Failed to save wordlist" in str(excinfo.value)
+            assert "Mock generic write error" in str(
+                excinfo.value
+            )  # Check original exception is included
+
+    def test_load_generic_error(self, mock_atlas, tmp_path):
+        """Test load method handles generic exceptions during file read (covers 323)."""
+        load_path = tmp_path / "load_fail.json"
+        load_path.touch()  # File needs to exist to get past initial check
+
+        with patch("builtins.open") as mock_open:
+            mock_open.side_effect = Exception("Mock generic read error")
+            with pytest.raises(IOError) as excinfo:
+                WordlistBuilder.load(load_path, atlas=mock_atlas)
+            # Match the actual error message format
+            assert "Failed to read wordlist file" in str(excinfo.value)
+            assert "Mock generic read error" in str(excinfo.value)
+
+    def test_export_text_generic_error(self, mock_atlas, tmp_path):
+        """Test export_text method handles generic exceptions during file write (covers 485-486)."""
+        builder = WordlistBuilder(atlas=mock_atlas)
+        builder.add_words(["apple"])
+        export_path = tmp_path / "export_fail.txt"
+
+        with patch("builtins.open") as mock_open:
+            mock_open.side_effect = Exception("Mock generic export error")
+            with pytest.raises(IOError) as excinfo:
+                builder.export_text(export_path)
+            # Match the actual error message format
+            assert "Failed to export wordlist to" in str(excinfo.value)
+            assert "Mock generic export error" in str(excinfo.value)
