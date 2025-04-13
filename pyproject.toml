@@ -49,6 +49,9 @@ dev = [
     "hypothesis>=6.130.0",
 ]
 
+[project.scripts]
+word_atlas = "word_atlas.cli:main"
+
 [project.urls]
 Homepage = "https://github.com/neumanns-workshop/english-word-atlas"
 Repository = "https://github.com/neumanns-workshop/english-word-atlas.git"

@@ -1,11 +1,6 @@
 # Add directories or file patterns to ignore during indexing (e.g. foo/ or *.csv)
 # Development and source materials
-/data/*
-!/data/word_data.json
-!/data/word_index.json
-!/data/embeddings.npy
 /working_notebooks/
-/extra_scripts/
 
 # Python
 __pycache__/
@@ -73,20 +68,10 @@ logs/
 *.manifest
 *.spec
 
-# Specific large files that should be generated locally
-data/frequencies/precomputed_frequencies.json
-data/dictionaries/precomputed_pronunciations.json
-data/embeddings/precomputed_embeddings.npz
-
 # Raw data files
 NGSL_1.2_stats.csv
 SUBTLEXus74286wordstextversion.zip
-data/frequencies/subtlex_us.txt
 SUP_lemmatized.csv
 data/dictionaries/cmudict-0.7b
 roget-structure.txt
 roget15a.txt
-
-# Keep processed data
-!/data/processed/
-!/data/processed/* 

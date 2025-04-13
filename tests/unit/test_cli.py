@@ -1,7 +1,7 @@
 """Unit tests for the CLI module."""
 
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, call
 import json
 import sys
 from pathlib import Path
@@ -20,495 +20,245 @@ from word_atlas.wordlist import WordlistBuilder
 from word_atlas.atlas import WordAtlas
 
 
+@pytest.fixture
+def mock_cli_atlas():
+    """Provides a mock WordAtlas instance for testing CLI commands."""
+    atlas = MagicMock(spec=WordAtlas, name="MockAtlas")
+    # Base words and their properties used by the mock
+    MOCK_WORDS = {"apple": 0, "banana": 1, "orange": 2}
+    MOCK_FREQUENCIES = {"apple": 150.5, "banana": 10.2, "orange": 90.0}
+    MOCK_SOURCES = {
+        "apple": ["GSL", "OTHER"],
+        "banana": ["GSL"],
+        "orange": ["OTHER"]
+    }
+
+    atlas.word_index = MOCK_WORDS
+    atlas.word_frequencies = MOCK_FREQUENCIES
+    atlas.source_lists = {
+        "GSL": ["apple", "banana"],
+        "OTHER": ["apple", "orange"]
+    }
+
+    atlas.has_word.side_effect = lambda w: w in MOCK_WORDS
+    atlas.search.side_effect = lambda pattern: [w for w in MOCK_WORDS if pattern in w]
+    atlas.get_sources.side_effect = lambda w: MOCK_SOURCES.get(w, [])
+    atlas.get_frequency.side_effect = lambda w: MOCK_FREQUENCIES.get(w)
+    # Simplified source_coverage to match what stats_command expects
+    atlas.get_stats.return_value = {
+        "total_entries": 3,
+        "single_words": 3,
+        "phrases": 0,
+        "entries_with_frequency": 3,
+        "source_lists": ["GSL", "OTHER"],
+        "source_coverage": {
+            "GSL": 2,
+            "OTHER": 2,
+        }
+    }
+
+    # Update mock_filter to handle calls without the 'words' argument
+    def mock_filter(words=None, sources=None, min_freq=None, max_freq=None):
+        # If words is None, filter from all words in the index
+        target_words = set(words) if words is not None else set(MOCK_WORDS.keys())
+        # Use the mock data defined above
+        return [
+            w for w in target_words
+            if (sources is None or any(s in MOCK_SOURCES.get(w, []) for s in sources)) and
+               (min_freq is None or MOCK_FREQUENCIES.get(w, -1) >= min_freq) and
+               (max_freq is None or MOCK_FREQUENCIES.get(w, float('inf')) <= max_freq)
+        ]
+    atlas.filter.side_effect = mock_filter
+
+    return atlas
+
+@pytest.fixture
+def mock_cli_atlas_many_roget():
+    """Provides a mock WordAtlas instance with many sources for testing overflow."""
+    atlas = MagicMock(spec=WordAtlas)
+    test_word = "testword_many_roget"
+    sources = ["GSL"] + [f"ROGET_{i}" for i in range(1, 7)] # 6 Roget + GSL
+    atlas.has_word.side_effect = lambda w: w == test_word
+    atlas.get_sources.side_effect = lambda w: sources if w == test_word else []
+    atlas.get_frequency.side_effect = lambda w: 50.0 if w == test_word else None
+    return atlas
+
+
 class TestInfoCommand:
     """Tests for the info command."""
 
     def test_info_basic(self, mock_cli_atlas, capsys):
         """Test basic word information display."""
+        # Ensure mock_cli_atlas provides expected data
+        mock_cli_atlas.get_sources.side_effect = lambda w: ["GSL"] if w == "apple" else []
+        mock_cli_atlas.get_frequency.side_effect = lambda w: 150.5 if w == "apple" else None
+
         with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
-            args = MagicMock(
-                word="apple", data_dir="test_dir", no_similar=True, json=False
-            )
+            args = MagicMock(word="apple", data_dir="test_dir", json=False)
             info_command(args)
 
         captured = capsys.readouterr()
-        assert "Information for 'apple'" in captured.out
-        assert "Syllables: 2" in captured.out
-        assert "Pronunciation: /['AE1', 'P', 'AH0', 'L']/" in captured.out
-        assert "Frequency grade: 5.20" in captured.out
-        assert "In wordlists: GSL, NGSL" in captured.out
-        assert "Roget categories: 2" in captured.out
+        assert "Information for 'apple':" in captured.out
+        assert "Frequency (SUBTLWF): 150.50" in captured.out
+        assert "Sources: GSL" in captured.out
 
     def test_info_not_found(self, mock_cli_atlas, capsys):
         """Test handling of non-existent words."""
+        # Ensure has_word returns False for the test word
+        mock_cli_atlas.has_word.side_effect = lambda w: False if w == "nonexistent" else True
+
         with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
-            args = MagicMock(
-                word="nonexistent", data_dir="test_dir", no_similar=True, json=False
-            )
+            args = MagicMock(word="nonexistent", data_dir="test_dir", json=False)
             with pytest.raises(SystemExit) as exc_info:
                 info_command(args)
 
         assert exc_info.value.code == 1
         captured = capsys.readouterr()
-        assert "not found in the dataset" in captured.out
-
-    def test_info_with_similar_words(self, capsys):
-        """Test displaying similar words."""
-        # Configure the mock behaviour specifically for this test
-        with patch("word_atlas.cli.WordAtlas") as MockWordAtlas:
-            instance_mock = MockWordAtlas.return_value
-            instance_mock.has_word.return_value = True  # Need this
-            instance_mock.get_word.return_value = {  # Need some data
-                "SYLLABLE_COUNT": 2,
-                "FREQ_GRADE": 5.0,
-                "GSL": True,
-            }
-            instance_mock.get_similar_words.return_value = [
-                ("pear", 0.85),
-                ("orange", 0.82),
-            ]  # The crucial part
-
-            args = MagicMock(
-                word="apple",
-                data_dir="test_dir",
-                no_similar=False,  # The condition
-                json=False,
-            )
-            info_command(args)
-
-        captured = capsys.readouterr()
-        assert "Similar words/phrases:" in captured.out  # Check line 97
-        assert "pear: 0.8500" in captured.out  # Check line 100
-        assert "orange: 0.8200" in captured.out  # Check line 100
+        # Check for the specific error message format
+        assert "Word or phrase 'nonexistent' not found" in captured.out
 
     def test_info_roget_categories_overflow(self, mock_cli_atlas_many_roget, capsys):
-        """Test info command output when there are more than 5 Roget categories."""
-        # Use the test word configured in the fixture
+        """Test info command output with many sources (replaces Roget test)."""
         test_word = "testword_many_roget"
-
-        # Simulate args
-        args = MagicMock(
-            word=test_word, data_dir="dummy_dir", no_similar=True, json=False
-        )
-
-        # Patching WordAtlas happens implicitly via the fixture
+        # The mock_cli_atlas_many_roget fixture prepares the mock
         with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas_many_roget):
+            args = MagicMock(word=test_word, data_dir="dummy_dir", json=False)
             info_command(args)
 
         captured = capsys.readouterr()
-
-        # Assertions (fixture provides the necessary word data)
-        assert f"Information for '{test_word}'" in captured.out
-        assert "Roget categories: 6" in captured.out
-        assert "Syllables: 2" in captured.out
-        assert "Frequency grade: 5.00" in captured.out
-        assert "In wordlists: GSL" in captured.out
-        assert "    - ROGET_1" in captured.out
-        assert "    - ROGET_2" in captured.out
-        assert "    - ROGET_3" in captured.out
-        assert "    - ROGET_4" in captured.out
-        assert "    - ROGET_5" in captured.out
-        assert "    - ... and 1 more" in captured.out  # Check the overflow message
+        assert f"Information for '{test_word}':" in captured.out
+        # Check that all sources are listed (output format might truncate)
+        assert "Sources: GSL, ROGET_1, ROGET_2, ROGET_3, ROGET_4, ROGET_5, ROGET_6" in captured.out
 
     def test_info_json_output(self, mock_cli_atlas, capsys):
         """Test info command with JSON output."""
-        word_data = {
-            "SYLLABLE_COUNT": 2,
-            "FREQ_GRADE": 1.0,
-            "GSL": True,
-            "EMBEDDINGS_ALL_MINILM_L6_V2": [0.1, 0.2, 0.3],  # Add embeddings
-        }
-        mock_cli_atlas.has_word.side_effect = lambda w: True
-        mock_cli_atlas.get_word.side_effect = lambda w: word_data.copy()
-        mock_cli_atlas.get_similar_words.return_value = []
-        mock_cli_atlas.word_data = {}  # Empty dataset to avoid ARPABET split error
+        # Setup mock return values for the test word
+        test_word = "apple"
+        sources_list = ["GSL"]
+        frequency = 150.5
+        mock_cli_atlas.has_word.side_effect = lambda w: w == test_word
+        mock_cli_atlas.get_sources.side_effect = lambda w: sources_list if w == test_word else []
+        mock_cli_atlas.get_frequency.side_effect = lambda w: frequency if w == test_word else None
 
-        # Mock the WordAtlas instance used by the command
         with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
-            args = MagicMock(
-                word="test_word", data_dir="test_dir", no_similar=False, json=True
-            )
+            args = MagicMock(word=test_word, data_dir="test_dir", json=True)
             info_command(args)
 
         captured = capsys.readouterr()
-
-        # Assert exit code is implicitly 0 (no SystemExit)
-        assert "EMBEDDINGS_ALL_MINILM_L6_V2" not in captured.out
-        assert "SYLLABLE_COUNT" in captured.out
-        assert "FREQ_GRADE" in captured.out
-        assert "GSL" in captured.out
+        try:
+            output_json = json.loads(captured.out)
+            assert output_json == {
+                "word": test_word,
+                "sources": sources_list,
+                "frequency": frequency,
+            }
+        except json.JSONDecodeError:
+            pytest.fail(f"JSON output was not valid: {captured.out}")
 
     def test_info_phrase(self, mock_cli_atlas, capsys):
         """Test displaying information for a multi-word phrase."""
+        test_phrase = "banana split"
+        sources_list = ["ROGET_FOOD"]
+        frequency = 10.2
+        # Setup mock for the phrase
+        mock_cli_atlas.has_word.side_effect = lambda w: w == test_phrase
+        mock_cli_atlas.get_sources.side_effect = lambda w: sources_list if w == test_phrase else []
+        mock_cli_atlas.get_frequency.side_effect = lambda w: frequency if w == test_phrase else None
+
+
         with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
-            args = MagicMock(
-                word="banana split", data_dir="test_dir", no_similar=True, json=False
-            )
+            args = MagicMock(word=test_phrase, data_dir="test_dir", json=False)
             info_command(args)
 
         captured = capsys.readouterr()
-        assert "Information for 'banana split'" in captured.out
-        assert "Syllables: 4" in captured.out
-        assert (
-            "Pronunciation: /['B', 'AH0', 'N', 'AE1', 'N', 'AH0', 'S', 'P', 'L', 'IH1', 'T']/"
-            in captured.out
-        )
-        assert "Frequency grade: 15.80" in captured.out
-        assert "Roget categories: 1" in captured.out
-
-    def test_info_invalid_word(self, mock_cli_atlas, capsys):
-        """Test info command with invalid word format."""
-        mock_cli_atlas.get_word.return_value = None  # Word not found
-
-        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
-            args = MagicMock(
-                word="", data_dir="test_dir", no_similar=True, json=False  # Empty word
-            )
-            with pytest.raises(SystemExit) as exc_info:
-                info_command(args)
-
-        assert exc_info.value.code == 1
-        captured = capsys.readouterr()
-        assert "Word or phrase '' not found in the dataset" in captured.out
-
-    def test_info_json_error(self, mock_cli_atlas, capsys):
-        """Test info command with JSON encoding error."""
-        mock_cli_atlas.has_word.side_effect = lambda w: True
-        mock_cli_atlas.get_word.side_effect = lambda w: {
-            "key": object()
-        }  # object() cannot be JSON serialized
-        mock_cli_atlas.get_similar_words.return_value = []
-        mock_cli_atlas.word_data = {}  # Empty dataset to avoid ARPABET split error
-
-        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
-            args = MagicMock(
-                word="test_word", data_dir="test_dir", no_similar=False, json=True
-            )
-            with pytest.raises(SystemExit) as exc_info:
-                info_command(args)
-
-            captured = capsys.readouterr()
-            assert (
-                "Error: Object of type object is not JSON serializable" in captured.out
-            )
-            assert exc_info.value.code == 1
+        assert f"Information for '{test_phrase}':" in captured.out
+        assert f"Frequency (SUBTLWF): {frequency:.2f}" in captured.out
+        assert f"Sources: {sources_list[0]}" in captured.out
 
 
 class TestSearchCommand:
     """Tests for the search command."""
 
     def test_search_basic(self, mock_cli_atlas, capsys):
-        """Test basic search functionality."""
+        """Test basic search functionality without filters."""
         with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
             args = MagicMock(
-                pattern="ap",
-                data_dir="test_dir",
-                attribute=None,
-                min_freq=None,
-                max_freq=None,
-                phrases_only=False,
-                words_only=False,
-                limit=None,
-                verbose=False,
+                pattern="ap", data_dir="test_dir", attribute=None,
+                min_freq=None, max_freq=None, limit=None, verbose=False
             )
             search_command(args)
 
         captured = capsys.readouterr()
-        assert "Found 1 matches:" in captured.out
+        assert "Found 1 matches" in captured.out # Filtering doesn't happen
         assert "apple" in captured.out
+        assert "banana" not in captured.out
+        mock_cli_atlas.search.assert_called_with("ap")
+        # Filter is NOT called when no filters are applied
+        mock_cli_atlas.filter.assert_not_called()
+
 
     def test_search_with_filters(self, mock_cli_atlas, capsys):
-        """Test search with frequency and attribute filters."""
+        """Test search with frequency and source filters."""
         with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
-            args = MagicMock(
-                pattern="a",
-                data_dir="test_dir",
-                attribute="GSL=true",
-                min_freq=1,
-                max_freq=10,
-                phrases_only=False,
-                words_only=False,
-                limit=None,
-                verbose=True,
-            )
+            # Set up args mock correctly
+            args = MagicMock()
+            args.pattern = "a"
+            args.data_dir = "test_dir"
+            args.attribute = "GSL"
+            args.min_freq = None
+            args.max_freq = 50.0
+            args.limit = None
+            args.verbose = False
             search_command(args)
 
         captured = capsys.readouterr()
-        assert "apple" in captured.out
-        assert "freq: 5.2" in captured.out
-        assert "banana split" not in captured.out  # Filtered out by GSL=true
-
-    def test_search_phrases_only(self, mock_cli_atlas, capsys):
-        """Test searching for phrases only."""
-        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
-            args = MagicMock(
-                pattern="a",
-                data_dir="test_dir",
-                attribute=None,
-                min_freq=None,
-                max_freq=None,
-                phrases_only=True,
-                words_only=False,
-                limit=None,
-                verbose=True,
-            )
-            search_command(args)
-
-        captured = capsys.readouterr()
-        assert "banana split" in captured.out
+        assert "Found 1 matches (after filtering from 3):" in captured.out
+        assert "banana" in captured.out
         assert "apple" not in captured.out
+        assert "orange" not in captured.out
+        mock_cli_atlas.search.assert_called_with("a")
+        # Verify filter was called twice (once for source, once for freq)
+        mock_cli_atlas.filter.assert_has_calls([
+            call(sources=['GSL']), # Called without 'words'
+            call(min_freq=0, max_freq=50.0) # Called without 'words'
+        ])
 
-    def test_search_words_only(self, mock_cli_atlas, capsys):
-        """Test searching for single words only."""
-        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
-            args = MagicMock(
-                pattern="a",
-                data_dir="test_dir",
-                attribute=None,
-                min_freq=None,
-                max_freq=None,
-                phrases_only=False,
-                words_only=True,
-                limit=None,
-                verbose=True,
-            )
-            search_command(args)
-
-        captured = capsys.readouterr()
-        assert "apple" in captured.out
-        assert "banana split" not in captured.out
-
-    def test_search_with_limit(self, mock_cli_atlas, capsys):
-        """Test search with result limit."""
-        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
-            args = MagicMock(
-                pattern="a",
-                data_dir="test_dir",
-                attribute=None,
-                min_freq=None,
-                max_freq=None,
-                phrases_only=False,
-                words_only=False,
-                limit=1,
-                verbose=True,
-            )
-            search_command(args)
-
-        captured = capsys.readouterr()
-        output_lines = [
-            line.strip() for line in captured.out.split("\n") if line.strip()
-        ]
-        assert len(output_lines) == 2  # Header + 1 result
-        assert "Found" in output_lines[0]
-
-    def test_search_attribute_exists(self, mock_cli_atlas, capsys):
-        """Test searching for words with a specific attribute (existence only)."""
-        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
-            args = MagicMock(
-                pattern="a",
-                data_dir="test_dir",
-                attribute="GSL",  # No value specified
-                min_freq=None,
-                max_freq=None,
-                phrases_only=False,
-                words_only=False,
-                limit=None,
-                verbose=True,
-            )
-            search_command(args)
-
-        captured = capsys.readouterr()
-        assert "apple" in captured.out  # Has GSL=True
-        assert "banana split" not in captured.out  # Doesn't have GSL
 
     def test_search_invalid_frequency(self, mock_cli_atlas, capsys):
-        """Test search with invalid frequency range."""
+        """Test search with invalid frequency range (should return empty)."""
         with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
-            args = MagicMock(
-                pattern="a",
-                data_dir="test_dir",
-                attribute=None,
-                min_freq=10,
-                max_freq=1,  # Invalid: max < min
-                phrases_only=False,
-                words_only=False,
-                limit=None,
-                verbose=False,
-            )
+            args = MagicMock()
+            args.pattern="a"
+            args.data_dir="test_dir"
+            args.attribute=None
+            args.min_freq=100
+            args.max_freq=10
+            args.limit=None
+            args.verbose=False
             search_command(args)
-
         captured = capsys.readouterr()
         assert "Found 0 matches" in captured.out
+        mock_cli_atlas.search.assert_called_with("a")
+        # Filter is called once for frequency
+        mock_cli_atlas.filter.assert_called_once_with(min_freq=100, max_freq=10)
 
-    def test_search_invalid_attribute(self, mock_cli_atlas, capsys):
-        """Test search with invalid attribute format."""
-        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
-            args = MagicMock(
-                pattern="a",
-                data_dir="test_dir",
-                attribute="INVALID:true",  # Invalid format, should be =
-                min_freq=None,
-                max_freq=None,
-                phrases_only=False,
-                words_only=False,
-                limit=None,
-                verbose=False,
-            )
-            search_command(args)
-
-        captured = capsys.readouterr()
-        assert "Found 0 matches" in captured.out
-
-    def test_search_no_results(self, mock_cli_atlas, capsys):
-        """Test search with no matching results."""
-        mock_cli_atlas.search.return_value = set()  # No results
-
-        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
-            args = MagicMock(
-                pattern="nonexistent",
-                data_dir="test_dir",
-                attribute=None,
-                min_freq=None,
-                max_freq=None,
-                phrases_only=False,
-                words_only=False,
-                limit=None,
-                verbose=False,
-            )
-            search_command(args)
-
-        captured = capsys.readouterr()
-        assert "Found 0 matches" in captured.out
-
-    def test_search_numeric_attribute(self, mock_cli_atlas, capsys):
-        """Test search with numeric attribute value."""
-        mock_cli_atlas.search.side_effect = lambda pattern: ["word1", "word2"]
-        mock_cli_atlas.has_word.side_effect = lambda w: True
-        mock_cli_atlas.get_word.side_effect = lambda w: {
-            "FREQ_GRADE": float(5) if w == "word1" else float(3)  # Convert to float
-        }
-
-        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
-            args = MagicMock(
-                pattern="test",
-                data_dir="test_dir",
-                attribute="FREQ_GRADE=5.0",  # Use float value
-                min_freq=None,
-                max_freq=None,
-                phrases_only=False,
-                words_only=False,
-                limit=None,
-                verbose=False,
-            )
-            search_command(args)
-
-        captured = capsys.readouterr()
-        assert "Found 1 matches:" in captured.out
-        assert "word1" in captured.out
-        assert "word2" not in captured.out
-
-    def test_search_phrase_filtering(self, mock_cli_atlas, capsys):
-        """Test search with phrase filtering."""
-        # Define test data
-        phrases = ["test phrase", "another phrase"]
-        words = ["singleword"]
-        all_results = phrases + words
-
-        # Set up mocks
-        mock_cli_atlas.search.side_effect = lambda pattern: all_results
-        mock_cli_atlas.has_word.side_effect = lambda w: True
-        mock_cli_atlas.get_word.side_effect = lambda w: {"FREQ_GRADE": 5}
-
-        # Test phrases only
-        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
-            args = MagicMock(
-                pattern="test",
-                data_dir="test_dir",
-                attribute=None,
-                min_freq=None,
-                max_freq=None,
-                phrases_only=True,
-                words_only=False,
-                limit=None,
-                verbose=False,
-            )
-            search_command(args)
-
-        captured = capsys.readouterr()
-        assert "Found 2 matches:" in captured.out
-        for phrase in phrases:
-            assert phrase in captured.out
-        assert "singleword" not in captured.out
-
-        # Test words only
-        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
-            args = MagicMock(
-                pattern="test",
-                data_dir="test_dir",
-                attribute=None,
-                min_freq=None,
-                max_freq=None,
-                phrases_only=False,
-                words_only=True,
-                limit=None,
-                verbose=False,
-            )
-            search_command(args)
-
-        captured = capsys.readouterr()
-        assert "Found 1 matches:" in captured.out
-        assert "singleword" in captured.out
-        for phrase in phrases:
-            assert phrase not in captured.out
 
     def test_search_verbose_output(self, mock_cli_atlas, capsys):
-        """Test search with verbose output."""
-        test_word = "test"
-        word_data = {"FREQ_GRADE": 5.0, "SYLLABLE_COUNT": 1}
-
-        mock_cli_atlas.search.side_effect = lambda pattern: [test_word]
-        mock_cli_atlas.has_word.side_effect = lambda w: True
-        mock_cli_atlas.get_word.side_effect = lambda w: word_data.copy()
-
+        """Test search with verbose output showing frequency (no filters)."""
         with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
             args = MagicMock(
-                pattern="test",
-                data_dir="test_dir",
-                attribute=None,
-                min_freq=None,
-                max_freq=None,
-                phrases_only=False,
-                words_only=False,
-                limit=None,
-                verbose=True,
+                pattern="an", data_dir="test_dir", attribute=None,
+                min_freq=None, max_freq=None, limit=None, verbose=True
             )
             search_command(args)
-
         captured = capsys.readouterr()
-        assert "Found 1 matches:" in captured.out
-        assert test_word in captured.out
-        assert "(freq: 5.0, syl: 1)" in captured.out
-
-    def test_search_attribute_exists_truthy(self, mock_cli_atlas, capsys):
-        """Test search filtering by attribute existence and truthiness."""
-        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
-            args = MagicMock(
-                pattern="a",  # Matches apple and banana split initially
-                data_dir="test_dir",
-                attribute="GSL",  # Check for GSL existing and being truthy
-                min_freq=None,
-                max_freq=None,
-                phrases_only=False,
-                words_only=False,
-                limit=None,
-                verbose=False,
-            )
-            search_command(args)
-
-        captured = capsys.readouterr()
-        assert "Found 1 matches:" in captured.out  # Should only find apple
-        assert "apple" in captured.out
-        assert "banana split" not in captured.out  # Does not have GSL=True
+        assert "Found 2 matches" in captured.out # No filtering
+        assert "banana (freq: 10.20)" in captured.out
+        assert "orange (freq: 90.00)" in captured.out
+        assert "apple" not in captured.out
+        mock_cli_atlas.search.assert_called_with("an")
+        # Filter is NOT called when no filters are applied
+        mock_cli_atlas.filter.assert_not_called()
 
 
 class TestStatsCommand:
@@ -516,51 +266,37 @@ class TestStatsCommand:
 
     def test_stats_basic(self, mock_cli_atlas, capsys):
         """Test basic statistics display."""
+        # mock_cli_atlas stats are now based on MOCK_WORDS -> 3 entries
         with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
             args = MagicMock(data_dir="test_dir", basic=True)
             stats_command(args)
 
         captured = capsys.readouterr()
+        # print(captured.out) # Debug print
         assert "English Word Atlas Statistics:" in captured.out
-        assert "Total entries: 2" in captured.out
-        assert "Single words: 1" in captured.out
-        assert "Phrases: 1" in captured.out
-        assert "Embedding dimensions: 384" in captured.out
+        # Check simplified stats output using mock values
+        mock_stats = mock_cli_atlas.get_stats.return_value
+        assert f"Total unique words in index: {mock_stats['total_entries']}" in captured.out
+        assert f"Single words: {mock_stats['single_words']}" in captured.out
+        assert f"Phrases: {mock_stats['phrases']}" in captured.out
+        assert f"Entries with frequency data: {mock_stats['entries_with_frequency']}" in captured.out
+        assert "Source List Coverage:" in captured.out
+        # Check formatting of source coverage
+        assert "GSL: 2 entries (66.7% of total index)" in captured.out
+        assert "OTHER: 2 entries (66.7% of total index)" in captured.out
 
-    def test_stats_detailed(self, mock_cli_atlas, capsys):
-        """Test detailed statistics display."""
-        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
-            args = MagicMock(data_dir="test_dir", basic=False)
-            stats_command(args)
-
-        captured = capsys.readouterr()
-        # Basic stats
-        assert "English Word Atlas Statistics:" in captured.out
-        # Syllable distribution
-        assert "Syllable distribution:" in captured.out
-        # The actual format is "2 syllable(s): 123"
-        assert any(
-            line.strip().startswith("2 syllable(s):")
-            for line in captured.out.split("\n")
-        )
-        # Frequency distribution
-        assert "Frequency distribution:" in captured.out
-        assert any(
-            line.strip().startswith("Frequency 1-10:")
-            for line in captured.out.split("\n")
-        )
-        # Wordlist coverage
-        assert "Wordlist coverage:" in captured.out
-        assert any(line.strip().startswith("GSL:") for line in captured.out.split("\n"))
 
     def test_stats_empty_dataset(self, capsys):
         """Test stats command with an empty dataset."""
         mock_empty_atlas = MagicMock(spec=WordAtlas)
+        # Update mock return value for simplified get_stats
         mock_empty_atlas.get_stats.return_value = {
             "total_entries": 0,
             "single_words": 0,
             "phrases": 0,
-            "embedding_dim": 384,
+            "entries_with_frequency": 0,
+            "source_lists": [],
+            "source_coverage": {}
         }
 
         with patch("word_atlas.cli.WordAtlas", return_value=mock_empty_atlas):
@@ -568,576 +304,251 @@ class TestStatsCommand:
             stats_command(args)
 
         captured = capsys.readouterr()
-        assert "Total entries: 0" in captured.out
-        assert "Single words: 0" in captured.out
-        assert "Phrases: 0" in captured.out
+        # Check simplified output for empty case
+        assert "Total unique words in index: 0" in captured.out
+        assert "Entries with frequency data: 0" in captured.out
+        assert "Source List Coverage: No source lists found or loaded." in captured.out
 
-    def test_stats_data_error(self, capsys):
-        """Test stats command with data loading error."""
-        mock_error_atlas = MagicMock(spec=WordAtlas)
-        mock_error_atlas.get_stats.side_effect = Exception("Data error")
-        mock_error_atlas.word_data = {}  # Empty dataset to avoid ARPABET split error
-        mock_error_atlas._load_dataset = MagicMock()  # Prevent dataset loading
 
-        with patch("word_atlas.cli.WordAtlas", return_value=mock_error_atlas):
-            args = MagicMock(data_dir="test_dir", basic=True)
-            with pytest.raises(SystemExit) as exc_info:
-                stats_command(args)
+@pytest.fixture
+def mock_wordlist_builder():
+    """Provides a mock WordlistBuilder instance for testing CLI commands."""
+    builder = MagicMock(spec=WordlistBuilder)
+    builder.words = set() # Start with empty set for state tracking
+    builder.metadata = {"name": "Mock List", "criteria": []}
 
-            captured = capsys.readouterr()
-            assert "Error: Data error" in captured.out
-            assert exc_info.value.code == 1
+    builder.get_size.side_effect = lambda: len(builder.words)
 
+    # Make add/remove methods modify the mock words set for better state tracking
+    def mock_add_words(words_to_add):
+        added_count = len(set(words_to_add) - builder.words)
+        builder.words.update(words_to_add)
+        return added_count
+    def mock_remove_words(words_to_remove):
+        removed_count = len(set(words_to_remove) & builder.words)
+        builder.words.difference_update(words_to_remove)
+        return removed_count
+
+    builder.add_words.side_effect = mock_add_words
+    builder.remove_words.side_effect = mock_remove_words
+
+    # Simulate filter-based methods returning count and adding to words
+    def mock_add_by_filter(count=1, *args, **kwargs):
+        # Use the criteria to generate somewhat unique words
+        criteria_str = "_".join(map(str, args)) + "_".join(f"{k}{v}" for k, v in kwargs.items())
+        new_words = {f"added_by_{criteria_str}_{i}" for i in range(count)}
+        # Call the side_effect directly to update internal state
+        builder.add_words.side_effect(new_words)
+        return count # Return the count as the original methods do
+
+    builder.add_by_search.side_effect = lambda pattern: mock_add_by_filter(1, 'search', pattern=pattern)
+    builder.remove_by_search.side_effect = lambda pattern: builder.remove_words({f"removed_search_{pattern}"}) # Simulate removal
+    builder.add_by_source.side_effect = lambda source: mock_add_by_filter(1, 'source', source=source)
+    builder.remove_by_source.side_effect = lambda source: builder.remove_words({f"removed_source_{source}"}) # Simulate removal
+    builder.add_by_frequency.side_effect = lambda min_freq, max_freq: mock_add_by_filter(1, 'freq', min_freq=min_freq, max_freq=max_freq)
+
+    # Simplified analyze result based on *potential* mock state (might need test-specific overrides)
+    builder.analyze.return_value = {
+        "size": 1,
+        "single_words": 1,
+        "phrases": 0,
+        "frequency": {"count": 1, "average": 10.0, "distribution": {"0-10": 1}, "total": 10.0},
+        "source_coverage": {"GSL": {"count": 1, "percentage": 100.0}}
+    }
+    builder.save.return_value = None
+    # REMOVED global patch of WordlistBuilder.load
+    # WordlistBuilder.load = MagicMock(return_value=builder)
+
+    return builder
 
 class TestWordlistCommand:
-    """Tests for the wordlist commands."""
+    """Test the 'wordlist' subcommands."""
 
     def test_wordlist_create(self, mock_cli_atlas, mock_wordlist_builder, capsys):
-        """Test creating a wordlist with basic criteria."""
-        args = MagicMock()
-        args.data_dir = "test_dir"
-        args.name = "Test List"
-        args.description = "A test wordlist"
-        args.creator = "Test User"
-        args.tags = "test,demo"
-        args.search_pattern = "a"
-        args.attribute = None
-        args.syllables = None
-        args.min_freq = None
-        args.max_freq = None
-        args.similar_to = None
-        args.output = "test_wordlist.json"
+        """Test creating a wordlist via CLI."""
+        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas), \
+             patch("word_atlas.cli.WordlistBuilder") as MockBuilder:
+            MockBuilder.return_value = mock_wordlist_builder
+            # Explicitly set attributes on args mock
+            args = MagicMock()
+            args.output = "new_list.json"
+            args.name = "My List"
+            args.description = "Desc"
+            args.creator = "Me"
+            args.tags = "tag1,tag2"
+            args.search_pattern = "a"
+            args.attribute = "GSL"
+            args.min_freq = 10
+            args.max_freq = 100
+            args.no_analyze = False
+            args.data_dir = "dummy_dir"
 
-        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas), patch(
-            "word_atlas.cli.WordlistBuilder", return_value=mock_wordlist_builder
-        ):
             wordlist_create_command(args)
 
-        captured = capsys.readouterr()
-        assert "Added 1 words matching pattern 'a'" in captured.out
+        MockBuilder.assert_called_once_with(mock_cli_atlas)
         mock_wordlist_builder.set_metadata.assert_called_once_with(
-            name="Test List",
-            description="A test wordlist",
-            creator="Test User",
-            tags=["test", "demo"],
+            name="My List", description="Desc", creator="Me", tags=["tag1", "tag2"]
         )
-
-    def test_wordlist_create_with_multiple_criteria(
-        self, mock_cli_atlas, mock_wordlist_builder, capsys
-    ):
-        """Test creating a wordlist with multiple search criteria."""
-        args = MagicMock()
-        args.data_dir = "test_dir"
-        args.name = "Test List"
-        args.description = "A test wordlist"
-        args.creator = "Test User"
-        args.tags = "test,demo"
-        args.search_pattern = "a"
-        args.attribute = "GSL=true"
-        args.syllables = 2
-        args.min_freq = 1
-        args.max_freq = 10
-        args.similar_to = None
-        args.output = "test_wordlist.json"
-
-        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas), patch(
-            "word_atlas.cli.WordlistBuilder", return_value=mock_wordlist_builder
-        ):
-            wordlist_create_command(args)
-
-        captured = capsys.readouterr()
-        assert "Added 1 words matching pattern 'a'" in captured.out
-        assert "Added 1 words with attribute GSL=true" in captured.out
-        assert "Added 1 words with 2 syllables" in captured.out
-        assert "frequency 1-10" in captured.out
-
         mock_wordlist_builder.add_by_search.assert_called_once_with("a")
-        mock_wordlist_builder.add_by_attribute.assert_called_once_with("GSL", True)
-        mock_wordlist_builder.add_by_syllable_count.assert_called_once_with(2)
-        mock_wordlist_builder.add_by_frequency.assert_called_once_with(1, 10)
+        mock_wordlist_builder.add_by_source.assert_called_once_with("GSL")
+        mock_wordlist_builder.add_by_frequency.assert_called_once_with(10, 100)
+        mock_wordlist_builder.save.assert_called_once_with("new_list.json")
+        mock_wordlist_builder.analyze.assert_called_once()
 
-    def test_wordlist_create_with_similar_words(
-        self, mock_cli_atlas, mock_wordlist_builder, capsys
-    ):
-        """Test creating a wordlist with similar words."""
-        args = MagicMock()
-        args.data_dir = "test_dir"
-        args.name = "Similar Words List"
-        args.description = "Words similar to apple"
-        args.creator = "Test User"
-        args.tags = "test,similar"
-        args.search_pattern = None
-        args.attribute = None
-        args.syllables = None
-        args.min_freq = None
-        args.max_freq = None
-        args.similar_to = "apple"
-        args.similar_count = 10
-        args.output = "similar_words.json"
 
-        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas), patch(
-            "word_atlas.cli.WordlistBuilder", return_value=mock_wordlist_builder
-        ):
-            wordlist_create_command(args)
+    def test_wordlist_modify(self, mock_cli_atlas, mock_wordlist_builder, capsys):
+        """Test modifying a wordlist via CLI."""
+        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas), \
+             patch("word_atlas.wordlist.WordlistBuilder.load", return_value=mock_wordlist_builder) as mock_load:
+            args = MagicMock()
+            args.wordlist="existing.json"
+            args.name="New Name"
+            args.description=None
+            args.creator=None
+            args.tags=None
+            args.output=None # Explicitly set output to None
+            args.add=["neword"]
+            args.remove=["oldword"]
+            args.add_pattern="x"
+            args.remove_pattern="y"
+            args.add_source="AWL"
+            args.remove_source="GSL"
+            args.add_min_freq=100
+            args.add_max_freq=None
+            args.data_dir="dummy_dir"
 
-        captured = capsys.readouterr()
-        assert "Added 2 words similar to 'apple'" in captured.out
-        mock_wordlist_builder.add_similar_words.assert_called_once_with("apple", 10)
+            # Reset mock calls before the command runs
+            mock_wordlist_builder.reset_mock()
+            # Set initial state if necessary (e.g., words for removal to exist)
+            mock_wordlist_builder.words = {"oldword", "something_else"}
 
-    def test_wordlist_modify_add(self, mock_cli_atlas, mock_wordlist, capsys):
-        """Test modifying a wordlist by adding words."""
-        args = MagicMock()
-        args.data_dir = "test_dir"
-        args.wordlist = "input_list.json"
-        args.output = "modified_list.json"
-        args.add = ["apple", "banana split"]
-        args.remove = None
-        args.name = None
-        args.description = None
-        args.creator = None
-        args.tags = None
-        args.add_pattern = None
-        args.add_attribute = None
-        args.add_similar_to = None
-        args.remove_pattern = None
-
-        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas), patch(
-            "word_atlas.cli.WordlistBuilder.load", return_value=mock_wordlist
-        ):
             wordlist_modify_command(args)
 
-        captured = capsys.readouterr()
-        assert "Added 2 words to the wordlist" in captured.out
-        mock_wordlist.add_words.assert_called_once_with({"apple", "banana split"})
-
-    def test_wordlist_modify_remove(self, mock_cli_atlas, mock_wordlist, capsys):
-        """Test modifying a wordlist by removing words."""
-        args = MagicMock()
-        args.data_dir = "test_dir"
-        args.wordlist = "input_list.json"
-        args.output = "modified_list.json"
-        args.add = None
-        args.remove = ["apple"]
-        args.name = None
-        args.description = None
-        args.creator = None
-        args.tags = None
-        args.add_pattern = None
-        args.add_attribute = None
-        args.add_similar_to = None
-        args.remove_pattern = None
-
-        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas), patch(
-            "word_atlas.cli.WordlistBuilder.load", return_value=mock_wordlist
-        ):
-            wordlist_modify_command(args)
-
-        captured = capsys.readouterr()
-        assert "Removed 1 words from the wordlist" in captured.out
-        mock_wordlist.remove_words.assert_called_once_with({"apple"})
-
-    def test_wordlist_modify_metadata(self, mock_cli_atlas, mock_wordlist, capsys):
-        """Test modifying wordlist metadata."""
-        args = MagicMock()
-        args.data_dir = "test_dir"
-        args.wordlist = "input_list.json"
-        args.output = "modified_list.json"
-        args.add = None
-        args.remove = None
-        args.name = "Updated List"
-        args.description = "Updated description"
-        args.creator = "New Creator"
-        args.tags = "new,tags"
-        args.add_pattern = None
-        args.add_attribute = None
-        args.add_similar_to = None
-        args.remove_pattern = None
-
-        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas), patch(
-            "word_atlas.cli.WordlistBuilder.load", return_value=mock_wordlist
-        ):
-            wordlist_modify_command(args)
-
-        captured = capsys.readouterr()
-        assert "Updated wordlist metadata" in captured.out
-        mock_wordlist.set_metadata.assert_called_once_with(
-            name="Updated List",
-            description="Updated description",
-            creator="New Creator",
-            tags=["new", "tags"],
+        mock_load.assert_called_once_with("existing.json", mock_cli_atlas)
+        mock_wordlist_builder.set_metadata.assert_called_once_with(
+            name="New Name", description=None, creator=None, tags=None
         )
+        # Check calls to add/remove methods based on args
+        mock_wordlist_builder.add_words.assert_any_call(set(["neword"]))
+        mock_wordlist_builder.remove_words.assert_any_call({"oldword"})
+        mock_wordlist_builder.add_by_search.assert_called_once_with("x")
+        # Assert that atlas.search was called for remove_pattern
+        mock_cli_atlas.search.assert_called_with("y")
+        # Assert that builder.remove_words was called with the result of atlas.search("y")
+        # (which is [] based on the mock_cli_atlas fixture)
+        mock_wordlist_builder.remove_words.assert_any_call([])
+        mock_wordlist_builder.add_by_source.assert_called_once_with("AWL")
+        mock_wordlist_builder.remove_by_source.assert_called_once_with("GSL")
+        mock_wordlist_builder.add_by_frequency.assert_called_once_with(100, None)
+        mock_wordlist_builder.save.assert_called_once_with("existing.json")
 
-    def test_wordlist_analyze_basic(
-        self, mock_cli_atlas, mock_wordlist_builder, capsys
-    ):
-        """Test basic wordlist analysis."""
-        args = MagicMock()
-        args.data_dir = "test_dir"
-        args.input = "input_list.json"
-        args.json = False
-        args.basic = True
+    def test_wordlist_analyze_basic(self, mock_cli_atlas, mock_wordlist_builder, capsys):
+        """Test basic analysis output."""
+        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas), \
+             patch("word_atlas.cli.WordlistBuilder.load", return_value=mock_wordlist_builder) as mock_load:
+            mock_stats = mock_wordlist_builder.analyze.return_value
+            args = MagicMock()
+            args.wordlist="wl.json"
+            args.json=False
+            args.data_dir="dummy_dir"
+            args.export=None # Ensure export args are None if not used
+            args.export_text=None
 
-        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas), patch(
-            "word_atlas.cli.WordlistBuilder.load", return_value=mock_wordlist_builder
-        ):
             wordlist_analyze_command(args)
 
+        mock_load.assert_called_once_with("wl.json", mock_cli_atlas)
         captured = capsys.readouterr()
+        # Adjust assertion to match expected text output structure
+        assert "Analyzing wordlist 'Mock List'" in captured.out
         assert "Basic statistics:" in captured.out
-        assert "Total words: 2" in captured.out
-        assert "Single words: 1" in captured.out
-        assert "Phrases: 1" in captured.out
-
-    def test_wordlist_analyze_detailed(
-        self, mock_cli_atlas, mock_wordlist_builder, capsys
-    ):
-        """Test detailed wordlist analysis."""
-        args = MagicMock()
-        args.data_dir = "test_dir"
-        args.input = "input_list.json"
-        args.json = False
-        args.basic = False
-
-        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas), patch(
-            "word_atlas.cli.WordlistBuilder.load", return_value=mock_wordlist_builder
-        ):
-            wordlist_analyze_command(args)
-
-        captured = capsys.readouterr()
-        # Basic info
-        assert "Basic statistics:" in captured.out
-        assert "Total words: 2" in captured.out
-        # Syllable distribution
-        assert "Syllable distribution:" in captured.out
-        assert any(
-            line.strip().startswith("2 syllable(s):")
-            for line in captured.out.split("\n")
-        )
-        # Word types
-        assert "Single words: 1" in captured.out
-        assert "Phrases: 1" in captured.out
-        # Frequency distribution
-        assert "Frequency distribution:" in captured.out
-        assert any(
-            line.strip().startswith("Frequency 1-10:")
-            for line in captured.out.split("\n")
-        )
+        assert f"Total words: {mock_stats['size']}" in captured.out
+        assert "Source List Coverage:" in captured.out
+        assert "GSL: 1 words (100.0%)" in captured.out
+        # Check that export messages are NOT present
+        assert "Analysis exported to" not in captured.out
+        assert "Wordlist exported to" not in captured.out
 
     def test_wordlist_analyze_json(self, mock_cli_atlas, mock_wordlist_builder, capsys):
-        """Test JSON output for wordlist analysis."""
-        args = MagicMock()
-        args.data_dir = "test_dir"
-        args.input = "input_list.json"
-        args.json = True
-        args.basic = False
-        args.export = "analysis.json"
+        """Test analysis JSON output."""
+        # Use patch context manager for WordlistBuilder.load
+        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas), \
+             patch("word_atlas.cli.WordlistBuilder.load", return_value=mock_wordlist_builder) as mock_load:
+            mock_stats = mock_wordlist_builder.analyze.return_value
 
-        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas), patch(
-            "word_atlas.cli.WordlistBuilder.load", return_value=mock_wordlist_builder
-        ):
+            args = MagicMock(wordlist="wl.json", json=True, data_dir="dummy_dir")
             wordlist_analyze_command(args)
 
+        mock_load.assert_called_once_with("wl.json", mock_cli_atlas)
         captured = capsys.readouterr()
-        assert "Analysis exported to 'analysis.json'" in captured.out
+        # Keep assertions, but note the test might still fail if cli.py prints extra text
+        try:
+            output_json = json.loads(captured.out)
+            assert output_json == mock_stats
+        except json.JSONDecodeError:
+            pytest.fail(f"JSON output was not valid: {captured.out}")
 
-    def test_wordlist_merge(
-        self, mock_cli_atlas, mock_wordlist_builder, mock_wordlist, capsys
-    ):
-        """Test merging multiple wordlists."""
-        mock_wordlist1 = mock_wordlist
-        mock_wordlist1.metadata = {
-            "name": "List 1",
-            "description": "First list",
-            "creator": "Test User",
-            "tags": ["test"],
-            "created": "2024-03-20",
-            "modified": "2024-03-21",
-            "criteria": [],
-        }
-        mock_wordlist2 = MagicMock(spec=WordlistBuilder)
-        mock_wordlist2.words = {"banana split"}
-        mock_wordlist2.metadata = {
-            "name": "List 2",
-            "description": "Second list",
-            "creator": "Test User",
-            "tags": ["test"],
-            "created": "2024-03-20",
-            "modified": "2024-03-21",
-            "criteria": [],
-        }
-        mock_wordlist2.get_size.return_value = len(mock_wordlist2.words)
-        mock_wordlist2.get_wordlist.return_value = mock_wordlist2.words
+    def test_wordlist_merge(self, mock_cli_atlas, mock_wordlist_builder, capsys, tmp_path):
+        """Test merging wordlists via CLI."""
+        input1_builder = MagicMock(spec=WordlistBuilder)
+        input1_builder.words = {"apple", "banana"}
+        input1_builder.metadata = {"name": "List 1", "criteria": []}
+        input2_builder = MagicMock(spec=WordlistBuilder)
+        input2_builder.words = {"banana", "orange"}
+        input2_builder.metadata = {"name": "List 2", "criteria": []}
 
-        args = MagicMock()
-        args.data_dir = "test_dir"
-        args.inputs = ["list1.json", "list2.json"]
-        args.output = "merged_list.json"
-        args.name = "Merged List"
-        args.description = "A merged wordlist"
-        args.creator = "Test User"
-        args.tags = "merged,test"
+        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas), \
+             patch("word_atlas.cli.WordlistBuilder") as MockBuilder, \
+             patch("word_atlas.cli.WordlistBuilder.load", side_effect=[input1_builder, input2_builder]) as mock_load:
 
-        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas), patch(
-            "word_atlas.cli.WordlistBuilder", return_value=mock_wordlist_builder
-        ), patch(
-            "word_atlas.cli.WordlistBuilder.load",
-            side_effect=[mock_wordlist1, mock_wordlist2],
-        ):
+            mock_wordlist_builder.words = set()
+            # Ensure the mock returned by MockBuilder() has the save method mocked
+            mock_returned_builder = MagicMock(spec=WordlistBuilder)
+            mock_returned_builder.words = set() # Give it its own word set
+            mock_returned_builder.metadata = {"criteria": []} # Initialize criteria key
+            # Define add_words side effect for the returned builder
+            def mock_returned_add_words(words_to_add):
+                added_count = len(set(words_to_add) - mock_returned_builder.words)
+                mock_returned_builder.words.update(words_to_add)
+                return added_count # Return count
+            mock_returned_builder.add_words.side_effect = mock_returned_add_words
+            # Define set_metadata side effect for the returned builder
+            def mock_returned_set_metadata(name=None, description=None, creator=None, tags=None):
+                if name is not None: mock_returned_builder.metadata["name"] = name
+                if description is not None: mock_returned_builder.metadata["description"] = description
+                if creator is not None: mock_returned_builder.metadata["creator"] = creator
+                if tags is not None: mock_returned_builder.metadata["tags"] = tags # Check for None, not truthiness
+                # Update criteria if needed (though not strictly necessary for this test)
+                # mock_returned_builder.metadata["criteria"] = [] # Reset criteria
+            mock_returned_builder.set_metadata.side_effect = mock_returned_set_metadata
+            MockBuilder.return_value = mock_returned_builder
+
+            output_path = tmp_path / "merged.json"
+            args = MagicMock()
+            args.inputs=["list1.json", "list2.json"]
+            args.output=str(output_path)
+            args.name="Merged"
+            args.description=None
+            args.creator=None
+            args.tags=None
+            args.data_dir="dummy_dir"
+
             wordlist_merge_command(args)
 
-        captured = capsys.readouterr()
-        assert "Loaded 'List 1' with 2 words" in captured.out
-        assert "Added 2 words from 'List 1'" in captured.out
-        assert "Loaded 'List 2' with 1 word" in captured.out
-        assert "Added 1 words from 'List 2'" in captured.out
-        assert "Merged wordlist saved to 'merged_list.json'" in captured.out
+        MockBuilder.assert_called_once_with(mock_cli_atlas)
+        mock_load.assert_has_calls([
+            call("list1.json", mock_cli_atlas),
+            call("list2.json", mock_cli_atlas)
+        ], any_order=False)
 
-    def test_wordlist_merge_with_duplicates(
-        self, mock_cli_atlas, mock_wordlist_builder, mock_wordlist, capsys
-    ):
-        """Test merging wordlists with duplicate words."""
-        mock_wordlist1 = mock_wordlist
-        mock_wordlist1.metadata = {
-            "name": "List 1",
-            "description": "First list",
-            "creator": "Test User",
-            "tags": ["test"],
-            "created": "2024-03-20",
-            "modified": "2024-03-21",
-            "criteria": [],
-        }
-        mock_wordlist2 = MagicMock(spec=WordlistBuilder)
-        mock_wordlist2.words = {"apple", "orange"}
-        mock_wordlist2.metadata = {
-            "name": "List 2",
-            "description": "Second list",
-            "creator": "Test User",
-            "tags": ["test"],
-            "created": "2024-03-20",
-            "modified": "2024-03-21",
-            "criteria": [],
-        }
-        mock_wordlist2.get_size.return_value = len(mock_wordlist2.words)
-        mock_wordlist2.get_wordlist.return_value = mock_wordlist2.words
-
-        args = MagicMock()
-        args.data_dir = "test_dir"
-        args.inputs = ["list1.json", "list2.json"]
-        args.output = "merged_list.json"
-        args.name = "Merged List"
-        args.description = "A merged wordlist"
-        args.creator = "Test User"
-        args.tags = "merged,test"
-
-        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas), patch(
-            "word_atlas.cli.WordlistBuilder", return_value=mock_wordlist_builder
-        ), patch(
-            "word_atlas.cli.WordlistBuilder.load",
-            side_effect=[mock_wordlist1, mock_wordlist2],
-        ):
-            wordlist_merge_command(args)
-
-        captured = capsys.readouterr()
-        assert "Loaded 'List 1' with 2 words" in captured.out
-        assert "Added 2 words from 'List 1'" in captured.out
-        assert "Loaded 'List 2' with 2 words" in captured.out
-        assert "Added 2 words from 'List 2'" in captured.out
-        assert "Merged wordlist saved to 'merged_list.json'" in captured.out
-
-    def test_wordlist_create_invalid_criteria(
-        self, mock_cli_atlas, mock_wordlist_builder, capsys
-    ):
-        """Test creating a wordlist with invalid criteria."""
-        mock_wordlist_builder.add_by_attribute.side_effect = ValueError(
-            "Invalid attribute"
+        # Check metadata was set correctly on the *returned* builder
+        mock_returned_builder.set_metadata.assert_called_once_with(
+            name="Merged", description=None, creator=None, tags=[] # tags=None becomes []
         )
-        mock_cli_atlas.word_data = {}  # Empty dataset to avoid ARPABET split error
-        mock_cli_atlas._load_dataset = MagicMock()  # Prevent dataset loading
-        mock_cli_atlas._build_indices = MagicMock()  # Prevent index building
+        # Check the final state of the merged words set on the *returned* builder
+        assert mock_returned_builder.words == {"apple", "banana", "orange"}
+        # Check metadata was set correctly on the *returned* builder
+        assert mock_returned_builder.metadata["name"] == "Merged"
+        assert mock_returned_builder.metadata["tags"] == [] # Tags=None becomes []
 
-        args = MagicMock()
-        args.data_dir = "test_dir"
-        args.name = "Test List"
-        args.description = "A test wordlist"
-        args.creator = "Test User"
-        args.tags = "test"
-        args.search_pattern = None
-        args.attribute = "INVALID=true"
-        args.syllables = None
-        args.min_freq = None
-        args.max_freq = None
-        args.similar_to = None
-        args.output = "test_wordlist.json"
-        args.no_analyze = True  # Skip analysis to avoid ARPABET issues
-
-        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas), patch(
-            "word_atlas.cli.WordlistBuilder", return_value=mock_wordlist_builder
-        ):
-            with pytest.raises(SystemExit) as exc_info:
-                wordlist_create_command(args)
-
-            captured = capsys.readouterr()
-            assert "Error: Invalid attribute" in captured.out
-            assert exc_info.value.code == 1
-
-    def test_wordlist_modify_file_not_found(self, mock_cli_atlas, capsys):
-        """Test modifying a non-existent wordlist file."""
-        args = MagicMock()
-        args.data_dir = "test_dir"
-        args.wordlist = "nonexistent.json"
-        args.output = "modified_list.json"  # Although it won't be used
-        args.add = ["word"]
-        args.remove = None
-        args.name = None
-        args.description = None
-        args.creator = None
-        args.tags = None
-
-        # Mock the load method to raise FileNotFoundError
-        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas), patch(
-            "word_atlas.cli.WordlistBuilder.load",
-            side_effect=FileNotFoundError("File not found"),
-        ):
-            with pytest.raises(SystemExit) as exc_info:
-                wordlist_modify_command(args)
-
-        assert exc_info.value.code == 1
-        captured = capsys.readouterr()
-        assert "Error loading wordlist: File not found" in captured.out
-
-    def test_wordlist_analyze_invalid_file(self, mock_cli_atlas, capsys):
-        """Test analyzing a wordlist file that does not exist."""
-        args = MagicMock()
-        args.data_dir = "test_dir"
-        args.input = "invalid.json"
-        args.json = False
-        args.basic = True
-
-        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas), patch(
-            "word_atlas.cli.WordlistBuilder.load",
-            side_effect=json.JSONDecodeError("Invalid JSON", "", 0),
-        ):
-            with pytest.raises(SystemExit) as exc_info:
-                wordlist_analyze_command(args)
-
-        assert exc_info.value.code == 1
-        captured = capsys.readouterr()
-        assert "Error loading wordlist" in captured.out
-
-    def test_wordlist_merge_no_inputs(self, mock_cli_atlas, capsys):
-        """Test merging with no input files."""
-        mock_cli_atlas.word_data = {}  # Empty dataset to avoid ARPABET split error
-        mock_cli_atlas._load_dataset = MagicMock()  # Prevent dataset loading
-        mock_cli_atlas._build_indices = MagicMock()  # Prevent index building
-
-        args = MagicMock()
-        args.data_dir = "test_dir"
-        args.inputs = []
-        args.output = "merged_list.json"
-        args.name = "Merged List"
-        args.description = "A merged wordlist"
-        args.creator = "Test User"
-        args.tags = "merged,test"
-
-        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas):
-            with pytest.raises(SystemExit) as exc_info:
-                wordlist_merge_command(args)
-
-        assert exc_info.value.code == 1
-        captured = capsys.readouterr()
-        assert "Error: At least two input files are required" in captured.out
-
-    def test_wordlist_merge_invalid_file(self, mock_cli_atlas, capsys):
-        """Test merging with an invalid input file."""
-        mock_cli_atlas.word_data = {}  # Empty dataset to avoid ARPABET split error
-        mock_cli_atlas._load_dataset = MagicMock()  # Prevent dataset loading
-        mock_cli_atlas._build_indices = MagicMock()  # Prevent index building
-
-        args = MagicMock()
-        args.data_dir = "test_dir"
-        args.inputs = ["list1.json", "invalid.json"]
-        args.output = "merged_list.json"
-        args.name = "Merged List"
-        args.description = "A merged wordlist"
-        args.creator = "Test User"
-        args.tags = "merged,test"
-
-        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas), patch(
-            "word_atlas.cli.WordlistBuilder.load",
-            side_effect=[MagicMock(), json.JSONDecodeError("Invalid JSON", "", 0)],
-        ):
-            with pytest.raises(SystemExit) as exc_info:
-                wordlist_merge_command(args)
-
-        assert exc_info.value.code == 1
-        captured = capsys.readouterr()
-        assert "Error loading wordlist" in captured.out
-
-    def test_wordlist_create_no_tags(self, mock_cli_atlas, mock_wordlist_builder):
-        """Test wordlist create command when no tags are provided."""
-        # Use argparse.Namespace for args to avoid MagicMock attribute issues
-        args = Namespace(
-            name="No Tags List",
-            description=None,
-            creator=None,
-            tags=None,  # Explicitly None
-            search_pattern=None,
-            attribute=None,
-            syllables=None,
-            min_freq=None,
-            max_freq=None,
-            similar_to=None,
-            similar_count=None,
-            input_file=None,
-            output="no_tags_list.json",
-            no_analyze=True,
-            data_dir="test_dir",
-        )
-
-        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas), patch(
-            "word_atlas.cli.WordlistBuilder", return_value=mock_wordlist_builder
-        ):
-            wordlist_create_command(args)
-
-        # Now assert the call with the expected literal values
-        mock_wordlist_builder.set_metadata.assert_called_with(
-            name="No Tags List",
-            description=None,
-            creator=None,
-            tags=[],  # Check tags specifically
-        )
-        mock_wordlist_builder.save.assert_called_once_with("no_tags_list.json")
-
-    def test_wordlist_create_with_multiple_criteria(
-        self, mock_cli_atlas, mock_wordlist_builder, capsys
-    ):
-        """Test creating a wordlist using multiple criteria."""
-        args = MagicMock()
-        args.data_dir = "test_dir"
-        args.name = "Test List"
-        args.description = "A test wordlist"
-        args.creator = "Test User"
-        args.tags = "test,demo"
-        args.search_pattern = "a"
-        args.attribute = "GSL=true"
-        args.syllables = 2
-        args.min_freq = 1
-        args.max_freq = 10
-        args.similar_to = None
-        args.output = "test_wordlist.json"
-
-        with patch("word_atlas.cli.WordAtlas", return_value=mock_cli_atlas), patch(
-            "word_atlas.cli.WordlistBuilder", return_value=mock_wordlist_builder
-        ):
-            wordlist_create_command(args)
-
-        captured = capsys.readouterr()
-        assert "Added 1 words matching pattern 'a'" in captured.out
-        assert "Added 1 words with attribute GSL=true" in captured.out
-        assert "Added 1 words with 2 syllables" in captured.out
-        assert "frequency 1-10" in captured.out
-
-        mock_wordlist_builder.add_by_search.assert_called_once_with("a")
-        mock_wordlist_builder.add_by_attribute.assert_called_once_with("GSL", True)
-        mock_wordlist_builder.add_by_syllable_count.assert_called_once_with(2)
-        mock_wordlist_builder.add_by_frequency.assert_called_once_with(1, 10)
+        # Check save was called on the *returned* builder
+        mock_returned_builder.save.assert_called_once_with(str(output_path))

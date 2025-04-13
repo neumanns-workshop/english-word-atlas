@@ -16,45 +16,14 @@ class TestWordAtlas:
         """Test WordAtlas initialization."""
         atlas = WordAtlas(mock_data_dir)
 
-        # Check basic attributes
-        assert hasattr(atlas, "embeddings")
+        # Check basic attributes (index, frequencies, sources)
         assert hasattr(atlas, "word_to_idx")
-        assert hasattr(atlas, "word_data")
-        assert hasattr(atlas, "idx_to_word")
+        assert hasattr(atlas, "frequencies")
+        assert hasattr(atlas, "_source_lists")
+        assert hasattr(atlas, "all_words")
 
-        # Check statistics
-        assert "total_entries" in atlas.stats
-        assert "single_words" in atlas.stats
-        assert "phrases" in atlas.stats
-        assert "embedding_dim" in atlas.stats
-
-        # Check values
-        assert atlas.stats["total_entries"] == len(atlas.word_data)
-        assert atlas.stats["embedding_dim"] == atlas.embeddings.shape[1]
-
-    def test_get_word(self, mock_atlas):
-        """Test retrieving word information."""
-        # Test existing word
-        word_info = mock_atlas.get_word("apple")
-        assert isinstance(word_info, dict)
-        assert "SYLLABLE_COUNT" in word_info
-        assert "FREQ_GRADE" in word_info
-        assert "GSL" in word_info
-        assert word_info["SYLLABLE_COUNT"] == 2
-
-        # Test non-existent word
-        assert mock_atlas.get_word("nonexistent") == {}
-
-    def test_get_embedding(self, mock_atlas):
-        """Test getting word embeddings."""
-        # Test existing word
-        embedding = mock_atlas.get_embedding("apple")
-        assert isinstance(embedding, np.ndarray)
-        assert embedding.ndim == 1
-        assert embedding.shape[0] == 384  # From mock data
-
-        # Test non-existent word
-        assert mock_atlas.get_embedding("nonexistent") is None
+        # Check stats are accessible (calculation tested separately)
+        assert hasattr(atlas, "get_stats")
 
     def test_has_word(self, mock_atlas):
         """Test word existence check."""
@@ -66,17 +35,18 @@ class TestWordAtlas:
         """Test getting all words."""
         words = mock_atlas.get_all_words()
         assert isinstance(words, list)
-        assert len(words) == 2  # From mock data
+        assert len(words) == 3  # apple, banana, orange
         assert "apple" in words
         assert "banana" in words
+        assert "orange" in words
 
     def test_search(self, mock_atlas):
         """Test word search functionality."""
-        # Test regex search
-        results = mock_atlas.search("^a")
+        # Test prefix search (now simple substring)
+        results = mock_atlas.search("a") # Case-insensitive substring default
         assert isinstance(results, list)
-        assert len(results) == 1
-        assert "apple" in results
+        assert len(results) == 3 # apple, banana, orange
+        assert set(results) == {"apple", "banana", "orange"}
 
         # Test substring search
         results = mock_atlas.search("ana")
@@ -84,201 +54,149 @@ class TestWordAtlas:
         assert len(results) == 1
         assert "banana" in results
 
-        # Test invalid regex - should return empty list
-        results = mock_atlas.search("[")
+        # Test substring search for added word
+        results = mock_atlas.search("ora")
+        assert isinstance(results, list)
+        assert len(results) == 1
+        assert "orange" in results
+
+        # Test search with special characters (should be treated literally)
+        results = mock_atlas.search("(")
         assert isinstance(results, list)
         assert len(results) == 0
 
-    def test_filter_by_attribute(self, mock_atlas):
-        """Test filtering by attribute."""
-        # Test boolean attribute
-        gsl_words = mock_atlas.filter_by_attribute("GSL")
+    def test_filter(self, mock_atlas):
+        """Test filtering by various criteria."""
+        # Test filtering by source list
+        gsl_words = mock_atlas.filter(sources=["GSL"])
         assert isinstance(gsl_words, set)
-        assert len(gsl_words) == 2  # Both words are GSL
-        assert "apple" in gsl_words
-        assert "banana" in gsl_words
+        assert gsl_words == {"apple", "banana"} # From mock_data_dir sources
 
-        # Test Roget category
-        food_words = mock_atlas.filter_by_attribute("ROGET_FOOD")
+        # Test filtering by another source list
+        food_words = mock_atlas.filter(sources=["ROGET_FOOD"])
         assert isinstance(food_words, set)
-        assert len(food_words) == 2
-        assert "apple" in food_words
-        assert "banana" in food_words
+        assert food_words == {"apple", "banana"}
 
-    def test_filter_by_syllable_count(self, mock_atlas):
-        """Test filtering by syllable count."""
-        # Test 2-syllable words
-        two_syllables = mock_atlas.filter_by_syllable_count(2)
-        assert isinstance(two_syllables, set)
-        assert len(two_syllables) == 1
-        assert "apple" in two_syllables
+        # Test filtering by multiple source lists (intersection)
+        gsl_food_words = mock_atlas.filter(sources=["GSL", "ROGET_FOOD"])
+        assert isinstance(gsl_food_words, set)
+        assert gsl_food_words == {"apple", "banana"}
 
-        # Test 3-syllable words
-        three_syllables = mock_atlas.filter_by_syllable_count(3)
-        assert isinstance(three_syllables, set)
-        assert len(three_syllables) == 1
-        assert "banana" in three_syllables
+        # Test filtering by a source list not present
+        with pytest.raises(ValueError, match="Source 'UNKNOWN_SOURCE' not found."):
+            mock_atlas.filter(sources=["UNKNOWN_SOURCE"])
 
-    def test_filter_by_frequency(self, mock_atlas):
-        """Test filtering by frequency."""
-        # Test with min frequency
-        words = mock_atlas.filter_by_frequency(min_freq=1)
-        assert isinstance(words, list)
-        assert len(words) == 2  # Both words have FREQ_GRADE = 1
+        # Test filtering by frequency
+        # apple=150.5, banana=10.2, orange=90.0
+        high_freq_words = mock_atlas.filter(min_freq=100.0)
+        assert high_freq_words == {"apple"}
+        low_freq_words = mock_atlas.filter(max_freq=50.0)
+        assert low_freq_words == {"banana"}
+        range_freq_words = mock_atlas.filter(min_freq=50.0, max_freq=100.0)
+        assert range_freq_words == {"orange"}
 
-        # Test with max frequency
-        words = mock_atlas.filter_by_frequency(max_freq=1)
-        assert isinstance(words, list)
-        assert len(words) == 2
+        # Test combining filters (source + frequency)
+        gsl_low_freq = mock_atlas.filter(sources=["GSL"], max_freq=50.0)
+        assert gsl_low_freq == {"banana"}
 
-        # Test with both
-        words = mock_atlas.filter_by_frequency(min_freq=1, max_freq=1)
-        assert isinstance(words, list)
-        assert len(words) == 2
+    def test_get_frequency(self, mock_atlas):
+        """Test retrieving word frequency."""
+        assert mock_atlas.get_frequency("apple") == 150.5
+        assert mock_atlas.get_frequency("banana") == 10.2
+        assert mock_atlas.get_frequency("orange") == 90.0
+        assert mock_atlas.get_frequency("nonexistent") is None
 
-    def test_word_similarity(self, mock_atlas):
-        """Test word similarity calculation."""
-        # Test existing words
-        similarity = mock_atlas.word_similarity("apple", "banana")
-        assert isinstance(similarity, (float, np.floating))
-        assert -1 <= float(similarity) <= 1
+    def test_get_sources(self, mock_atlas):
+        """Test retrieving sources for a word."""
+        # Apple is in GSL, ROGET_FOOD, ROGET_PLANT
+        assert mock_atlas.get_sources("apple") == sorted(["GSL", "ROGET_FOOD", "ROGET_PLANT"])
+        # Banana is in GSL, ROGET_FOOD, ROGET_PLANT
+        assert mock_atlas.get_sources("banana") == sorted(["GSL", "ROGET_FOOD", "ROGET_PLANT"])
+        # Orange is only in OTHER (added by mock_atlas fixture)
+        assert mock_atlas.get_sources("orange") == ["OTHER"]
+        assert mock_atlas.get_sources("nonexistent") == []
 
-        # Test with non-existent word
-        assert mock_atlas.word_similarity("apple", "nonexistent") == 0.0
-        assert mock_atlas.word_similarity("nonexistent", "banana") == 0.0
+    def test_get_source_list_names(self, mock_atlas):
+        """Test getting all available source list names."""
+        names = mock_atlas.get_source_list_names()
+        assert isinstance(names, list)
+        # Expect OTHER to be included now
+        assert names == sorted(["GSL", "OTHER", "ROGET_FOOD", "ROGET_PLANT"])
 
-    def test_get_similar_words(self, mock_atlas):
-        """Test getting similar words."""
-        # Test with existing word
-        similar = mock_atlas.get_similar_words("apple", n=1)
-        assert isinstance(similar, list)
-        assert len(similar) == 1
-        assert len(similar[0]) == 2  # (word, score) tuple
-        assert isinstance(similar[0][0], str)
-        assert isinstance(similar[0][1], (float, np.floating))
-
-        # Test with non-existent word
-        assert mock_atlas.get_similar_words("nonexistent") == []
-
-        # Test with n=0
-        assert mock_atlas.get_similar_words("apple", n=0) == []
-
-    def test_syllable_counting(self, mock_atlas):
-        """Test syllable counting from ARPABET."""
-        # Test with mock data
-        word_data = mock_atlas.get_word("apple")
-        assert "ARPABET" in word_data
-        assert word_data["SYLLABLE_COUNT"] == 2
-
-        word_data = mock_atlas.get_word("banana")
-        assert "ARPABET" in word_data
-        assert word_data["SYLLABLE_COUNT"] == 3
-
-    def test_frequency_indexing(self, mock_atlas):
-        """Test frequency indexing."""
-        # Both mock words have FREQ_GRADE = 1
-        words = mock_atlas.filter_by_frequency(min_freq=1, max_freq=1)
-        assert len(words) == 2
-        assert "apple" in words
-        assert "banana" in words
-
-        # No words with high frequency
-        words = mock_atlas.filter_by_frequency(min_freq=1000)
-        assert len(words) == 0
+    def test_get_words_in_source(self, mock_atlas):
+        """Test getting words belonging to a specific source."""
+        assert mock_atlas.get_words_in_source("GSL") == {"apple", "banana"}
+        assert mock_atlas.get_words_in_source("ROGET_PLANT") == {"apple", "banana"}
+        assert mock_atlas.get_words_in_source("ROGET_FOOD") == {"apple", "banana"}
+        # Check OTHER source added by fixture
+        assert mock_atlas.get_words_in_source("OTHER") == {"orange"}
+        with pytest.raises(ValueError, match="Source 'UNKNOWN' not found."):
+            mock_atlas.get_words_in_source("UNKNOWN")
 
     def test_utility_methods(self, mock_atlas):
         """Test various utility methods."""
-        # Test __len__
-        assert len(mock_atlas) == 2
-
-        # Test __contains__
+        assert len(mock_atlas) == 3
         assert "apple" in mock_atlas
         assert "nonexistent" not in mock_atlas
 
-        # Test get_roget_categories
-        categories = mock_atlas.get_roget_categories()
+        # Test get_source_list_names includes OTHER
+        categories = mock_atlas.get_source_list_names()
         assert isinstance(categories, list)
-        assert "ROGET_FOOD" in categories
-        assert "ROGET_PLANT" in categories
+        assert categories == sorted(["GSL", "OTHER", "ROGET_FOOD", "ROGET_PLANT"])
 
-        # Test get_syllable_counts
-        counts = mock_atlas.get_syllable_counts()
-        assert isinstance(counts, list)
-        assert 2 in counts  # apple
-        assert 3 in counts  # banana
-
-    def test_arpabet_syllable_counting(self, mock_atlas):
-        """Test ARPABET syllable counting in detail."""
-        # Test with mock data that has ARPABET but no SYLLABLE_COUNT
-        word_data = mock_atlas.get_word("apple")
-        orig_data = word_data.copy()
-
-        # Remove SYLLABLE_COUNT to force ARPABET counting
-        del word_data["SYLLABLE_COUNT"]
-        assert word_data["ARPABET"] == [["AE1", "P", "AH0", "L"]]  # From mock data
-
-        # Re-index to trigger ARPABET counting
-        mock_atlas._build_indices()
-
-        # Check that syllable count was calculated from ARPABET
-        assert mock_atlas.filter_by_syllable_count(2)
-
-        # Restore original data
-        word_data.update(orig_data)
-
-    def test_phrases_and_single_words(self, mock_atlas):
-        """Test phrase and single word filtering."""
-        # Add a mock phrase
-        mock_atlas.word_data["red apple"] = {
-            "SYLLABLE_COUNT": 3,
-            "FREQ_GRADE": 1,
-            "GSL": True,
+        # Check source coverage from stats
+        stats = mock_atlas.get_stats()
+        assert "source_coverage" in stats
+        # Update expected coverage to include OTHER
+        assert stats["source_coverage"] == {
+            "GSL": 2,
+            "OTHER": 1,
+            "ROGET_FOOD": 2,
+            "ROGET_PLANT": 2
         }
+        assert "metadata_attributes" not in stats
+        assert "embedding_dim" not in stats
 
-        phrases = mock_atlas.get_phrases()
-        assert len(phrases) == 1
-        assert "red apple" in phrases
+    def test_word_counts_from_stats(self, mock_atlas):
+        """Test phrase and single word counts via get_stats."""
+        stats = mock_atlas.get_stats()
+        assert "phrases" in stats
+        assert "single_words" in stats
+        # Based on mock_data_dir fixture (apple, banana, orange)
+        assert stats["phrases"] == 0
+        assert stats["single_words"] == 3
 
-        singles = mock_atlas.get_single_words()
-        assert len(singles) == 2
-        assert "apple" in singles
-        assert "banana" in singles
-
-        # Clean up
-        del mock_atlas.word_data["red apple"]
-
-    def test_roget_categories_complete(self, mock_atlas):
-        """Test complete Roget category functionality."""
-        # Add a mock word with different Roget categories
-        mock_atlas.word_data["orange"] = {
-            "ROGET_FOOD": True,
-            "ROGET_COLOR": True,
-            "FREQ_GRADE": 1,
-        }
-        mock_atlas._build_indices()
-
-        categories = mock_atlas.get_roget_categories()
-        assert len(categories) >= 3  # FOOD, PLANT, COLOR
-        assert "ROGET_FOOD" in categories
-        assert "ROGET_PLANT" in categories
-        assert "ROGET_COLOR" in categories
-
-        # Test filtering with new category
-        color_words = mock_atlas.filter_by_attribute("ROGET_COLOR")
-        assert len(color_words) == 1
-        assert "orange" in color_words
-
-        # Clean up
-        del mock_atlas.word_data["orange"]
-        mock_atlas._build_indices()
+    def test_source_list_discovery(self, mock_atlas):
+        """Test that source lists are discovered correctly."""
+        source_names = mock_atlas.get_source_list_names()
+        # Update expectation to include OTHER
+        assert sorted(source_names) == sorted(["GSL", "OTHER", "ROGET_FOOD", "ROGET_PLANT"])
+        gsl_words = mock_atlas.get_words_in_source("GSL")
+        assert gsl_words == {"apple", "banana"}
+        # Check OTHER source content
+        other_words = mock_atlas.get_words_in_source("OTHER")
+        assert other_words == {"orange"}
 
     def test_get_stats(self, mock_atlas):
-        """Test getting dataset statistics."""
+        """Test the get_stats method."""
         stats = mock_atlas.get_stats()
         assert isinstance(stats, dict)
-        assert "total_entries" in stats
-        assert "single_words" in stats
-        assert "phrases" in stats
-        assert "embedding_dim" in stats
-        assert stats["total_entries"] == len(mock_atlas)
-        assert stats["embedding_dim"] == mock_atlas.embeddings.shape[1]
+
+        assert stats["total_entries"] == 3
+        assert stats["single_words"] == 3
+        assert stats["phrases"] == 0
+        assert "entries_with_frequency" in stats
+        assert stats["entries_with_frequency"] == 3
+
+        assert "source_lists" in stats
+        # Update expectation to include OTHER
+        assert sorted(stats["source_lists"]) == sorted(["GSL", "OTHER", "ROGET_FOOD", "ROGET_PLANT"])
+        assert "source_coverage" in stats
+        # Update expected coverage to include OTHER
+        assert stats["source_coverage"] == {
+            "GSL": 2,
+            "OTHER": 1,
+            "ROGET_FOOD": 2,
+            "ROGET_PLANT": 2
+        }
+        assert "embedding_dim" not in stats
