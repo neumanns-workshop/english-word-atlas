@@ -29,11 +29,20 @@ class WordlistBuilder:
             self.atlas = WordAtlas(data_dir=data_dir)
         else:
             # Basic check if the provided atlas seems compatible (has expected methods)
-            if not all(hasattr(atlas, method) for method in [
-                'has_word', 'search', 'filter', 'get_frequency', 'get_sources',
-                'get_source_list_names'
-            ]):
-                raise TypeError("Provided atlas object does not have the expected methods.")
+            if not all(
+                hasattr(atlas, method)
+                for method in [
+                    "has_word",
+                    "search",
+                    "filter",
+                    "get_frequency",
+                    "get_sources",
+                    "get_source_list_names",
+                ]
+            ):
+                raise TypeError(
+                    "Provided atlas object does not have the expected methods."
+                )
             self.atlas = atlas
 
         self.words: Set[str] = set()
@@ -42,7 +51,7 @@ class WordlistBuilder:
             "description": "",
             "creator": "",
             "tags": [],
-            "criteria": [], # Tracks how the list was built
+            "criteria": [],  # Tracks how the list was built
         }
 
     def add_words(self, words_to_add: Union[List[str], Set[str]]) -> int:
@@ -148,7 +157,11 @@ class WordlistBuilder:
         added_count = len(self.words) - original_count
 
         if added_count > 0:
-            freq_desc = f">= {min_freq}" if max_freq is None else f"between {min_freq} and {max_freq}"
+            freq_desc = (
+                f">= {min_freq}"
+                if max_freq is None
+                else f"between {min_freq} and {max_freq}"
+            )
             self.metadata["criteria"].append(
                 {
                     "type": "frequency",
@@ -194,7 +207,9 @@ class WordlistBuilder:
             Number of words removed.
         """
         matching_words = self.atlas.search(pattern, case_sensitive=case_sensitive)
-        return self.remove_words(matching_words) # Delegate removal and criteria logging
+        return self.remove_words(
+            matching_words
+        )  # Delegate removal and criteria logging
 
     def remove_by_source(self, source_name: str) -> int:
         """Remove words belonging to a specific source list.
@@ -210,18 +225,18 @@ class WordlistBuilder:
         """
         # filter handles the ValueError if source_name is invalid
         words_to_remove = self.atlas.filter(sources=[source_name])
-        removed_count = self.remove_words(words_to_remove) # Delegate removal
+        removed_count = self.remove_words(words_to_remove)  # Delegate removal
 
         # Add specific criteria for this removal type
         if removed_count > 0:
-             self.metadata["criteria"].append(
-                 {
-                     "type": "remove_source",
-                     "source": source_name,
-                     "count": removed_count,
-                     "description": f"Attempted removal of {removed_count} words belonging to source '{source_name}'",
-                 }
-             )
+            self.metadata["criteria"].append(
+                {
+                    "type": "remove_source",
+                    "source": source_name,
+                    "count": removed_count,
+                    "description": f"Attempted removal of {removed_count} words belonging to source '{source_name}'",
+                }
+            )
         return removed_count
 
     def get_wordlist(self) -> List[str]:
@@ -246,7 +261,7 @@ class WordlistBuilder:
             self.metadata["description"] = description
         if creator is not None:
             self.metadata["creator"] = creator
-        if tags is not None: # Allow replacing with empty list
+        if tags is not None:  # Allow replacing with empty list
             self.metadata["tags"] = tags
 
     def get_metadata(self) -> Dict[str, Any]:
@@ -260,7 +275,7 @@ class WordlistBuilder:
         Args:
             filename: The path to save the JSON file.
             overwrite: If True, overwrite the file if it exists. Defaults to False.
-        
+
         Raises:
             FileExistsError: If the file exists and overwrite is False.
             IOError: If there is an error writing the file.
@@ -273,7 +288,7 @@ class WordlistBuilder:
         save_path.parent.mkdir(parents=True, exist_ok=True)
         wordlist_data = {
             "metadata": self.metadata,
-            "words": self.get_wordlist(), # Save sorted list
+            "words": self.get_wordlist(),  # Save sorted list
         }
         try:
             with open(save_path, "w", encoding="utf-8") as f:
@@ -304,8 +319,10 @@ class WordlistBuilder:
         """
         load_path = Path(filename)
         # Ensure FileNotFoundError is raised if file doesn't exist
-        if not load_path.is_file(): # Check if it's a file specifically
-            raise FileNotFoundError(f"Wordlist file not found or is not a file: {load_path}")
+        if not load_path.is_file():  # Check if it's a file specifically
+            raise FileNotFoundError(
+                f"Wordlist file not found or is not a file: {load_path}"
+            )
 
         try:
             with open(load_path, "r", encoding="utf-8") as f:
@@ -313,13 +330,17 @@ class WordlistBuilder:
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid JSON in wordlist file {load_path}: {e}") from e
         except Exception as e:
-             raise IOError(f"Failed to read wordlist file {load_path}: {e}") from e
+            raise IOError(f"Failed to read wordlist file {load_path}: {e}") from e
 
-        if not isinstance(wordlist_data, dict) or \
-           "metadata" not in wordlist_data or \
-           "words" not in wordlist_data or \
-           not isinstance(wordlist_data["words"], list):
-            raise ValueError(f"Invalid wordlist file format in {load_path}. Expected dict with 'metadata' and 'words' list.")
+        if (
+            not isinstance(wordlist_data, dict)
+            or "metadata" not in wordlist_data
+            or "words" not in wordlist_data
+            or not isinstance(wordlist_data["words"], list)
+        ):
+            raise ValueError(
+                f"Invalid wordlist file format in {load_path}. Expected dict with 'metadata' and 'words' list."
+            )
 
         # Create a new builder instance
         builder = cls(atlas=atlas, data_dir=data_dir)
@@ -327,11 +348,13 @@ class WordlistBuilder:
         # Populate metadata directly
         loaded_meta = wordlist_data.get("metadata", {})
         builder.metadata = {
-             "name": loaded_meta.get("name", "Loaded Wordlist"),
-             "description": loaded_meta.get("description", ""),
-             "creator": loaded_meta.get("creator", ""),
-             "tags": loaded_meta.get("tags", []),
-             "criteria": loaded_meta.get("criteria", []) # Directly assign loaded criteria
+            "name": loaded_meta.get("name", "Loaded Wordlist"),
+            "description": loaded_meta.get("description", ""),
+            "creator": loaded_meta.get("creator", ""),
+            "tags": loaded_meta.get("tags", []),
+            "criteria": loaded_meta.get(
+                "criteria", []
+            ),  # Directly assign loaded criteria
         }
 
         # Directly assign validated words, don't use add_words
@@ -342,7 +365,7 @@ class WordlistBuilder:
                 valid_words.add(word)
             # else: word not in atlas, ignore
 
-        builder.words = valid_words # Assign the validated set directly
+        builder.words = valid_words  # Assign the validated set directly
 
         return builder
 
@@ -353,14 +376,17 @@ class WordlistBuilder:
             "size": len(self.words),
             "single_words": 0,
             "phrases": 0,
-            "frequency": { # Added average init
-                "total": 0.0, "count": 0, "average": 0.0, "distribution": {}
+            "frequency": {  # Added average init
+                "total": 0.0,
+                "count": 0,
+                "average": 0.0,
+                "distribution": {},
             },
             "source_coverage": {},
         }
 
         if not self.words:
-            return stats # Return defaults if wordlist is empty
+            return stats  # Return defaults if wordlist is empty
 
         all_source_names = self.atlas.get_source_list_names()
         for src_name in all_source_names:
@@ -387,7 +413,9 @@ class WordlistBuilder:
                     bin_label = "101-1000"
                 else:
                     bin_label = ">1000"
-                stats["frequency"]["distribution"][bin_label] = stats["frequency"]["distribution"].get(bin_label, 0) + 1
+                stats["frequency"]["distribution"][bin_label] = (
+                    stats["frequency"]["distribution"].get(bin_label, 0) + 1
+                )
 
             # Source list coverage
             word_sources = self.atlas.get_sources(word)
@@ -409,7 +437,9 @@ class WordlistBuilder:
         if total_words > 0:
             for src_name in stats["source_coverage"]:
                 count = stats["source_coverage"][src_name]["count"]
-                stats["source_coverage"][src_name]["percentage"] = (count / total_words) * 100
+                stats["source_coverage"][src_name]["percentage"] = (
+                    count / total_words
+                ) * 100
 
         return stats
 
@@ -435,13 +465,15 @@ class WordlistBuilder:
         if sort_key:
             words_to_export.sort(key=sort_key)
         else:
-            words_to_export.sort() # Default sort alphabetically
+            words_to_export.sort()  # Default sort alphabetically
 
         try:
             with open(export_path, "w", encoding="utf-8") as f:
                 if include_metadata:
                     f.write(f"# Wordlist Name: {self.metadata.get('name', 'N/A')}\n")
-                    f.write(f"# Description: {self.metadata.get('description', 'N/A')}\n")
+                    f.write(
+                        f"# Description: {self.metadata.get('description', 'N/A')}\n"
+                    )
                     f.write(f"# Creator: {self.metadata.get('creator', 'N/A')}\n")
                     f.write(f"# Tags: {self.metadata.get('tags', [])}\n")
                     f.write(f"# Criteria: {self.metadata.get('criteria', [])}\n")

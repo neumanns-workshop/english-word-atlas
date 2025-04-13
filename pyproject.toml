@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "english-word-atlas"
-version = "0.1.4"
+version = "0.2.0"
 description = "A comprehensive dataset of English words and phrases with linguistic and semantic annotations"
 readme = "README.md"
 requires-python = ">=3.9"

@@ -40,9 +40,9 @@ def get_data_dir(data_dir: Optional[Union[str, Path]] = None) -> Path:
             # Verify required base files exist
             # Now requires word_index.json and the frequencies file
             required_files = ["word_index.json"]
-            required_dirs = ["sources"] # Require sources dir
+            required_dirs = ["sources"]  # Require sources dir
             required_freq_file = Path("frequencies/word_frequencies.json")
-            
+
             base_files_exist = all((path / file).exists() for file in required_files)
             dirs_exist = all((path / d).is_dir() for d in required_dirs)
             freq_file_exists = (path / required_freq_file).exists()
@@ -114,7 +114,9 @@ def get_word_index(data_dir: Optional[Union[str, Path]] = None) -> Dict[str, int
         return json.load(f)
 
 
-def get_word_frequencies(data_dir: Optional[Union[str, Path]] = None) -> Dict[str, float]:
+def get_word_frequencies(
+    data_dir: Optional[Union[str, Path]] = None,
+) -> Dict[str, float]:
     """Load the word frequency map from frequencies/word_frequencies.json.
 
     Args:

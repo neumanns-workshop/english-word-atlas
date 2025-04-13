@@ -32,10 +32,18 @@ atlas = WordAtlas()
 # Check if a word exists and get its basic info
 word = "freedom"
 if atlas.has_word(word):
-    info = atlas.get_word_info(word)
     print(f"Information for '{word}':")
-    print(f"  Sources: {info.get('sources', 'N/A')}")
-    print(f"  Frequency: {info.get('frequency', 'N/A'):.2f}")
+    try:
+        sources = atlas.get_sources(word)
+        print(f"  Sources: {sources}")
+    except KeyError:
+        print("  Sources: Not found in any source list.") # Should not happen if has_word is true
+
+    try:
+        freq = atlas.get_frequency(word)
+        print(f"  Frequency: {freq:.2f}")
+    except KeyError:
+        print("  Frequency: N/A") # Word might exist but have no frequency data
 
     # Get embedding (if needed)
     # embedding = atlas.get_embedding(word)
@@ -84,7 +92,6 @@ english_word_atlas/
     │   ├── gsl.txt           # Example source list (General Service List)
     │   └── ...               # Other source lists (.txt or .json)
     ├── embeddings.npy          # Pre-calculated embedding vectors
-    ├── word_data_base.json     # Core annotations (pronunciation, etc.)
     └── word_index.json         # Word/phrase to index mapping
 ```
 
@@ -125,7 +132,6 @@ pip install -e ".[dev]"
 
 All data files are included in the `data` directory and managed with Git LFS. Ensure you have Git LFS installed (`git lfs install`).
 
-- `data/word_data_base.json`: Core linguistic annotations (e.g., pronunciation) for each word/phrase.
 - `data/frequencies/word_frequencies.json`: Word frequency data derived from SUBTLEX-US.
 - `data/sources/`: Directory containing various source lists (e.g., `gsl.txt`, `awl.txt`) as simple text files or JSON lists, indicating word membership in those lists.
 - `data/word_index.json`: Mapping from words/phrases to embedding vector indices.
@@ -146,13 +152,18 @@ atlas = WordAtlas()
 print(f"Has 'platypus'? {atlas.has_word('platypus')}")
 print(f"Has 'kick the bucket'? {atlas.has_word('kick the bucket')}")
 
-# Get basic info (sources, frequency)
-info = atlas.get_word_info("elephant")
-if info:
-    print(f"Sources for 'elephant': {info.get('sources')}")
-    print(f"Frequency of 'elephant': {info.get('frequency')}")
-else:
-    print("Word not found.")
+# Get sources and frequency
+try:
+    sources = atlas.get_sources("elephant")
+    print(f"Sources for 'elephant': {sources}")
+except KeyError:
+    print("Word 'elephant' not found in any source list.") # Should not happen based on mock data
+
+try:
+    freq = atlas.get_frequency("elephant")
+    print(f"Frequency of 'elephant': {freq:.2f}")
+except KeyError:
+    print("Word 'elephant' has no frequency data.")
 
 # Get embedding vector (NumPy array)
 vector = atlas.get_embedding("elephant")
@@ -232,7 +243,7 @@ word_atlas wordlist modify common_gsl.json --add-pattern "^a" --remove-pattern "
     --add-source AWL --remove-source OTHER \\
     --add-min-freq 50 --add-max-freq 200
 
-# Analyze a wordlist (show stats)
+# Analyze a wordlist (show stats: size, single/phrase count, frequency info, source coverage)
 word_atlas wordlist analyze common_gsl.json
 
 # Analyze and export analysis results to JSON

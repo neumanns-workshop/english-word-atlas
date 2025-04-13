@@ -110,7 +110,7 @@ def test_main_no_command(capsys):
         with pytest.raises(SystemExit) as e:
             main()
         # Optionally check the exit code
-        assert e.value.code == 2 
+        assert e.value.code == 2
 
     # Check that the error message was printed to stderr
     captured = capsys.readouterr()

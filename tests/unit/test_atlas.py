@@ -7,7 +7,7 @@ import json
 import numpy as np
 from pathlib import Path
 from unittest.mock import patch, MagicMock
-import io # Import io for StringIO
+import io  # Import io for StringIO
 
 from word_atlas.atlas import WordAtlas
 
@@ -46,9 +46,9 @@ class TestWordAtlas:
     def test_search(self, mock_atlas):
         """Test word search functionality."""
         # Test prefix search (now simple substring)
-        results = mock_atlas.search("a") # Case-insensitive substring default
+        results = mock_atlas.search("a")  # Case-insensitive substring default
         assert isinstance(results, list)
-        assert len(results) == 3 # apple, banana, orange
+        assert len(results) == 3  # apple, banana, orange
         assert set(results) == {"apple", "banana", "orange"}
 
         # Test substring search
@@ -73,7 +73,7 @@ class TestWordAtlas:
         # Test filtering by source list
         gsl_words = mock_atlas.filter(sources=["GSL"])
         assert isinstance(gsl_words, set)
-        assert gsl_words == {"apple", "banana"} # From mock_data_dir sources
+        assert gsl_words == {"apple", "banana"}  # From mock_data_dir sources
 
         # Test filtering by another source list
         food_words = mock_atlas.filter(sources=["ROGET_FOOD"])
@@ -112,9 +112,13 @@ class TestWordAtlas:
     def test_get_sources(self, mock_atlas):
         """Test retrieving sources for a word."""
         # Apple is in GSL, ROGET_FOOD, ROGET_PLANT
-        assert mock_atlas.get_sources("apple") == sorted(["GSL", "ROGET_FOOD", "ROGET_PLANT"])
+        assert mock_atlas.get_sources("apple") == sorted(
+            ["GSL", "ROGET_FOOD", "ROGET_PLANT"]
+        )
         # Banana is in GSL, ROGET_FOOD, ROGET_PLANT
-        assert mock_atlas.get_sources("banana") == sorted(["GSL", "ROGET_FOOD", "ROGET_PLANT"])
+        assert mock_atlas.get_sources("banana") == sorted(
+            ["GSL", "ROGET_FOOD", "ROGET_PLANT"]
+        )
         # Orange is only in OTHER (added by mock_atlas fixture)
         assert mock_atlas.get_sources("orange") == ["OTHER"]
         # Check that a non-existent word raises KeyError
@@ -157,7 +161,7 @@ class TestWordAtlas:
             "GSL": 2,
             "OTHER": 1,
             "ROGET_FOOD": 2,
-            "ROGET_PLANT": 2
+            "ROGET_PLANT": 2,
         }
         assert "metadata_attributes" not in stats
         assert "embedding_dim" not in stats
@@ -175,7 +179,9 @@ class TestWordAtlas:
         """Test that source lists are discovered correctly."""
         source_names = mock_atlas.get_source_list_names()
         # Update expectation to include OTHER
-        assert sorted(source_names) == sorted(["GSL", "OTHER", "ROGET_FOOD", "ROGET_PLANT"])
+        assert sorted(source_names) == sorted(
+            ["GSL", "OTHER", "ROGET_FOOD", "ROGET_PLANT"]
+        )
         gsl_words = mock_atlas.get_words_in_source("GSL")
         assert gsl_words == {"apple", "banana"}
         # Check OTHER source content
@@ -195,14 +201,16 @@ class TestWordAtlas:
 
         assert "source_lists" in stats
         # Update expectation to include OTHER
-        assert sorted(stats["source_lists"]) == sorted(["GSL", "OTHER", "ROGET_FOOD", "ROGET_PLANT"])
+        assert sorted(stats["source_lists"]) == sorted(
+            ["GSL", "OTHER", "ROGET_FOOD", "ROGET_PLANT"]
+        )
         assert "source_coverage" in stats
         # Update expected coverage to include OTHER
         assert stats["source_coverage"] == {
             "GSL": 2,
             "OTHER": 1,
             "ROGET_FOOD": 2,
-            "ROGET_PLANT": 2
+            "ROGET_PLANT": 2,
         }
         assert "embedding_dim" not in stats
 
@@ -213,13 +221,13 @@ class TestWordAtlas:
         # Create a .txt source file
         txt_source_path = mock_data_dir / "sources" / "TXT_Source.txt"
         txt_source_path.write_text("apple\nnew_word_txt\n", encoding="utf-8")
-        
+
         # Re-initialize atlas to pick up the new file
         atlas = WordAtlas(data_dir=mock_data_dir)
-        
+
         assert "TXT_Source" in atlas.get_source_list_names()
         # Assuming 'apple' is in the main index but 'new_word_txt' is not
-        assert atlas.get_words_in_source("TXT_Source") == {"apple"} 
+        assert atlas.get_words_in_source("TXT_Source") == {"apple"}
         # Check that new_word_txt was ignored (due to not being in index)
         assert "new_word_txt" not in atlas.get_words_in_source("TXT_Source")
 
@@ -227,20 +235,22 @@ class TestWordAtlas:
         """Test handling of invalid JSON source files during loading."""
         invalid_json_path = mock_data_dir / "sources" / "INVALID_JSON.json"
         invalid_json_path.write_text("this is not json", encoding="utf-8")
-        
+
         # Initialize atlas - should print warning
         atlas = WordAtlas(data_dir=mock_data_dir)
-        captured_init = capsys.readouterr() # Capture warnings from init
-        
+        captured_init = capsys.readouterr()  # Capture warnings from init
+
         # Source name might still be discovered, but loading fails
         assert "INVALID_JSON" in atlas.get_source_list_names()
-        assert "Warning: Could not parse source JSON 'INVALID_JSON'" in captured_init.err
+        assert (
+            "Warning: Could not parse source JSON 'INVALID_JSON'" in captured_init.err
+        )
         # Verify get_words_in_source returns empty set (should not print another warning here)
         result = atlas.get_words_in_source("INVALID_JSON")
         assert result == set()
-        captured_get = capsys.readouterr() # Check if it warned again
-        assert "Returning empty set" not in captured_get.err # Should not warn again
-             
+        captured_get = capsys.readouterr()  # Check if it warned again
+        assert "Returning empty set" not in captured_get.err  # Should not warn again
+
     def test_source_loading_file_not_found(self, mock_data_dir, capsys, monkeypatch):
         """Test handling when a source file disappears before loading."""
         # We need to mock builtins.open for this one
@@ -251,76 +261,90 @@ class TestWordAtlas:
 
         # --- Reimplement using patch('builtins.open') ---
         with patch("builtins.open") as mock_open:
-            def open_side_effect(file, mode='r', **kwargs):
+
+            def open_side_effect(file, mode="r", **kwargs):
                 if str(file) == str(disappearing_path):
                     raise FileNotFoundError(f"Mock disparition for {file}")
                 # Fallback to actual open for other files (like index, frequencies)
                 return original_open(file, mode=mode, **kwargs)
+
             mock_open.side_effect = open_side_effect
 
             # Initialize atlas - should print warning
             atlas = WordAtlas(data_dir=mock_data_dir)
             # captured_init = capsys.readouterr() # Don't capture yet
         # ------------------------------------------------
-        
+
         assert "DISAPPEARING" in atlas.get_source_list_names()
-        
+
         # Call the method, then capture all stderr at once
         result = atlas.get_words_in_source("DISAPPEARING")
         assert result == set()
-        captured_all = capsys.readouterr() 
+        captured_all = capsys.readouterr()
 
         # Check both warnings are present in the combined stderr
-        assert "Warning: Source file 'DISAPPEARING' disappeared before loading" in captured_all.err
-        
+        assert (
+            "Warning: Source file 'DISAPPEARING' disappeared before loading"
+            in captured_all.err
+        )
+
         # Clean up the file we created
         if disappearing_path.exists():
-             disappearing_path.unlink()
+            disappearing_path.unlink()
 
     def test_source_loading_non_string_items(self, mock_data_dir, capsys):
         """Test handling when a source file contains non-string items."""
         non_string_path = mock_data_dir / "sources" / "NON_STRING.json"
         # Include valid word 'apple' and invalid items
         non_string_path.write_text('["apple", 123, null, {"a": 1}] ', encoding="utf-8")
-        
+
         atlas = WordAtlas(data_dir=mock_data_dir)
         captured = capsys.readouterr()
-        
-        assert "NON_STRING" in atlas.get_source_list_names() # Should still load valid items
+
+        assert (
+            "NON_STRING" in atlas.get_source_list_names()
+        )  # Should still load valid items
         assert atlas.get_words_in_source("NON_STRING") == {"apple"}
-        assert "Warning: Source 'NON_STRING' contained 3 non-string items" in captured.err
+        assert (
+            "Warning: Source 'NON_STRING' contained 3 non-string items" in captured.err
+        )
 
     def test_source_loading_unknown_words(self, mock_data_dir, capsys):
         """Test handling when a source file contains words not in the main index."""
         unknown_words_path = mock_data_dir / "sources" / "UNKNOWN_WORDS.json"
         # Include valid word 'banana' and unknown words
-        unknown_words_path.write_text('["banana", "zzxxyy", "qqwwrr"] ', encoding="utf-8")
-        
+        unknown_words_path.write_text(
+            '["banana", "zzxxyy", "qqwwrr"] ', encoding="utf-8"
+        )
+
         atlas = WordAtlas(data_dir=mock_data_dir)
         captured = capsys.readouterr()
-        
+
         assert "UNKNOWN_WORDS" in atlas.get_source_list_names()
         assert atlas.get_words_in_source("UNKNOWN_WORDS") == {"banana"}
         # Check that the warning mentions the count and an example
-        assert "Warning: Source 'UNKNOWN_WORDS' contains 2 words not found in master index" in captured.err
+        assert (
+            "Warning: Source 'UNKNOWN_WORDS' contains 2 words not found in master index"
+            in captured.err
+        )
         assert "(e.g., 'zzxxyy')" in captured.err or "(e.g., 'qqwwrr')" in captured.err
 
     def test_get_words_in_source_failed_load(self, mock_data_dir, capsys):
         """Test get_words_in_source for a source that failed to load."""
         invalid_json_path = mock_data_dir / "sources" / "FAILED_LOAD.json"
         invalid_json_path.write_text("this is not json", encoding="utf-8")
-        
+
         atlas = WordAtlas(data_dir=mock_data_dir)
         # Don't capture init warning separately
-        
+
         # Call the method, then capture all stderr at once
         result = atlas.get_words_in_source("FAILED_LOAD")
         assert result == set()
-        captured_all = capsys.readouterr() 
+        captured_all = capsys.readouterr()
 
         # Check both warnings are present in the combined stderr
         assert "Warning: Could not parse source JSON 'FAILED_LOAD'" in captured_all.err
-        
+
     def test_filter_source_failed_load(self, mock_data_dir, capsys):
         """Test filter by source for a source that failed to load (covers line 198)."""
         invalid_json_path = mock_data_dir / "sources" / "FAILED_FILTER.json"
@@ -331,11 +355,13 @@ class TestWordAtlas:
         # Call the method, then capture all stderr at once
         result = atlas.filter(sources=["FAILED_FILTER"])
         assert result == set()
-        captured_all = capsys.readouterr() 
+        captured_all = capsys.readouterr()
 
         # Check both warnings are present in the combined stderr
-        assert "Warning: Could not parse source JSON 'FAILED_FILTER'" in captured_all.err
-            
+        assert (
+            "Warning: Could not parse source JSON 'FAILED_FILTER'" in captured_all.err
+        )
+
         # Clean up the dummy file
         invalid_json_path.unlink()
 
@@ -347,7 +373,7 @@ class TestWordAtlas:
         (tmp_path / "frequencies").mkdir()
         (tmp_path / "frequencies" / "word_frequencies.json").touch()
         (tmp_path / "sources").mkdir()
-        
+
         with pytest.raises(FileNotFoundError) as excinfo:
             WordAtlas(data_dir=tmp_path)
         # Check for the standard FileNotFoundError, not a custom message
@@ -362,7 +388,7 @@ class TestWordAtlas:
         (tmp_path / "frequencies" / "word_frequencies.json").touch()
         (tmp_path / "sources").mkdir()
         (tmp_path / "word_index.json").write_text("{invalid json", encoding="utf-8")
-        
+
         # Expect JSONDecodeError, not SystemExit
         with pytest.raises(json.JSONDecodeError):
             WordAtlas(data_dir=tmp_path)
@@ -372,8 +398,8 @@ class TestWordAtlas:
         """Test WordAtlas initialization raises FileNotFoundError if frequencies file is missing."""
         # Use standard mock_data_dir setup, but remove the frequencies file
         freq_path = mock_data_dir / "frequencies" / "word_frequencies.json"
-        freq_path.unlink() # Remove the file
-        
+        freq_path.unlink()  # Remove the file
+
         # Expect FileNotFoundError during init, not a warning and later KeyError
         with pytest.raises(FileNotFoundError) as excinfo:
             WordAtlas(data_dir=mock_data_dir)
@@ -386,9 +412,9 @@ class TestWordAtlas:
         # Create a fresh atlas instance for this test
         atlas = WordAtlas(data_dir=mock_data_dir)
         # Ensure the main word index lookup fails on this instance
-        monkeypatch.setattr(atlas, 'word_to_idx', {})
+        monkeypatch.setattr(atlas, "word_to_idx", {})
         # Verify monkeypatch worked and condition is met
-        assert "word_definitely_not_in_index" not in atlas.word_to_idx 
+        assert "word_definitely_not_in_index" not in atlas.word_to_idx
         # Corrected f-string syntax again (use single quotes inside expression)
         with pytest.raises(KeyError):
             atlas.get_sources("word_definitely_not_in_index")
@@ -405,9 +431,13 @@ class TestWordAtlas:
     def test_init_frequencies_invalid_json(self, tmp_path):
         """Test WordAtlas initialization raises JSONDecodeError if frequencies file is invalid JSON."""
         # Create data dir with valid index but invalid frequencies
-        (tmp_path / "word_index.json").write_text('{"apple": 0, "banana": 1}', encoding="utf-8")
+        (tmp_path / "word_index.json").write_text(
+            '{"apple": 0, "banana": 1}', encoding="utf-8"
+        )
         (tmp_path / "frequencies").mkdir()
-        (tmp_path / "frequencies" / "word_frequencies.json").write_text("invalid json", encoding="utf-8")
+        (tmp_path / "frequencies" / "word_frequencies.json").write_text(
+            "invalid json", encoding="utf-8"
+        )
         (tmp_path / "sources").mkdir()
 
         # Expect ValueError from loading frequencies (data module wraps JSONDecodeError)
@@ -418,9 +448,13 @@ class TestWordAtlas:
     def test_init_missing_sources_dir(self, tmp_path, capsys):
         """Test WordAtlas initialization warns if sources directory is missing."""
         # Create data dir structure *without* the sources subdirectory
-        (tmp_path / "word_index.json").write_text('{"apple": 0, "banana": 1}', encoding="utf-8")
+        (tmp_path / "word_index.json").write_text(
+            '{"apple": 0, "banana": 1}', encoding="utf-8"
+        )
         (tmp_path / "frequencies").mkdir()
-        (tmp_path / "frequencies" / "word_frequencies.json").write_text('{"apple": 5.0, "banana": 4.5}', encoding="utf-8")
+        (tmp_path / "frequencies" / "word_frequencies.json").write_text(
+            '{"apple": 5.0, "banana": 4.5}', encoding="utf-8"
+        )
         # Do NOT create (tmp_path / "sources")
 
         atlas = WordAtlas(data_dir=tmp_path)

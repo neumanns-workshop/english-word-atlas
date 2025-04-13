@@ -39,7 +39,7 @@ MOCK_WORDS = {
         "FREQ_COUNT": 90.0,
         "ARPABET": [["AO1", "R", "AH0", "N", "JH"]],
         "EMBEDDING": [0.3] * 384,
-    }
+    },
 }
 
 
@@ -89,16 +89,18 @@ def mock_atlas(mock_data_dir):
     """Provides a WordAtlas instance initialized with mock data, ensuring necessary sources exist."""
     # Ensure the OTHER.txt source file exists *before* WordAtlas initializes.
     other_source_path = mock_data_dir / "sources" / "OTHER.txt"
-    other_source_path.write_text("orange\n") # Overwrite/create with correct content
+    other_source_path.write_text("orange\n")  # Overwrite/create with correct content
 
     # Initialize WordAtlas - it should now load OTHER.txt automatically.
     atlas = WordAtlas(mock_data_dir)
 
     # Simple verification (optional, can be removed if tests pass reliably)
     if "OTHER" not in atlas.get_source_list_names():
-         pytest.fail("mock_atlas fixture failed to load the OTHER source list.")
+        pytest.fail("mock_atlas fixture failed to load the OTHER source list.")
     if atlas.get_words_in_source("OTHER") != {"orange"}:
-         pytest.fail(f"mock_atlas fixture loaded OTHER source with unexpected content: {atlas.get_words_in_source('OTHER')}")
+        pytest.fail(
+            f"mock_atlas fixture loaded OTHER source with unexpected content: {atlas.get_words_in_source('OTHER')}"
+        )
 
     return atlas
 
@@ -125,10 +127,10 @@ def mock_cli_atlas():
 
     # Source lists (using keys from MOCK_WORDS)
     test_sources = {
-        "GSL": {"apple", "banana"}, # Assuming these are in MOCK_WORDS
+        "GSL": {"apple", "banana"},  # Assuming these are in MOCK_WORDS
         "ROGET_FOOD": {"apple", "banana"},
         "ROGET_PLANT": {"apple", "banana"},
-        "OTHER": {"orange"}
+        "OTHER": {"orange"},
     }
     # Filter sources to only include words actually in our mock index
     test_sources = {
@@ -141,9 +143,11 @@ def mock_cli_atlas():
     # REMOVED atlas.word_data
     atlas.frequencies = test_frequencies
     atlas.all_words = set(mock_index.keys())
-    atlas.word_to_idx = mock_index # Keep index for has_word / all_words consistency
-    atlas._source_lists = test_sources # Directly assign for mock
-    atlas.available_sources = {name: Path(f"mock/sources/{name}.json") for name in test_source_list_names} # Mock paths
+    atlas.word_to_idx = mock_index  # Keep index for has_word / all_words consistency
+    atlas._source_lists = test_sources  # Directly assign for mock
+    atlas.available_sources = {
+        name: Path(f"mock/sources/{name}.json") for name in test_source_list_names
+    }  # Mock paths
 
     # --- Mock Methods ---
     all_words = list(atlas.all_words)
@@ -153,11 +157,13 @@ def mock_cli_atlas():
     # REMOVED mock_get_metadata
 
     def mock_get_frequency(word):
-        return test_frequencies.get(word.lower()) # Match simplified WordAtlas
+        return test_frequencies.get(word.lower())  # Match simplified WordAtlas
+
     atlas.get_frequency.side_effect = mock_get_frequency
 
     def mock_get_sources(word):
         return sorted([name for name, words in test_sources.items() if word in words])
+
     atlas.get_sources.side_effect = mock_get_sources
 
     atlas.get_source_list_names.return_value = test_source_list_names
@@ -165,8 +171,9 @@ def mock_cli_atlas():
     def mock_get_words_in_source(source_name):
         # Raise error like the real one if source doesn't exist
         if source_name not in test_sources:
-             raise ValueError(f"Source '{source_name}' not found.")
+            raise ValueError(f"Source '{source_name}' not found.")
         return test_sources.get(source_name, set())
+
     atlas.get_words_in_source.side_effect = mock_get_words_in_source
 
     # REMOVED get_metadata_attributes
@@ -180,21 +187,23 @@ def mock_cli_atlas():
             source_intersection = set()
             first_source = True
             for src_name in sources:
-                words_in_src = mock_get_words_in_source(src_name) # Use mock getter
+                words_in_src = mock_get_words_in_source(src_name)  # Use mock getter
                 if first_source:
                     source_intersection.update(words_in_src)
                     first_source = False
                 else:
                     source_intersection.intersection_update(words_in_src)
-                    if not source_intersection: return set()
+                    if not source_intersection:
+                        return set()
             results.intersection_update(source_intersection)
-            if not results: return set()
+            if not results:
+                return set()
 
         # Filter by Frequency
         if min_freq is not None or max_freq is not None:
             freq_matches = set()
-            min_f = min_freq if min_freq is not None else -float('inf')
-            max_f = max_freq if max_freq is not None else float('inf')
+            min_f = min_freq if min_freq is not None else -float("inf")
+            max_f = max_freq if max_freq is not None else float("inf")
             for word in results:
                 freq = mock_get_frequency(word)
                 if freq is not None and min_f <= freq <= max_f:
@@ -202,6 +211,7 @@ def mock_cli_atlas():
             results.intersection_update(freq_matches)
 
         return results
+
     atlas.filter.side_effect = mock_filter
 
     def mock_search(pattern, case_sensitive=False):
@@ -210,6 +220,7 @@ def mock_cli_atlas():
             return [w for w in all_words if pattern in w.lower()]
         else:
             return [w for w in all_words if pattern in w]
+
     atlas.search.side_effect = mock_search
 
     # Mock get_stats (simplified)
@@ -219,7 +230,7 @@ def mock_cli_atlas():
         "phrases": sum(1 for w in all_words if " " in w),
         "entries_with_frequency": len(test_frequencies),
         "source_lists": test_source_list_names,
-        "source_coverage": {name: len(words) for name, words in test_sources.items()}
+        "source_coverage": {name: len(words) for name, words in test_sources.items()},
     }
     atlas.get_stats.return_value = stats
 
@@ -250,7 +261,7 @@ def mock_cli_atlas_many_roget(mock_cli_atlas):
         atlas._source_lists[src].add(test_word)
         # Update available_sources mock path if needed
         if src not in atlas.available_sources:
-             atlas.available_sources[src] = Path(f"mock/sources/{src}.json")
+            atlas.available_sources[src] = Path(f"mock/sources/{src}.json")
 
     # --- Update side_effects that depend on the data ---
     # (Most side effects in mock_cli_atlas use the atlas attributes directly,
@@ -270,7 +281,9 @@ def mock_cli_atlas_many_roget(mock_cli_atlas):
         "phrases": sum(1 for w in atlas.all_words if " " in w),
         "entries_with_frequency": len(atlas.frequencies),
         "source_lists": new_source_names,
-        "source_coverage": {name: len(words) for name, words in atlas._source_lists.items()}
+        "source_coverage": {
+            name: len(words) for name, words in atlas._source_lists.items()
+        },
     }
     atlas.get_stats.return_value = new_stats
 
@@ -310,6 +323,7 @@ def mock_wordlist_builder(mock_cli_atlas):
             "average_frequency": avg_freq,
             "source_counts": sources,
         }
+
     builder.analyze.side_effect = analyze_side_effect
 
     return builder
