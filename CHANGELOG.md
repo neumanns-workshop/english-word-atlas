@@ -10,16 +10,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added support for Academic Word List (AWL) and Academic Vocabulary List (AVL) source lists.
 - Added support for AFINN-111 sentiment word list as a source.
-- Added numerous unit tests to improve coverage for `word_atlas.atlas`, `word_atlas.data`, and `word_atlas.wordlist` modules, focusing on error handling and edge cases.
+- Added numerous unit tests to improve coverage for `word_atlas.data` and `word_atlas.wordlist` modules, focusing on error handling and edge cases.
 - Added `overwrite` parameter to `WordlistBuilder.save()` method.
+- Added comprehensive tests for `cli.py` commands (`info`, `search`, `stats`, `wordlist create/modify/analyze/merge`), significantly increasing its coverage.
+- Added tests for generic exception handling in `WordlistBuilder` file operations (`save`, `load`, `export_text`).
 
 ### Changed
 - Regenerated `word_index.json` to include AWL and AVL words.
 - Refactored tests in `tests/unit/test_data.py` for `get_data_dir` search logic using more robust mocking.
 - Refactored tests in `tests/unit/test_atlas.py` for handling failed source loads during initialization and subsequent method calls.
-- Improved overall test coverage significantly, ensuring all modules meet the 77% target (overall ~87%).
+- Improved overall test coverage significantly (overall ~94%), with major gains in `cli.py` (to ~93%) and `wordlist.py` (to ~98%), though `atlas.py` coverage decreased according to Codecov.
 - Updated `README.md` to reflect current API usage (`get_sources`, `get_frequency`), remove references to obsolete data files (`word_data_base.json`), and clarify CLI command descriptions.
 - Reformatted codebase using `black`.
+- Updated `get_stats` in `atlas.py` to correctly handle sources and empty data.
+- Refactored `wordlist.py` tests (`test_init_invalid_atlas_type`, `test_methods_with_no_atlas`, `test_export_text_formatting_options`) to align with current code logic and fix failures.
+- Removed unreachable `if not self.atlas:` code blocks from `wordlist.py` (`add_by_frequency`, `remove_by_source`).
+
+### Fixed
+- Fixed `.gitignore` to correctly track necessary dataset files in `/data/frequencies` and `/data/sources`, resolving CI file loading issues.
+- Fixed CI failure in `test_methods_with_no_atlas` by mocking `WordAtlas` constructor call.
+- Fixed various test failures discovered during coverage improvement for `cli.py`, `atlas.py`, and `wordlist.py`.
 
 ## [0.1.4] - 2025-04-06
 
