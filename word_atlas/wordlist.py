@@ -140,9 +140,9 @@ class WordlistBuilder:
         return added_count
 
     def add_by_frequency(
-        self, min_freq: float = 0, max_freq: Optional[float] = None
+        self, min_freq: Optional[float] = None, max_freq: Optional[float] = None
     ) -> int:
-        """Add words within a frequency range.
+        """Add words based on their frequency range.
 
         Args:
             min_freq: Minimum frequency (inclusive).
@@ -151,10 +151,17 @@ class WordlistBuilder:
         Returns:
             Number of words added.
         """
-        matching_words = self.atlas.filter(min_freq=min_freq, max_freq=max_freq)
-        original_count = len(self.words)
-        self.words.update(matching_words)
-        added_count = len(self.words) - original_count
+        # Directly use self.atlas as it's guaranteed to exist
+        added_count = 0
+        min_f = min_freq if min_freq is not None else -float("inf")
+        max_f = max_freq if max_freq is not None else float("inf")
+
+        # Iterate through all words known by the atlas with frequencies
+        for word, freq in self.atlas.frequencies.items():
+            if min_f <= freq <= max_f:
+                if word not in self.words and self.atlas.has_word(word):
+                    self.words.add(word)
+                    added_count += 1
 
         if added_count > 0:
             freq_desc = (
@@ -223,20 +230,19 @@ class WordlistBuilder:
         Raises:
             ValueError: If the source name is not found.
         """
-        # filter handles the ValueError if source_name is invalid
-        words_to_remove = self.atlas.filter(sources=[source_name])
-        removed_count = self.remove_words(words_to_remove)  # Delegate removal
+        # Directly use self.atlas
+        try:
+            # Get words from the source using the atlas method which handles errors
+            words_in_source = self.atlas.get_words_in_source(source_name)
+        except ValueError as e:
+            # Re-raise if source doesn't exist, as per original behaviour
+            raise ValueError(f"Source '{source_name}' not found in atlas.") from e
 
-        # Add specific criteria for this removal type
-        if removed_count > 0:
-            self.metadata["criteria"].append(
-                {
-                    "type": "remove_source",
-                    "source": source_name,
-                    "count": removed_count,
-                    "description": f"Attempted removal of {removed_count} words belonging to source '{source_name}'",
-                }
-            )
+        removed_count = 0
+        words_to_remove = self.words.intersection(words_in_source)
+        for word in words_to_remove:
+            self.words.remove(word)
+            removed_count += 1
         return removed_count
 
     def get_wordlist(self) -> List[str]:

@@ -271,21 +271,47 @@ class WordAtlas:
 
     # ---- Statistics ----
 
-    def get_stats(self) -> Dict[str, Any]:
-        """Calculate overall statistics for the loaded dataset."""
-        stats = {}
-        stats["total_entries"] = len(self.all_words)
-        stats["single_words"] = sum(1 for w in self.all_words if " " not in w)
-        stats["phrases"] = stats["total_entries"] - stats["single_words"]
-        stats["entries_with_frequency"] = len(self.frequencies)
-        stats["source_lists"] = self.get_source_list_names()
+    def get_stats(self) -> dict:
+        """Calculate and return statistics about the loaded dataset."""
+        # Initialize stats with defaults
+        stats = {
+            "total_words": 0,
+            "total_phrases": 0,
+            "total_entries": 0,
+            "coverage": {},
+        }
+        # No need for separate counters now
+        # total_words = 0
+        # total_phrases = 0
+        words_by_source = {source: set() for source in self.get_source_list_names()}
 
-        source_coverage = {}
-        for source_name in stats["source_lists"]:
-            # Use cached source lists for efficiency
-            source_set = self._source_lists.get(source_name, set())
-            source_coverage[source_name] = len(source_set)
-        stats["source_coverage"] = source_coverage
+        for word, data in self.word_to_idx.items():
+            is_phrase = " " in word
+            if is_phrase:
+                stats["total_phrases"] += 1
+            else:
+                stats["total_words"] += 1
+
+            # Correctly get sources for the word
+            # sources = data.get("sources", []) # INCORRECT: data is index (int)
+            sources = self.get_sources(word) # CORRECT: Use the method
+
+            for source in sources:
+                if source in words_by_source:
+                    words_by_source[source].add(word)
+
+        stats["total_entries"] = stats["total_words"] + stats["total_phrases"]
+
+        # Calculate coverage percentage for each source list
+        stats["coverage"] = {
+            source: len(words_in_source) / stats["total_entries"] * 100
+            if stats["total_entries"] > 0  # Use the value from stats dict
+            else 0
+            for source, words_in_source in words_by_source.items()
+        }
+
+        # Add embedding dimension if present
+        # ... existing code ...
 
         return stats
 

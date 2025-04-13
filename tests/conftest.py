@@ -116,7 +116,6 @@ def mock_cli_atlas():
     # Use MOCK_WORDS to derive index and frequencies for the mock
     # This ensures consistency if MOCK_WORDS is the source of truth
     mock_word_list = list(MOCK_WORDS.keys())
-    mock_index = {word: idx for idx, word in enumerate(mock_word_list)}
 
     # Frequencies (derived from MOCK_WORDS)
     test_frequencies = {
@@ -132,18 +131,25 @@ def mock_cli_atlas():
         "ROGET_PLANT": {"apple", "banana"},
         "OTHER": {"orange"},
     }
-    # Filter sources to only include words actually in our mock index
+    # Filter sources to only include words actually in our mock word list
     test_sources = {
-        name: {word for word in words if word in mock_index}
+        name: {word for word in words if word in mock_word_list}
         for name, words in test_sources.items()
     }
     test_source_list_names = sorted(list(test_sources.keys()))
 
+    # --- Correctly structure word_to_idx for get_stats ---
+    mock_word_to_idx = {}
+    for word in mock_word_list:
+        sources_for_word = [name for name, words_in_source in test_sources.items() if word in words_in_source]
+        mock_word_to_idx[word] = {"sources": sorted(sources_for_word)}
+        # We don't need the actual index or other metadata for the current tests using this mock
+
     # --- Assign Attributes ---
     # REMOVED atlas.word_data
     atlas.frequencies = test_frequencies
-    atlas.all_words = set(mock_index.keys())
-    atlas.word_to_idx = mock_index  # Keep index for has_word / all_words consistency
+    atlas.all_words = set(mock_word_list)
+    atlas.word_to_idx = mock_word_to_idx # Use the corrected structure
     atlas._source_lists = test_sources  # Directly assign for mock
     atlas.available_sources = {
         name: Path(f"mock/sources/{name}.json") for name in test_source_list_names
