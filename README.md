@@ -5,7 +5,7 @@
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://github.com/neumanns-workshop/english-word-atlas)
 [![Version](https://img.shields.io/badge/dynamic/toml?url=https://raw.githubusercontent.com/neumanns-workshop/english-word-atlas/main/pyproject.toml&query=$.project.version&label=version&color=brightgreen)](https://github.com/neumanns-workshop/english-word-atlas/blob/main/CHANGELOG.md)
 
-A curated dataset of English words and phrases with comprehensive linguistic and semantic annotations, designed to capture the conceptual diversity of English. This dataset combines historical lexicographic resources with modern NLP tools to provide rich annotations for cognitive and computational linguistics research. Notably, due to Roget's Thesaurus entries, it includes multi-word phrases (e.g., "be so good as", "put a good face on") alongside single words, with full embedding and pronunciation coverage for both.
+A curated dataset of English words and phrases from popular wordlists designed to capture the conceptual diversity of English.
 
 > **Note:** This project is focused on local development and is not distributed via PyPI. Please use the local installation methods described below.
 
